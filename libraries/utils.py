@@ -2,116 +2,179 @@ from config import Configuration
 
 import glob
 import logging
+import numpy as np
 import os
 import shutil
 
 class Utils:
 
 	@staticmethod
-	def config_camera(name='PL16803'):
-		''' This function returns a dictionary of parameters related to a given camera.
-
-		:parameter name [string] - The name of the camera
-
-		:return params [dictionary] - The parameters of the camera
-
-			dx [float] - The number of pixels along the camera's x-axis
-			dy [float] - The number of pixels along the camera's y-axis
-			gain [float] - The gain of the camera [ADU/e]
-			inverse_gain [float] - The inverse gain of the camera [e/ADU]
-			pixel_size [float] - The angular size of the pixel projected into the sky [arcsec/px]
-			read_noise [float] - The readout noise of the camera [ADU]
-
-		'''
-
-		params = {}
-
-		if name == 'PL16803':
-			dx = 4096
-			dy = 4096
-			gain = 0.72
-			inverse_gain = 1.39
-			pixel_size = 0.6305
-			read_noise = 11.4			
-
-		elif name == 'ST8300':
-			dx = 3352
-			dy = 2532
-			gain = 2.48
-			inverse_gain = 0.403
-			pixel_size = None
-			read_noise = 28.5
-
-		elif name == 'TOROS':
-			dx = 10560
-			dy = 10560
-			gain = None
-			inverse_gain = None
-			pixel_size = 0.468
-			read_noise = None
-
-		else:
-			dx = 4096
-			dy = 4096
-			gain = 0.72
-			inverse_gain = 1.39
-			pixel_size = 0.6305
-			read_noise = 11.4
-
-		params['dx'] = dx
-		params['dy'] = dy
-		params['gain'] = gain
-		params['inverse_gain'] = inverse_gain
-		params['pixel_size'] = pixel_size
-		params['read_noise'] = read_noise
-
-		return params
-
-	@staticmethod
-	def config_observatory(name='CTMO'):
-		''' This function returns a dictionary of parameters related to a given camera.
+	def config_observatory(name):
+		''' This function returns a dictionary of parameters related to a given observatory.
 
 		:parameter name [string] - The name of the observatory
 
 		:return params [dictionary] - The parameters of the observatory
 
-			declination_limit [float] - The limiting declination in the sky accessable to the observatory [deg]
-			elevation [int] - The elevation of the observatory above sea level [m]
-			latitude [float] - The latitude of the observatory
-			longitude [float] - The longitude of the observatory
+			atmosphere_qe
+			bandpass 				[nm]
+			ccd_qe
+			central_wavelength 		[nm]
+			collecting_area			[m^2]
+			declination_limit		[deg]
+			elevation				[m]
+			etendue					[m^2 deg^2]
+			field_separation		[deg]
+			field_size				[deg]
+			filter_qe
+			focal_length			[m]
+			fov						[m^2]
+			gain					[e/ADU]
+			latitude				[deg]
+			longitude				[deg]
+			pixel_number
+			pixel_scale				[arcsec/px]
+			primary_area			[m^2]
+			primary_diameter		[m]
+			primary_qe
+			readout_noise			[e]
+			secondary_area			[m^2]
+			secondary_diameter		[m]
+			secondary_qe
+			seeing					[arcsec]
+			sky						[mag/arcsec^2]
+			telescope
+			total_throughput
+			vignetting
 
 		'''
 
 		params = {}
 
 		if name == 'CTMO':
-			declination_limit = -40.00
+			atmosphere_qe = [0.8, 0.8, 0.9, 0.9, 0.9]					# better estimate
+			bandpass = [65, 149, 133, 149, 280]
+			ccd_qe = 0.9
+			central_wavelength = [352.5, 475.5, 628.5, 769.5, 960.0]
+			declination_limit = -34.00
 			elevation = 11.5
+			filter_qe = 0.9
+			focal_length = 2.939
+			gain = 1.385
 			latitude = 25.995789
 			longitude = -97.568956
+			pixel_number = 4096
+			pixel_scale = 0.6305
+			primary_diameter = 0.610
+			primary_qe = 0.96
+			readout_noise = 15.8
+			secondary_diameter = 0.190
+			secondary_qe = 0.96
+			seeing = 4.0												# better estimate
+			sky = [19.81, 19.81, 19.81, 19.81, 19.81]					# better estimate
+			telescope = 'reflector'
 
 		elif name == 'Macon':
+			atmosphere_qe = [0.8, 0.9, 0.9, 0.9]
+			bandpass = [147, 141, 147, 147]
+			ccd_qe = 0.9
+			central_wavelength = [473.5, 638.5, 775.5, 922.5]
 			declination_limit = 33.84
 			elevation = 4650
+			filter_qe = 0.9
+			focal_length = 3.974
+			gain = 2.18
 			latitude = -24.62055556
 			longitude = -67.32833333
+			pixel_number = 10560
+			pixel_scale = 0.468
+			primary_diameter = 0.610
+			primary_qe = 0.96
+			readout_noise = 5.0
+			secondary_diameter = 0.280
+			secondary_qe = 0.96
+			seeing = 0.93
+			sky = [22.1, 21.1, 20.1, 18.7]
+			telescope = 'reflector'
 
 		elif name == 'OAFA':
-			declination_limit = None
+			atmosphere_qe = [0.9]
+			bandpass = [50]
+			ccd_qe = 0.9
+			central_wavelength = [530.0]
+			declination_limit = 26.66
 			elevation = 2420
+			filter_qe = 1.0
+			focal_length = 3.7
+			gain = 2.18
 			latitude = -31.8023
 			longitude = -69.3265
+			pixel_number = 10560
+			pixel_scale = 0.4959
+			primary_diameter = 0.508
+			primary_qe = 0.92
+			readout_noise = 5.0
+			secondary_diameter = 0.0
+			secondary_qe = 1.0
+			seeing = 2.5												# better estimate
+			sky = [21.96]
+			telescope = 'refractor'										# better estimate
 
+		field_size = pixel_scale * pixel_number / 3600
+
+		fov = field_size ** 2
+
+		primary_area = np.pi * (primary_diameter / 2) ** 2
+		secondary_area = np.pi * (secondary_diameter / 2) ** 2
+
+		if telescope == 'reflector':
+			collecting_area = primary_area - secondary_area
 		else:
-			declination_limit = -40.00
-			elevation = 11.5
-			latitude = 25.995789
-			longitude = -97.568956
+			collecting_area = primary_area
 
+		etendue = collecting_area * fov
+
+		vignetting_circle = np.pi * (field_size/2) ** 2
+
+		if name == 'Macon':
+			vignetting = 0.756
+			field_separation = 1.19
+		else:
+			vignetting = vignetting_circle / fov
+			field_separation = vignetting * np.sqrt((field_size/2)**2 + field_size**2)
+
+		total_throughput = ccd_qe * filter_qe * primary_qe * secondary_qe * vignetting
+
+		params['atmosphere_qe'] = atmosphere_qe
+		params['bandpass'] = bandpass
+		params['ccd_qe'] = ccd_qe
+		params['central_wavelength'] = central_wavelength
+		params['collecting_area'] = collecting_area
 		params['declination_limit'] = declination_limit
 		params['elevation'] = elevation
+		params['etendue'] = etendue
+		params['field_separation'] = field_separation
+		params['field_size'] = field_size
+		params['filter_qe'] = filter_qe
+		params['focal_length'] = focal_length
+		params['fov'] = fov
+		params['gain'] = gain
 		params['latitude'] = latitude
 		params['longitude'] = longitude
+		params['pixel_number'] = pixel_number
+		params['pixel_scale'] = pixel_scale
+		params['primary_area'] = primary_area
+		params['primary_diameter'] = primary_diameter
+		params['primary_qe'] = primary_qe
+		params['readout_noise'] = readout_noise
+		params['secondary_area'] = secondary_area
+		params['secondary_diameter'] = secondary_diameter
+		params['secondary_qe'] = secondary_qe
+		params['seeing'] = seeing
+		params['sky'] = sky
+		params['total_throughput'] = total_throughput
+		params['vignetting'] = vignetting
+		params['vignetting_circle'] = vignetting_circle
 
 		return params
 

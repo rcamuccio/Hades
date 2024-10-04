@@ -1,19 +1,23 @@
 class Configuration:
 
 	WORKING_DIR = '/home/epimetheus/Downloads/2024-06-16/grb240615a/align/'
-	
-	MAIN_DIR = '/home/epimetheus/Downloads/hades-dev/'
-	CATALOG_DIR = '/home/epimetheus/Downloads/catalogs/'
+
+	MACHINE = 'qu' # epimetheus, qu
+	MAIN_DIR = '/home/' + MACHINE + '/Documents/hades-main/'
+	CATALOG_DIR = '/home/' + MACHINE + '/Documents/catalogs/'
 
 	OBJECT = 'grb240615a'
 	FIELD_RA = 326.1413
 	FIELD_DEC = 38.5948
 	
-	CAMERA = 'PL16803' # PL16803, ST8300, TOROS
-	MACHINE = 'epimetheus'
-	OBSERVATORY = 'CTMO' # CTMO, Macon, OAFA
+	OBSERVATORY = 'OAFA' # CTMO, Macon, OAFA
 
-	FIELD_SIZE = 0.6
+	EXPOSURE_TIME = 300
+	FIELD_PRIORITY = ['commissioning', 'ligo', 'science', 'main_survey']
+	GALACTIC_PLANE = 15
+	MOON_DISTANCE = 60
+	OVERHEAD = 30.
+	READ_TIME = 100.
 
 	AIRMASS_METHOD = 'ky1998'
 	BKG_METHOD = 'flat'

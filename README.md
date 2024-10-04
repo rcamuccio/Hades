@@ -85,7 +85,7 @@ The reduction toolbox includes plate solving FITS files. The plate solving routi
 ---
 
 7 Jun 2019<br>
-Last update: 11 Jul 2024
+Last update: 4 Oct 2024
 
 Richard Camuccio<br>
 rcamuccio@gmail.com

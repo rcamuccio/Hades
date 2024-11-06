@@ -1,11 +1,9 @@
 from config import Configuration
 from libraries.utils import Utils
-
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 import smtplib
-
 import logging
 logging.getLogger('requests').setLevel(logging.WARNING)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
@@ -13,10 +11,12 @@ logging.getLogger('urllib3').setLevel(logging.WARNING)
 class Alerts:
 
 	@staticmethod
-	def alert_team(alert_type='test', event_name='test'):
+	def alert_team(alert_channel='test', alert_type='test', event_name='test'):
 		''' This function sends text messages and emails to the team when an alert is detected.
 
+		:parameter alert_channel - 
 		:parameter alert_type - The example alert type for the text to send; the default is to simply send a test alert.
+		:parameter event_name - 
 
 		:return - Nothing is returned, howerver a message is sent to devices.
 
@@ -32,26 +32,46 @@ class Alerts:
 		msg['From'] = Configuration.EMAIL
 		msg['To'] = ', '.join(Configuration.MAILING_LIST)
 
-		# filter alert types
-		if alert_type == 'PRELIMINARY':
-			msg['Subject'] = 'Preliminary LVK-GW alert: ' + event_name + '\n'
-			body = 'Ole! A new GW-event has been detected by LVK. Check queue and results.\n'
+		if alert_channel == 'igwn_gwalert':
 
-		elif alert_type == 'INITIAL':
-			msg['Subject'] = 'Initial LVK-GW alert: ' + event_name + '\n'
-			body = 'Ole! A new GW-event has been detected by LVK. Check queue and results.\n'
-		
-		elif alert_type == 'RETRACTION':
-			msg['Subject'] = 'Event: ' + event_name + ' retracted\n'
-			body = 'The previous alert has been retracted.\n'
-		
-		elif alert_type == 'OBSERVER':
-			msg['Subject'] = 'Observer not present\n'
-			body = 'A new alert has been detected, but the observer may not be present.\n'
-		
+			if alert_type == 'M-PRELIMINARY':
+				msg['Subject'] = event_name + ': MOCK Preliminary Alert [' + alert_channel + ']\n'
+				body = 'A MOCK GW-event has been detected by the ' + alert_channel + ' alert channel. This is a preliminary alert. Check queue and results.'
+
+			elif alert_type == 'M-INITIAL':
+				msg['Subject'] = event_name + ': MOCK Initial Alert [' + alert_channel + ']\n'
+				body = 'A MOCK GW-event has been detected by the ' + alert_channel + ' alert channel. This is an initial alert. Check queue and results.'
+
+			elif alert_type == 'M-UPDATE':
+				msg['Subject'] = event_name + ': MOCK Update Alert [' + alert_channel + ']\n'
+				body = 'A MOCK GW-event has been detected by the ' + alert_channel + ' alert channel. This is an updated alert. Check queue and results.'
+
+			elif alert_type == 'M-RETRACTION':
+				msg['Subject'] = event_name + ': MOCK Retraction Alert [' + alert_channel + ']\n'
+				body = 'This MOCK alert has been retracted by LVK.'
+
+			elif alert_type == 'S-PRELIMINARY':
+				msg['Subject'] = event_name + ': REAL Preliminary Alert [' + alert_channel + ']\n'
+				body = 'A REAL GW-event has been detected by LVK. Check queue and results.'
+
+			elif alert_type == 'S-INITIAL':
+				msg['Subject'] = event_name + ': REAL Initial Alert [' + alert_channel + ']\n'
+				body = 'A REAL GW-event has been detected by LVK. Check queue and results.'
+
+			elif alert_type == 'S-UPDATE':
+				msg['Subject'] = event_name + ': REAL Update Alert [' + alert_channel + ']\n'
+				body = 'A REAL GW-event has been detected by LVK. Check queue and results.'
+
+			elif alert_type == 'S-RETRACTION':
+				msg['Subject'] = event_name + ': REAL Retraction Alert [' + alert_channel + ']\n'
+				body = 'This REAL alert has been retracted by LVK.'
+
+			else:
+				msg['Subject'] = event_name + ': UNKNOWN (' + alert_type + ') Alert [' + alert_channel + ']\n'
+				body = 'An UNKNOWN (' + alert_type + ') alert has been detected by LVK. Check queue and results.'
+
 		else:
-			msg['Subject'] = 'Alert Test for event: ' + event_name + '\n'
-			body = 'This is a test of the alert message system.\n'
+			Utils.log('Unknown alert channel (' + alert_channel + ').', 'info')
 
 		# convert message to text and send
 		msg.attach(MIMEText(body, 'plain'))

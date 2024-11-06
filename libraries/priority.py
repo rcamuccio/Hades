@@ -33,7 +33,7 @@ class Priority:
 		field_size = obs_params['field_size']
 		latitude = obs_params['latitude']
 
-		survey_fields_path = Configuration.MAIN_DIR + 'analysis/survey/' + Configuration.OBSERVATORY + '_fields.cat'
+		survey_fields_path = Configuration.TARTARUS_DIR + 'analysis/survey/' + Configuration.OBSERVATORY + '_fields.cat'
 
 		# set up variables necessary for geometry
 		deg_to_rad = np.pi / 180.
@@ -187,7 +187,7 @@ class Priority:
 
 		if Configuration.CATALOG_TARGET == 'glade24':
 
-			catalog = Configuration.CATALOG_DIR + 'GLADE_2.4.txt'
+			catalog = Configuration.TARTARUS_DIRECTORY + 'catalogs/' + 'GLADE_2.4.txt'
 			delimiter = ' '
 			usecols = [1, 6, 7, 8]
 			header = None
@@ -198,7 +198,7 @@ class Priority:
 
 		elif Configuration.CATALOG_TARGET == 'glade+':
 
-			catalog = Configuration.CATALOG_DIR + 'GLADE+.txt'
+			catalog = Configuration.TARTARUS_DIRECTORY + 'catalogs/' + 'GLADE+.txt'
 			delimiter = ' '
 			usecols = [2, 8, 9, 32]
 			header = None

@@ -310,6 +310,86 @@ class Preprocessing:
 
 	@staticmethod
 	def mk_flat(flat_exp, dark_exp):
+		''' This function will make the master flat frame using the provided image list.
+
+		:parameter flat_exp - The exposure time of the flat frames
+		:parameter dark_exp - The exposure time of the dark frames
+		:parameter combine_type - Mean/Median depending on how you want to combine the flat frame
+
+		:return - The flat field for the given date is returned and written to the calibration directory
+		'''
+
+		if os.path.isfile(Configuration.CALIBRATION_DIRECTORY + 'flat.fits') == 0:
+
+			bias = Preprocessing.mk_bias(overwrite_bias='N', combine_type='mean')
+			dark = Preprocessing.mk_dark(overwrite_dark='N', combine_type='mean')
+
+			images = pd.read_csv(Configuration.CALIBRATION_DIRECTORY + 'flat_list.csv', sep=',')
+			image_list = images.apply(lambda x: Configuration.RAW_DIRECTORY + x.Date + x.Files, axis=1).to_list()
+
+			nfiles = len(image_list)
+			nbulk = 30
+
+			full_bulk = nfiles // nbulk
+			part_bulk = nfiles % nbulk
+
+			if part_bulk > 0:
+				hold_bulk = full_bulk + 1
+			else:
+				hold_bulk = full_bulk
+
+			hold_data = np.ndarray(shape=(hold_bulk, Configuration.AXS_Y, Configuration.AXS_X))
+
+			Utils.log('Generating a master flat field from multiple files in bulks of ' + str(nbulk) + ' images. There are ' + str(nfiles) + ' images to combine, which means there should be ' + str(hold_bulk) + ' mini-files to combine.', 'info')
+
+			for kk in range(0, hold_bulk):
+
+				if kk < full_bulk:
+					block_hold = np.ndarray(shape=(nbulk, Configuration.AXS_Y, Configuration.AXS_X))
+					mx_index = nbulk
+
+				else:
+					block_hold = np.ndarray(shape=(part_bulk, Configuration.AXS_Y, Configuration.AXS_X))
+					mx_index = part_bulk
+
+				loop_start = kk * nbulk
+				idx_cnt = 0
+
+				Utils.log('Making mini-flat field frame number ' + str(kk) + '.', 'info')
+
+				for jj in range(loop_start, mx_index + loop_start):
+
+					flat_tmp, flat_head = fits.getdata(image_list[jj], header=True)
+
+					dark_scale = dark_exp / flat_exp
+
+					block_hold[idx_cnt] = ((flat_tmp - bias) - (dark / dark_scale))
+
+					idx_cnt += 1
+
+				hold_data[kk] = np.median(block_hold, axis=0)
+
+			flat_image = np.median(hold_data, axis=0)
+			nflat_image = flat_image / np.median(flat_image[5950:5950+3900, 3200:3200+900])
+
+			flat_header = fits.getheader(image_list[0])
+			flat_header['comb_type'] = 'median'
+			flat_header['median_val'] = np.median(flat_image[5950:5950+3900, 3200:3200+900])
+			flat_header['norm_pix'] = 'median'
+			flat_header['num_comb'] = len(image_list)
+			flat_header['mean_pix'] = np.mean(nflat_image)
+			flat_header['std_pix'] = np.std(nflat_image)
+			flat_header['max_pix'] = np.max(nflat_image)
+			flat_header['min_pix'] = np.min(nflat_image)
+			flat_header['mean'] = np.mean(flat_image)
+			flat_header['std'] = np.std(flat_image)
+			flat_header['max'] = np.max(flat_image)
+			flat_header['min'] = np.min(flat_image)
+
+			fits.writeto(Configuration.CALIBRATION_DIRECTORY + 'flat.fits', nflat_image, flat_header, overwrite=True)
+
+		else:
+			nflat_image = fits.getdata(Configuration.CALIBRATION_DIRECTORY + 'flat.fits')
 
 		return nflat_image
 

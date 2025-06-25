@@ -3,6 +3,7 @@ from libraries.utils import Utils
 import astroalign as aa
 import numpy as np
 import os
+import pandas as pd
 import twirl # deprecate
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -230,10 +231,82 @@ class Preprocessing:
 		:return - The dark frame is returned and written to the calibration directory
 		'''
 
-		
+		file_name = str(time_scale) + 's_dark_' + Configuration.FILE_EXTENSION
 
+		if (os.path.isfile(Configuration.CALIBRATION_DIRECTORY + file_name) == 0) | (overwrite_dark == 'Y'):
 
-		return bias_image_mean
+			if combine_type == 'mean':
+
+				chk_dark_list = Utils.get_file_list(Configuration.DARK_DIRECTORY, str(time_scale) + Configuration.FILE_EXTENSION)
+
+				images = pd.read_csv(Configuration.CALIBRATION_DIRECTORY + 'dark_list.csv', sep=',')
+				image_list = images.apply(lambda x: Configuration.RAW_DIRECTORY + x.Date + x.Files, axis=1).to_list()
+
+				nfiles = len(image_list)
+				if len(chk_dark_list) == 0:
+
+					bias = Preprocessing.mk_bias(Configuration.BIAS_DIRECTORY, combine_type='mean')
+
+					Utils.log('Generating a master dark frame for time scale ' + str(time_scale) + 's from multiple files using a mean combination. There are ' + str(nfiles) + ' images to combine.', 'info')
+
+					tmp_num = 0
+
+					dark_header = fits.getheader(image_list[0])
+
+					for kk in range(0, nfiles):
+
+						dark_tmp = fits.getdata(image_list[kk]).astype('float')
+
+						try:
+							dark_image = (dark_image - bias) + dark_tmp
+						except:
+							dark_image = dark_tmp - bias
+
+						if (kk % 20) == 0:
+							Utils.loget(str(kk + 1) + ' files read in. ' + str(nfiles - kk - 1) + ' files remain.', 'info')
+
+						if ((kk % 100 == 0) & (kk > 0)) | (kk == nfiles - 1):
+							Utils.log('Writing temporary file ' + str(tmp_num) + '. ' + str(nfiles - kk - 1) + ' files remain.', 'info')
+
+							fits.writeto(Configuration.DARK_DIRECTORY + str(tmp_num) + '_' + str(time_scale) + 's' + '_tmp_dark.fits', dark_image, dark_header, overwrite=True)
+							
+							del dark_image
+						
+						del dark_tmp
+
+				else:
+					Utils.log('Temporary dark files found. Skipping generating files.', 'info')
+
+				tmp_dark_list = Utils.get_file_list(Configuration.DARK_DIRECTORY, Configuration.FILE_EXTENSION)
+
+				for kk in range(0, len(tmp_dark_list)):
+
+					dark_tmp = fits.getdata(Configuration.BIAS_DIRECTORY + tmp_dark_list[kk]).astype('float')
+
+					try:
+						dark_image_fin += dark_tmp
+					except:
+						dark_image_fin = dark_tmp
+
+				del dark_tmp
+
+				dark_image_mean = dark_image_fin / nfiles
+
+				del dark_image_fin
+
+				dark_header['DARK_COMB'] = 'mean'
+				dark_header['NUM_DARK'] = nfiles
+				dark_header['EXPTIME'] = time_scale
+
+				fits.writeto(Configuration.CALIBRATION_DIRECTORY + file_name, dark_image_mean, dark_header, overwrite=True)
+
+			else:
+				Utils.log('Specific dark combination method is unavailable, try again.', 'info')
+
+		else:
+			dark_image_mean = fits.getdata(Configuration.CALIBRATION_DIRECTORY + file_name, 0)
+
+		return dark_image_mean
 
 	@staticmethod
 	def mk_flat(flat_exp, dark_exp):

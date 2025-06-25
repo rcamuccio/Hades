@@ -395,6 +395,99 @@ class Preprocessing:
 
 	@staticmethod
 	def mk_nme(file, difference_image='N', clip_image='N', subtract_sky='N', subtract_bias='N', divide_flat='N', subtract_dark='N', plate_solve='N'):
+		''' This function will create the appropriate name for the file based on which steps are taken.
+
+		:parameter file - The string with the file name
+		:parameter difference_image - Y/N if image subtraction occurred
+		:parameter clip_image - Y/N if image clipping occurred
+		:parameter subtract_sky - Y/N if sky subtraction occurred
+		:parameter subtract_bias - Y/N if bias subtraction occurred
+		:parameter divide_flat - Y/N if flat division occurred
+		:parameter subtract_dark - Y/N if dark subtraction occurred
+		:parameter plate_solve - Y/N if plate solving occurred
+
+		:return file_name - A string with the new file name
+		'''
+
+		file_name = file
+
+		if difference_image == 'Y':
+			file = file_name.replace('/clean/', '/diff/')
+			nme_hld = file.split('.fits')
+			file_name = nme_hld[0] + 'ad' + Configuration.FILE_EXTENSION
+
+		elif difference_image == 'N':
+			file_hld = file_name.split('/')
+			file = Configuration.CLEAN_DIRECTORY + file_hld[-2] + '/' + Configuration.FIELD + '/' + file_hld[-1]
+			nme_hld = file.split('.fits')
+
+			# nothing occurs
+			if (subtract_bias == 'N') & (divide_flat == 'N') & (subtract_sky == 'N') & (subtract_dark == 'N') & (clip_image == 'N'):
+				file_name = nme_hld[0] + Configuration.FILE_EXTENSION
+
+			# bias
+			elif (subtract_bias == 'Y') & (divide_flat == 'N') & (subtract_sky == 'N') & (subtract_dark == 'N') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_b' + Configuration.FILE_EXTENSION	
+
+			# flat
+			elif (subtract_bias == 'N') & (divide_flat == 'Y') & (subtract_sky == 'N') & (subtract_dark == 'N') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_f' + Configuration.FILE_EXTENSION
+
+			# sky
+			elif (subtract_bias == 'N') & (divide_flat == 'N') & (subtract_sky == 'Y') & (subtract_dark == 'N') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_s' + Configuration.FILE_EXTENSION
+
+			# dark
+			elif (subtract_bias == 'N') & (divide_flat == 'N') & (subtract_sky == 'N') & (subtract_dark == 'Y') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_k' + Configuration.FILE_EXTENSION
+
+			# clip
+			elif (subtract_bias == 'N') & (divide_flat == 'N') & (subtract_sky == 'N') & (subtract_dark == 'N') & (clip_image == 'Y'):
+				file_name = nme_hld[0] + '_c' + Configuration.FILE_EXTENSION
+
+			# bias and clip
+			elif (subtract_bias == 'Y') & (divide_flat == 'N') & (subtract_sky == 'N') & (subtract_dark == 'N') & (clip_image == 'Y'):
+				file_name = nme_hld[0] + '_bc' + Configuration.FILE_EXTENSION
+
+			# bias and flat
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'N') & (subtract_dark == 'N') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_bf' + Configuration.FILE_EXTENSION
+
+			# bias and sky
+			elif (subtract_bias == 'Y') & (divide_flat == 'N') & (subtract_sky == 'Y') & (subtract_dark == 'N') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_bs' + Configuration.FILE_EXTENSION
+
+			# bias and dark
+			elif (subtract_bias == 'Y') & (divide_flat == 'N') & (subtract_sky == 'N') & (subtract_dark == 'Y') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_bk' + Configuration.FILE_EXTENSION
+
+			# bias and flat and sky
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'Y') & (subtract_dark == 'N') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_bfs' + Configuration.FILE_EXTENSION
+
+			# bias and flat and dark
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'N') & (subtract_dark == 'Y') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_bfk' + Configuration.FILE_EXTENSION
+
+			# bias and flat and clip
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'N') & (subtract_dark == 'N') & (clip_image == 'Y'):
+				file_name = nme_hld[0] + '_bfc' + Configuration.FILE_EXTENSION
+
+			# bias and flat and sky and dark
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'Y') & (subtract_dark == 'Y') & (clip_image == 'N'):
+				file_name = nme_hld[0] + '_bfsk' + Configuration.FILE_EXTENSION
+
+			# bias and flat and sky and clip
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'Y') & (subtract_dark == 'N') & (clip_image == 'Y'):
+				file_name = nme_hld[0] + '_bfsc' + Configuration.FILE_EXTENSION
+
+			# bias and flat and dark and sky and clip
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'Y') & (subtract_dark == 'Y') & (clip_image == 'Y'):
+				file_name = nme_hld[0] + '_bfskc' + Configuration.FILE_EXTENSION
+
+			# bias and flat and dark and sky and clip and plate_solve
+			elif (subtract_bias == 'Y') & (divide_flat == 'Y') & (subtract_sky == 'Y') & (subtract_dark == 'Y') & (clip_image == 'Y') & (plate_solve == 'Y'):
+				file_name = nme_hld[0] + '_bfskcp' + Configuration.FILE_EXTENSION
 
 		return file_name
 

@@ -209,7 +209,79 @@ class Utils:
 		return raw_dir, cal_dir, wcs_dir, align_dir
 
 	@staticmethod
+	def get_all_files_per_date(path, file_ext):
+		''' This function will return all files for a directory split by date. Typically for flat/bias/dark frames.
+
+		:parameter path - A string with the path of the file
+		:parameter file_ext - The extension of the files, generally something like *.fits
+
+		:return files_no_ext - A list of files without their extension
+		'''
+
+		files_no_ext = []
+		for f in os.listdir(path):
+			z = path + f + '/'
+			try:
+				for x in os.listdir(z):
+					if x.endswith(file_ext):
+						files_no_ext.append(z + x)
+			except:
+				Utils.log('No files found on ' + f, 'info')
+
+		return files_no_ext
+
+	@staticmethod
+	def get_all_files_per_field(path, field, file_ext):
+		''' This function will return all the files for a given field without their extension.
+
+		:parameter path - A string with the path of the file
+		:parameter field - The field you are interested in searching for
+		:parameter file_ext - The extension of the files, generally something like *.fits
+
+		:return files_no_ext - A list of files without their extension
+		:return dte_dir - 
+		'''
+
+		files_no_ext = []
+		sub_dir = os.listdir(path)
+		dte_dir = []
+		for f in sub_dir:
+			z = path + f + '/'
+			try:
+				for x in os.listdir(z):
+					if ((x.split('_')[0] + '_' + x.split('_')[1] == field) | (x.split('_')[0] == field)):
+						files_no_ext.append(z + x)
+				dte_dir.append(f)
+			except:
+				Utils.log('Field ' + field + ' not observed on ' + f, 'info')
+
+		return files_no_ext, dte_dir
+
+	@staticmethod
+	def get_file_list(path, file_ext):
+		''' This function will return the files in a given directory without their extension.
+
+		:parameter path - A string with the path the file.
+		:parameter file_ext - The file type to make a list, generally something like *.fits
+
+		:return files_no_ext - A list of files without the extension
+		'''
+
+		file_list = [f for f in os.listdir(path) if f.endswith(file_ext)]
+
+		file_list.sort(key=len)
+
+		return file_list
+
+	@staticmethod
 	def log(statement, level):
+		''' This is a logger function designed to log all activity from the program to both the terminal and a file.
+
+		:parameter statement - A string which shows what needs to be logged
+		:parameter level - The type of statement (e.g. info, debug)
+
+		:return - Nothing is returned, but the log is updated and possibly printed to the terminal
+		'''
 
 		log_path = Configuration.MAIN_DIR + 'logs/main.log'
 

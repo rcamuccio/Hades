@@ -2,6 +2,7 @@ class Configuration:
 
 	# configuration
 	MACHINE = 'epimetheus' # epimetheus, qu
+	FILE_EXTENSION = '.fits'
 	DATE = ''
 
 	# directories

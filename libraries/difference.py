@@ -84,6 +84,66 @@ class Difference:
 		Difference.ois_difference(out_name, org_header)
 
 	@staticmethod
+	def find_subtraction_stars_img(img, star_list):
+		''' This function will find the subtraction stars to use for the differencing. They will be the same stars for every frame. This will help in detrending later.
+
+		:parameter star_list - The data frame with the list of stars to use for the subtraction
+
+		:return diff_list - 
+		'''
+
+		Utils.log('Finding stars for kernel from the star list.', 'info')
+
+		positions = np.transpose((star_list['xcen'], star_list['ycen']))
+
+		aperture = CircularAperture(positions, r=Configuration.APER_SIZE)
+		aperture_annulus = CircularAnnulus(positions, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
+		apers = [aperture, aperture_annulus]
+
+		phot_table = aperture_photometry(img, apers, method='exact')
+
+		sky = phot_table['aperture_sum_1'] / aperture_annulus.area
+
+		flux = np.array(phot_table['aperture_sum_0'] - (sky * aperture.area)) / Configuration.EXP_TIME
+
+		star_error = np.sqrt((phot_table['aperture_sum_0'] - (sky * aperture.area)) * Configuration.GAIN)
+		sky_error = np.sqrt(aperture.area * sky * Configuration.GAIN)
+
+		flux_er = np.array(np.sqrt(star_error**2 + sky_error**2))
+
+		mag = 25 - 2.5*np.log10(flux)
+		mag_er = (np.log(10.) / 2.5) * (flux_er / flux)
+
+		diff_list = star_list.copy().reset_index(drop=True)
+		diff_list['min_dist'] = diff_list.apply(lambda x: np.sort(np.sqrt((x['x'] - diff_list['x'])**2 + x['y'] - diff_list['y'])**2)[1], axis=1)
+		dist_cut = 2*Configuration.STMP + 1
+		diff_list['dmag'] = np.abs(diff_list['master_mag'].to_numpy() - mag)
+		mn, md, sg = sigma_clipped_stats(diff_list.dmag, sigma=2)
+		mag_plus = md + sg
+		mag_minus = md - sg
+
+		diff_list = star_list[(star_list['xcen'] > Configuration.AXS_LIMIT)
+							& (star_list['xcen'] < Configuration.AXS_X - Configuration.AXS_LIMIT)
+							& (star_list['ycen'] > Configuration.AXS_LIMIT)
+							& (star_list['ycen'] < Configuration.AXS_Y - Configuration.AXS_LIMIT)
+							& (diff_list['min_dist'] > dist_cut)
+							& ((diff_list['dmag'] < mag_plus) | (diff_list['dmag'] > mag_minus))].copy().reset_index(drop=True)
+
+		if len(diff_list) > Configuration.NRSTARS:
+			diff_list = diff_list.sample(n=Configuration.NRSTARS)
+		else:
+			Utils.log('There are not enough stars on the frame to use ' + str(Configuration.NRSTARS) + ' in the subtraction. Using all available stars.', 'info')
+
+		diff_list['x'] = np.around(diff_list['xcen'] + 1, decimals=0)
+		diff_list['y'] = np.around(diff_list['ycen'] + 1, decimals=0)
+
+		Utils.write_txt(Configuration.CODE_DIFFERENCE_DIRECTORY + 'params.txt', 'w', '%1d %1d %1d %4d\n' % (Configuration.STMP, Configuration.KRNL, Configuration.ORDR, len(diff_list)))
+
+		diff_list[['x', 'y']].astype(int).to_csv(Configuration.CODE_DIFFERENCE_DIRECTORY + 'refstars.txt', index=0, header=0, sep=' ')
+
+		return diff_list
+
+	@staticmethod
 	def ois_difference(out_name, header):
 		''' This function will run the c code oisdifference.
 

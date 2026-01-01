@@ -26,7 +26,7 @@ The GCN listener uses the GLADE catalog (both the latest GLADE+ and previous Gla
 
 ### Astrometry.net
 
-The reduction sequence includes plate solving FITS files. The plate solving routine is handled by a local instance of Astrometry.net (https://astrometry.net/use.html/). One needs to install Astrometry.net and the index files it uses for solving fields.
+The reduction sequence includes plate solving FITS files. The plate solving routine is handled by a local instance of Astrometry.net (https://astrometry.net/doc/index.html/). One needs to install Astrometry.net and the index files it uses for solving fields.
 
 There is a shell script available (https://github.com/rcamuccio/package-installers/blob/master/astrometry-installer.sh/) which can be used to download all of the required index files.
 

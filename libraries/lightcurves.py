@@ -1,0 +1,53 @@
+from config import Configuration
+from libraries.photometry import Photometry
+from libraries.utils import Utils
+from astropy.io import fits
+from astropy.wcs import WCS
+from photutils.aperture import aperture_photometry, CircularAnnulus, CircularAperture
+from photutils.centroids import centroid_sources
+import numpy as np
+import os
+import pandas as pd
+import warnings
+warnings.filterwarnings('ignore', category=RuntimeWarning)
+warnings.filterwarnings('ignore', category=Warning)
+
+class Lightcurves:
+
+    @staticmethod
+    def generate_flux_files():
+        '''This function will generate light curves for all of the stars in a given star list.
+
+        :return - Nothing is returned, but light curve files are generated for all stars
+        '''
+
+        # pull in the star list for photometry
+        star_list = pd.read_csv(Configuration.MASTER_DIRECTORY + Configuration.FIELD + '_star_list.txt', delimiter=' ', header=0)
+
+        # get the image list to difference
+        files, dates = Utils.get_all_files_per_field(Configuration.DIFFERENCED_DIRECTORY, Configuration.FIELD, 'diff', Configuration.FILE_EXTENSION)
+
+        # begin the algorithm to produce photometry
+        for idx, file in enumerate(files):
+            fin_nme = file.split('.fits')[0] + '.flux'
+            fin_nme = fin_nme.replace('/diff/', '/flux/')
+
+            # check if difference file already exists
+            if os.path.isfile(fin_nme):
+                Utils.log('Flux file ' + fin_nme + ' found. Skipping.', 'info')
+
+            else:
+                Utils.log('Extracting flux from ' + file + '.', 'info')
+                Photometry.single_frame_aperture_photometry(star_list, file, fin_nme)
+
+        Utils.log('Differencing complete for ' + Configuration.FIELD + '.', 'info')
+
+    @staticmethod
+    def mk_raw_lightcurves():
+        '''This function will create the individual raw light curve files for each star in the specific star list.
+
+        :return - Nothing is returned, but each light curve is output
+        '''
+
+        # combine the flux from the flux files and write the raw light curves
+        Photometry.combine_flux_files()

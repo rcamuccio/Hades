@@ -49,9 +49,12 @@ class Clean:
             # make a new name for the file based on which actions are taken
             file_name = Preprocessing.mk_nme(file, 'N', Configuration.SUBTRACT_BIAS, Configuration.SUBTRACT_DARK, Configuration.DIVIDE_FLAT, Configuration.CLIP_IMAGE, Configuration.SUBTRACT_SKY, Configuration.PLATE_SOLVE)
 
+            raw_file_name = file.split('/')[-1]
+            mod_file_name = file_name.split('/')[-1]
+
             # check if file exists
             if os.path.isfile(file_name):
-                Utils.log('Image ' + file_name + ' already exists. Skipping.', 'info')
+                Utils.log('Image ' + mod_file_name + ' already exists. Skipping.', 'info')
             else:
                 # clean the image
                 clean_img, header = Clean.clean_img(file, file_name)
@@ -77,7 +80,9 @@ class Clean:
         :return header - 
         '''
 
-        Utils.log('Now cleaning ' + file + '.', 'info')
+        raw_file_nme = file.split('/')[-1]
+
+        Utils.log('Now cleaning ' + raw_file_name + '.', 'info')
 
         # load image
         img, header = fits.getdata(file, header=True)
@@ -132,7 +137,7 @@ class Clean:
             dt5 = np.around((fn - st), decimals=2)
             Utils.log('Image plate solved in ' + str(dt5) + ' s.', 'info')
 
-        Utils.log('Cleaning finished on image ' + file + '.', 'info')
+        Utils.log('Cleaning finished on image ' + raw_file_name + '.', 'info')
 
         dt = np.around((dt1 + dt2 + dt3 + dt4 + dt5), decimals=2)
         Utils.log('Total time = ' + str(dt) + ' s.', 'info')

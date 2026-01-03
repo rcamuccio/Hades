@@ -1,3 +1,5 @@
+from libraries.utils import Utils
+
 class Configuration:
 
     # computer
@@ -78,15 +80,20 @@ class Configuration:
     STAR_LIST_MAX = 30000
     THRESHOLD = 5. # the threshold for a source above the background
 
-    # codebase directories
-    MAIN_DIRECTORY = '/home/epimetheus/Documents/hades/'
+    # main directory
+    MAIN_DIRECTORY = '/home/epimetheus/Documents/'
+
+    # codebase directory
+    CODE_DIRECTORY = MAIN_DIRECTORY + 'hades/'
 
     # output directories
-    OUTPUT_DIRECTORY = '/home/epimetheus/Documents/output/'
+    OUTPUT_DIRECTORY = MAIN_DIRECTORY + 'output/'
     ALERTS_DIRECTORY = OUTPUT_DIRECTORY + 'alerts/'
     ANALYSIS_DIRECTORY = OUTPUT_DIRECTORY + 'analysis/'
     LOG_DIRECTORY = OUTPUT_DIRECTORY + 'logs/'
     CODE_DIFFERENCE_DIRECTORY = OUTPUT_DIRECTORY + 'difference/'
+
+    SECRET_DIRECTORY = '/home/epimetheus/Documents/'
 
     # data directories
     DATA_DIRECTORY = '/media/epimetheus/Harbor/hades-data/'
@@ -108,6 +115,17 @@ class Configuration:
 
     # directory list
     DIRECTORIES = [ANALYSIS_DIRECTORY, DATA_DIRECTORY, LOG_DIRECTORY, CALIBRATION_DIRECTORY, FLUX_DIRECTORY, CLEAN_DIRECTORY, MASTER_MAIN_DIRECTORY, MASTER_DIRECTORY, MASTER_TMP_DIRECTORY, LIGHTCURVE_DIRECTORY, CENTROID_DIRECTORY, RAW_DIRECTORY, BIAS_DIRECTORY, DARK_DIRECTORY, FLAT_DIRECTORY, DIFFERENCED_DIRECTORY,CODE_DIFFERENCE_DIRECTORY, LIGHTCURVE_FIELD_DIRECTORY, REVIEW_DIRECTORY]
+
+    # listener
+    CLIENT_ID = Utils.get_credentials('id')
+    CLIENT_SECRET = Utils.get_credentials('secret')
+    EMAIL = 'toros.alerts@yahoo.com'
+    MAILING_LIST = ['rcamuccio@gmail.com']
+    PAS = 'ncnrlqwdthofhoch'
+    PORT = 465
+    SMTP = 'smtp.mail.yahoo.com'
+
+    AVAILABLE_TOPICS = ['gcn.circulars', 'gcn.heartbeat', 'gcn.notices.icecube.lvk_nu_track_search', 'igwn.gwalert', 'gcn.notices.swift.bat.guano', 'gcn.notices.einstein_probe.wxt.alert', 'gcn.notices.superk.sn_alert']
 
     # BROKER CONFIGURATION SPECIFICS
     LISTEN_NED_WAIT = 1

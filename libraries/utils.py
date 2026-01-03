@@ -83,6 +83,21 @@ class Utils:
         return files_no_ext, uni_dte_dir
 
     @staticmethod
+    def get_credentials(cred_type):
+
+        secret_path = Configuration.SECRET_DIRECTORY + 'secret.info'
+
+        if cred_type == 'id':
+
+        elif cred_type == 'secret':
+
+        else:
+            Utils.log('Unrecognized credential.', 'debug')
+            sys.exit()
+
+        return credential
+
+    @staticmethod
     def get_file_list(path, file_ext):
         '''This function will return the files in a given directory without their extension.
 

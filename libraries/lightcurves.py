@@ -29,18 +29,20 @@ class Lightcurves:
 
         # begin the algorithm to produce photometry
         for idx, file in enumerate(files):
-            fin_nme = file.split('.fits')[0] + '.flux'
-            fin_nme = fin_nme.replace('/diff/', '/flux/')
+            file_nme = file.split('.fits')[0] + '.flux'
+            file_nme = file_nme.replace('/diff/', '/flux/')
+
+            mod_file_nme = file_nme.split('/')[-1]
 
             # check if difference file already exists
-            if os.path.isfile(fin_nme):
-                Utils.log('Flux file ' + fin_nme + ' found. Skipping.', 'info')
+            if os.path.isfile(file_nme):
+                Utils.log('Flux file ' + mod_file_nme + ' found. Skipping.', 'info')
 
             else:
                 Utils.log('Extracting flux from ' + file + '.', 'info')
-                Photometry.single_frame_aperture_photometry(star_list, file, fin_nme)
+                Photometry.single_frame_aperture_photometry(star_list, file, file_nme)
 
-        Utils.log('Differencing complete for ' + Configuration.FIELD + '.', 'info')
+        Utils.log('Flux extraction complete for ' + Configuration.FIELD + '.', 'info')
 
     @staticmethod
     def mk_raw_lightcurves():

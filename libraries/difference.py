@@ -37,15 +37,17 @@ class BigDiff:
 
         # begin with the algorithm to difference the images
         for file_path in files:
-            fin_nme = Preprocessing.mk_nme(file_path, 'Y', 'N', 'N', 'N', 'N')
+            file_nme = Preprocessing.mk_nme(file_path, 'Y', 'N', 'N', 'N', 'N')
+
+            mod_file_nme = file_nme.split('/')[-1]
 
             # check to see if the difference file already exists
-            if os.path.isfile(fin_nme):
-                Utils.log('File ' + file_path + ' found. Skipping.', 'info')
+            if os.path.isfile(file_nme):
+                Utils.log('File ' + mod_file_nme + ' found. Skipping.', 'info')
 
             else:
-                Utils.log('Working to difference file ' + file_path + '.', 'info')
-                BigDiff.diff_img(star_list, file_path, fin_nme)
+                Utils.log('Differencing file ' + mod_file_nme + '.', 'info')
+                BigDiff.diff_img(star_list, file_path, file_nme)
 
         Utils.log('Differencing complete for ' + Configuration.FIELD + '.', 'info')
 

@@ -1,0 +1,11 @@
+name: hades
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - astroalign
+  - astroquery
+  - gcn-kafka
+  - ligo.skymap
+  - pandas
+  - photutils

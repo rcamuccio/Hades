@@ -1,11 +1,11 @@
 from config import Configuration
-from lib.routing import Router
-from lib.utilities import Utils
+from lib.router import Router
+from lib.utility import Utility
 from gcn_kafka import Consumer
 import os
 
 os.system('clear')
-Utils.log('Beginning listener for astronomical alerts.', 'info')
+Utility.log('Beginning listener for astronomical alerts.', 'info')
 
 consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET)
 consumer.subscribe(Configuration.AVAILABLE_TOPICS)
@@ -18,10 +18,10 @@ while True:
 		message_value = message.value()
 
 		if message_error:
-			Utils.log(message_error, 'debug')
-			Utils.log(message_offset, 'debug')
-			Utils.log(message_topic, 'debug')
-			Utils.log(message_value, 'debug')
+			Utility.log(message_error, 'debug')
+			Utility.log(message_offset, 'debug')
+			Utility.log(message_topic, 'debug')
+			Utility.log(message_value, 'debug')
 
 		else:
 			Router.filter_alert(message_value, message_topic)

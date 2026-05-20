@@ -1,5 +1,5 @@
 from config import Configuration
-from lib.utilities import Utils
+from lib.utility import Utility
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
@@ -13,99 +13,114 @@ class Router:
 
 		# GCN Kafka Alerts
 		if topic == 'gcn.circulars':
-			Utils.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
 			Router.gcn_circulars(value, topic)
 
 		elif topic == 'gcn.heartbeat':
 			Router.gcn_heartbeat(value, topic)
 
+		elif topic == 'gcn.notices.chime.frb':
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			#Router.gcn_notices_chime_frb(value, topic)
+
+		elif topic == 'gcn.notices.dsa110.frb':
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			#Router.gcn_notices_dsa110_frb(value, topic)
+
 		elif topic == 'gcn.notices.einstein_probe.wxt.alert':
-			Utils.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
 			Router.gcn_notices_einstein_probe_wxt_alert(value, topic)
 
+		elif topic == 'gcn.notices.icecube.gold_bronze_track_alerts':
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			#Router.gcn_notices_icecube_gold_bronze_track_alerts(value, topic)
+
 		elif topic == 'gcn.notices.icecube.lvk_nu_track_search':
-			Utils.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
 			Router.gcn_notices_icecube_lvk_nu_track_search(value, topic)
 
 		elif topic =='gcn.notices.superk.sn_alert':
-			Utils.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
 			Router.gcn_notices_superk_sn_alert(value, topic)
 
 		elif topic == 'gcn.notices.swift.bat.guano':
-			Utils.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
 			Router.gcn_notices_swift_bat_guano(value, topic)
 
 		elif topic == 'igwn.gwalert':
-			Utils.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
+			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
 			Router.igwn_gwalert(value, topic)
 
 		# Unknown Alerts
 		else:
-			Utils.log('Unknown Alert (' + str(topic) + '). Printing value to terminal.', 'info')
+			Utility.log('Unknown Alert (' + str(topic) + '). Printing value to terminal.', 'info')
 			print(value)
 
 	@staticmethod
-	def gcn_circulars(value, topic):
+	def gcn_circulars(value, topic, alert=False):
 
 		record = json.loads(value)
 
 		try:
-			schema = record['$schema']
+			record_schema = record['$schema']
 		except KeyError:
-			schema = None
+			record_schema = 'unknown: $schema'
 
 		try:
-			event_id = record['eventId']
+			record_event_id = record['eventId']
 		except KeyError:
-			event_id = None
+			record_event_id = 'unknown: eventId'
 
 		try:
-			submitter = record['submitter']
+			record_submitter = record['submitter']
 		except KeyError:
-			submitter = None
+			record_submitter = 'unknown: submitter'
 
 		try:
-			submitted_how = record['submittedHow']
+			record_submitted_how = record['submittedHow']
 		except KeyError:
-			submitted_how = None
+			record_submitted_how = 'unknown: submittedHow'
 
 		try:
-			subject = record['subject']
+			record_subject = record['subject']
 		except KeyError:
-			subject = None
+			record_subject = 'unknown: subject'
 
 		try:
-			circular_id = record['circularId']
+			record_circular_id = record['circularId']
 		except KeyError:
-			circular_id = None
+			record_circular_id = -999.
 
 		try:
-			fformat = record['format']
+			record_format = record['format']
 		except KeyError:
-			fformat = None
+			record_format = 'unknown: format'
 
 		try:
-			body = record['body']
+			record_body = record['body']
 		except KeyError:
-			body = None
+			record_body = 'unknown: body'
 
 		try:
-			created_on = record['createdOn']
+			record_created_on = record['createdOn']
 		except KeyError:
-			created_on = None
+			record_created_on = -999.
 
-		server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
-		server.ehlo()
-		server.login(Configuration.EMAIL, Configuration.PAS)
-		msg = MIMEMultipart()
-		msg['From'] = Configuration.EMAIL
-		msg['To'] = ', '.join(Configuration.MAILING_LIST)
-		msg['Subject'] = 'Alert Received: GCN Circular #' + str(circular_id) + '\n'
-		body = str(subject) + '\n\n' + str(body)
-		msg.attach(MIMEText(body, 'plain'))
-		sms = msg.as_string()
-		server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
-		server.quit()
+		if alert:
+			server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
+			server.ehlo()
+			server.login(Configuration.EMAIL, Configuration.PAS)
+
+			msg = MIMEMultipart()
+			msg['From'] = Configuration.EMAIL
+			msg['To'] = ', '.join(Configuration.MAILING_LIST)
+			msg['Subject'] = 'Alert Received: GCN Circular #' + str(record_circular_id) + '\n'
+			body = 'WXT Alert ' + str(record_id) + ' Received'
+			msg.attach(MIMEText(body, 'plain'))
+
+			sms = msg.as_string()
+			server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
+			server.quit()
 
 	@staticmethod
 	def gcn_heartbeat(value, topic):
@@ -113,58 +128,84 @@ class Router:
 		record = json.loads(value)
 
 	@staticmethod
-	def gcn_notices_einstein_probe_wxt_alert(value, topic):
+	def gcn_notices_einstein_probe_wxt_alert(value, topic, alert=False):
 
 		record = json.loads(value)
 		
 		try:
-			schema = record['$schema']
+			record_schema = record['$schema']
 		except KeyError:
-			schema = None
+			record_schema = 'unknown: $schema'
+
 		try:
-			instrument = record['instrument']
+			record_instrument = record['instrument']
 		except KeyError:
-			instrument = None
+			record_instrument = 'unknown: instrument'
+
 		try:
-			trigger_time = record['trigger_time']
+			record_trigger_time = record['trigger_time']
 		except KeyError:
-			trigger_time = None
+			record_trigger_time = 'unknown: trigger_time'
+
 		try:
-			iid = record['id']
+			record_id = record['id'][0]
 		except KeyError:
-			iid = None
+			record_id = 'unknown: id'
+
 		try:
-			ra = record['ra']
+			record_ra = record['ra']
 		except KeyError:
-			ra = None
+			record_ra = -999.
+
 		try:
-			dec = record['dec']
+			record_dec = record['dec']
 		except KeyError:
-			dec = None
+			record_dec = -999.
+
 		try:
-			ra_dec_error = record['ra_dec_error']
+			record_ra_dec_error = record['ra_dec_error']
 		except KeyError:
-			ra_dec_error = None
+			record_ra_dec_error = -999.
+
 		try:
-			image_energy_range = record['image_energy_range']
-			image_energy_range_min = image_energy_range[0]
-			image_energy_range_max = image_energy_range[1]
+			record_image_energy_range = record['image_energy_range']
+			record_image_energy_range_min = image_energy_range[0]
+			record_image_energy_range_max = image_energy_range[1]
 		except KeyError:
-			image_energy_range = None
-			image_energy_range_min = None
-			image_energy_range_max = None
+			record_image_energy_range = [-999., -999.]
+			record_image_energy_range_min = image_energy_range[0]
+			record_image_energy_range_max = image_energy_range[1]
+
 		try:
-			net_count_rate = record['net_count_rate']
+			record_net_count_rate = record['net_count_rate']
 		except KeyError:
-			net_count_rate = None
+			record_net_count_rate = -999.
+
 		try:
-			image_snr = record['image_snr']
+			record_image_snr = record['image_snr']
 		except KeyError:
-			image_snr = None
+			record_image_snr = -999.
+
 		try:
-			additional_info = record['additional_info']
+			record_additional_info = record['additional_info']
 		except KeyError:
-			additional_info = None
+			record_additional_info = 'unknown: additional_info'
+
+		if alert:
+			server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
+			server.ehlo()
+			server.login(Configuration.EMAIL, Configuration.PAS)
+
+			msg = MIMEMultipart()
+			msg['From'] = Configuration.EMAIL
+			msg['To'] = ', '.join(Configuration.MAILING_LIST)
+			msg['Subject'] = 'Alert Received: Einstein Probe WXT ID ' + str(record_id) + '\n'
+			body = 'Event coordinates:\n' + '    RA: ' + str(record_ra) + ' deg\n' + '    Dec: ' + str(record_dec) + ' deg\n' + '    Error: ' + str(record_ra_dec_error) + ' deg\n'
+			msg.attach(MIMEText(body, 'plain'))
+
+			sms = msg.as_string()
+			server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
+			server.quit()
 
 	@staticmethod
 	def gcn_notices_icecube_lvk_nu_track_search(value, topic):
@@ -172,139 +213,149 @@ class Router:
 		record = json.loads(value)
 
 		try:
-			schema = record['$schema']
+			record_schema = record['$schema']
 		except KeyError:
-			schema = None
+			record_schema = 'unknown: $schema'
+
 		try:
-			ttype = record['type']
+			record_type = record['type']
 		except KeyError:
-			ttype = None
+			record_type = 'unknown: type'
+
 		try:
-			reference = record['reference']
-			gcn_notices_lvk_alert = reference['gcn.notices.LVK.alert']
+			record_reference = record['reference']
+			record_gcn_notices_lvk_alert = record_reference['gcn.notices.LVK.alert']
 		except KeyError:
-			reference = None
-			gcn_notices_lvk_alert = None
+			record_reference = {'gcn.notices.LVK.alert':'unknown:'}
+			record_gcn_notices_lvk_alert = record_reference['gcn.notices.LVK.alert']
+
 		try:
-			ref_id = record['ref_ID']
+			record_ref_id = record['ref_ID']
 		except KeyError:
-			ref_id = None
+			record_ref_id = 'unknown: ref_ID'
+
 		try:
-			alert_datetime = record['alert_datetime']
+			record_alert_datetime = record['alert_datetime']
 		except KeyError:
-			alert_datetime = None
+			record_alert_datetime = 'unknown: alert_datetime'
+
 		try:
-			trigger_time = record['trigger_time']
+			record_trigger_time = record['trigger_time']
 		except KeyError:
-			trigger_time = None
+			record_trigger_time = 'unknown: trigger_time'
+
 		try:
-			observation_start = record['observation_start']
+			record_observation_start = record['observation_start']
 		except KeyError:
-			observation_start = None
+			record_observation_start = 'unknown: observation_start'
+
 		try:
-			observation_stop = record['observation_stop']
+			record_observation_stop = record['observation_stop']
 		except KeyError:
-			observation_stop = None
+			record_observation_stop = 'unknown: observation_stop'
+
 		try:
-			observation_livetime = record['observation_livetime']
+			record_observation_livetime = record['observation_livetime']
 		except KeyError:
-			observation_livetime = None
+			record_observation_livetime = -999.
+
 		try:
-			pval_generic = record['pval_generic']
+			record_pval_generic = record['pval_generic']
 		except KeyError:
-			pval_generic = None
+			record_pval_generic = -999.
+
 		try:
-			pval_bayesian = record['pval_bayesian']
+			record_pval_bayesian = record['pval_bayesian']
 		except KeyError:
-			pval_bayesian = None
+			record_pval_bayesian = -999.
+
 		try:
-			n_events_coincident = record['n_events_coincident']
-			if n_events_coincident > 0:
-				
+			record_n_events_coincident = record['n_events_coincident']
+			if record_n_events_coincident > 0:
+				try:
+					record_coincident_events = record['coincident_events']
+					for i in range(record_n_events_coincident):
+						record_coincident_event = record_coincident_events[i]
+						try:
+							record_event_dt = record_coincident_event['event_dt']
+						except KeyError:
+							record_event_dt = -999.
+
+						try:
+							record_localization = record_coincident_event['localization']
+							try:
+								record_ra = record_localization['ra']
+							except KeyError:
+								record_ra = -999.
+
+							try:
+								record_dec = record_localization['dec']
+							except KeyError:
+								record_dec = -999.
+
+							try:
+								record_ra_dec_error = record_localization['ra_dec_error']
+							except KeyError:
+								record_ra_dec_error = -999.
+
+							try:
+								record_containment_probability = record_localization['containment_probability']
+							except KeyError:
+								record_containment_probability = -999.
+
+							try:
+								record_systematic_included = record_localization['systematic_included']
+							except KeyError:
+								record_systematic_included = False
+
+						except KeyError:
+							record_localization = {}
+
+						try:
+							record_id = record_coincident_event['id'][0]
+						except KeyError:
+							record_id = 'unknown: id'
+
+						try:
+							record_event_pval_generic = record_coincident_event['event_pval_generic']
+						except KeyError:
+							record_event_pval_generic = -999.
+
+						try:
+							record_event_pval_bayesian = record_coincident_event['event_pval_bayesian']
+						except KeyError:
+							record_event_pval_bayesian = -999.
+
+		try:
+			record_most_probable_direction = record['most_probable_direction']
+			record_most_probable_direction_ra = most_probable_direction['ra']
+			record_most_probable_direction_dec = most_probable_direction['dec']
 		except KeyError:
-			n_events_coincident = None
-		if (n_events_coincident != None) & (n_events_coincident > 0):
+			record_most_probable_direction = {'ra': -999., 'dec': -999.}
+			record_most_probable_direction_ra = record_most_probable_direction['ra']
+			record_most_probable_direction_dec = record_most_probable_direction['dec']
+		try:
+			record_neutrino_flux_sensitivity_range = record['neutrino_flux_sensitivity_range']
 			try:
-				coincident_events = record['coincident_events']
+				record_flux_sensitivity = record_neutrino_flux_sensitivity_range['flux_sensitivity']
+				record_flux_sensitivity_min = record_flux_sensitivity[0]
+				record_flux_sensitivity_max = record_flux_sensitivity[1]
 			except KeyError:
-				coincident_events = None
-			for i in range(n_events_coincident):
-				coincident_event = coincident_events[i]
-				try:
-					event_dt = coincident_event['event_dt']
-				except KeyError:
-					event_dt = None
-				try:
-					localization = coincident_event['localization']
-				except KeyError:
-					localization = None
-				if localization != None:
-					try:
-						ra = localization['ra']
-					except KeyError:
-						ra = None
-					try:
-						dec = localization['dec']
-					except KeyError:
-						dec = None
-					try:
-						ra_dec_error = localization['ra_dec_error']
-					except KeyError:
-						ra_dec_error = None
-					try:
-						containment_probability = localization['containment_probability']
-					except KeyError:
-						containment_probability = None
-					try:
-						systematic_included = localization['systematic_included']
-					except KeyError:
-						systematic_included = None
-				try:
-					iid = coincident_event['id']
-				except KeyError:
-					iid = None
-				try:
-					event_pval_generic = coincident_event['event_pval_generic']
-				except KeyError:
-					event_pval_generic = None
-				try:
-					event_pval_bayesian = coincident_event['event_pval_bayesian']
-				except KeyError:
-					event_pval_bayesian = None
-		try:
-			most_probable_direction = record['most_probable_direction']
-			ra = most_probable_direction['ra']
-			dec = most_probable_direction['dec']
+				record_flux_sensitivity = [-999., -999.]
+				record_flux_sensitivity_min = record_flux_sensitivity[0]
+				record_flux_sensitivity_max = record_flux_sensitivity[1]
+
+			try:
+				record_sensitive_energy_range = record_neutrino_flux_sensitivity_range['sensitive_energy_range']
+				record_sensitive_energy_range_min = record_sensitive_energy_range[0]
+				record_sensitive_energy_range_max = record_sensitive_energy_range[1]
+			except KeyError:
+				record_sensitive_energy_range = [-999., -999.]
+				record_sensitive_energy_range_min = record_sensitive_energy_range[0]
+				record_sensitive_energy_range_max = record_sensitive_energy_range[1]
+
 		except KeyError:
-			most_probable_direction = None
-			ra = None
-			dec = None
-		try:
-			neutrino_flux_sensitivity_range = record['neutrino_flux_sensitivity_range']
-			try:	
-				flux_sensitivity = neutrino_flux_sensitivity_range['flux_sensitivity']
-				flux_sensitivity_min = flux_sensitivity[0]
-				flux_sensitivity_max = flux_sensitivity[1]
-			except KeyError:
-				flux_sensitivity = None
-				flux_sensitivity_min = None
-				flux_sensitivity_max = None
-			try:	
-				sensitive_energy_range = neutrino_flux_sensitivity_range['sensitive_energy_range']
-				sensitive_energy_range_min = sensitive_energy_range[0]
-				sensitive_energy_range_max = sensitive_energy_range[1]
-			except KeyError:
-				sensitive_energy_range = None
-				sensitive_energy_range_min = None
-				sensitive_energy_range_max = None
-		except KeyError:
-			neutrino_flux_sensitivity_range = None
-			flux_sensitivity = None
-			flux_sensitivity_min = None
-			flux_sensitivity_max = None
-			sensitive_energy_range = None
-			sensitive_energy_range_min = None
-			sensitive_energy_range_max = None
+			record_neutrino_flux_sensitivity_range = {}
 
 	@staticmethod
 	def gcn_notices_superk_sn_alert(value, topic):
@@ -435,12 +486,17 @@ class Router:
 		sms = msg.as_string()
 		server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
 		server.quit()
-		Utils.log('Alert message sent to mailing list recipients [' + topic + '].', 'info')
+		Utility.log('Alert message sent to mailing list recipients [' + topic + '].', 'info')
 
 	@staticmethod
 	def gcn_notices_swift_bat_guano(value, topic):
 
 		record = json.loads(value)
+
+		try:
+			schema = record['$schema']
+		except KeyError:
+			schema = None
 		
 		try:
 			mission = record['mission']

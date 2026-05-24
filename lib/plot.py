@@ -24,22 +24,22 @@ class Plot:
 		plt.close()
 
 	@staticmethod
-	def colormag(xlist, ylist, yfit):
+	def colormag(xlist, ylist, yfit, path, save=Configuration.SAVE_FIGURE):
 
 		plt.clf()
-		font = {'fontname':'Monospace', 'size':12}
-
-		plt.figure(figsize=(10, 10))
+		font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
 		plt.scatter(xlist, ylist, s=1, color='gray')
 		plt.plot(xlist, yfit, color='blue')
-
 		plt.title('Color-Magnitude Diagram', **font)
 		plt.xlabel('Color index [mag]', **font)
 		plt.ylabel('Delta magnitude [mag]', **font)
 		plt.xticks(**font)
 		plt.yticks(**font)
 
-		plt.savefig('plot-colormag.png', dpi=400)
+		if save:
+			plt.savefig(path, dpi=Configuration.DPI)
+
 		plt.close()
 
 	@staticmethod
@@ -71,8 +71,8 @@ class Plot:
 		vmin, vmax = interval.get_limits(data)
 		plt.imshow(data, cmap=Configuration.CMAP, origin='lower', vmin=vmin, vmax=vmax)
 		plt.colorbar()
-		plt.xlabel('Pixel Number [x]')
-		plt.ylabel('Pixel Number [y]')
+		plt.xlabel('x Pixel')
+		plt.ylabel('y Pixel')
 
 		if apertures != None:
 			apertures.plot(color='lime', lw=0.5, alpha=0.5)
@@ -84,9 +84,9 @@ class Plot:
 			emb_box = boxes['emb_box']
 
 			eml_box.plot(color='cyan', ls='dashed')
-			emt_box.plot(color='cyan', ls='dashed')
-			emr_box.plot(color='cyan', ls='dashed')
-			emb_box.plot(color='cyan', ls='dashed')
+			emt_box.plot(color='lime', ls='dashed')
+			emr_box.plot(color='yellow', ls='dashed')
+			emb_box.plot(color='orange', ls='dashed')
 
 		if save:
 			plt.savefig(path, dpi=Configuration.DPI)

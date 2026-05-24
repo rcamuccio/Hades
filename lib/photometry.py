@@ -92,10 +92,10 @@ class Photometry:
 	def clean_raw_frames(date, field):
 		'''This function cleans a series of raw data frames for a given date and field.
 
-		:parameter date - The date ('yyyy-mm-dd') of the raw frames
-		:parameter field - The field ('FIELD_xx.xxx') of the raw frames
+		:parameter date - The date of the raw frames
+		:parameter field - The field ID of the raw frames
 
-		:return frame_table - An Astropy table with the statistics of each raw data frame
+		:return frame_table - A table with the statistics of each raw data frame
 		'''
 
 		print('Cleaning available raw frames (' + field + ', ' + date + ')')
@@ -207,12 +207,12 @@ class Photometry:
 	def correct_bad_pixels(frame_data, frame_header, detect_bad_pixels=True):
 		'''This function corrects the pixels (nans and infs) of a data frame, and detects the individual bad pixels if desired.
 
-		:parameter frame_data - 
-		:parameter frame_header - 
-		:parameter detect_bad_pixels - 
+		:parameter frame_data - The image data array
+		:parameter frame_header - The image header
+		:parameter detect_bad_pixels - A toggle for determining if indidivual bad pixels (nans and infs) are detected
 
-		:return frame data - 
-		:return frame_header - 
+		:return frame data - The corrected image data array
+		:return frame_header - The corrected image header
 		'''
 
 		# set the array dimensions
@@ -254,6 +254,15 @@ class Photometry:
 
 	@staticmethod
 	def divide_flat(raw_frame_data, raw_frame_header, flatfield_frame_path):
+		'''This function corrects an image data array with a normalized flatfield data array, saves the file, and returns both the corrected data array and header.
+
+		:parameter raw_frame_data - The image data array
+		:parameter raw_frame_header - The image header
+		:parameter flatfield_frame_path - The path to the flatfield frame
+
+		:return clean_frame_data - The corrected image data array
+		:return clean_frame_header - The corrected image header
+		'''
 
 		flatfield_frame = fits.open(flatfield_frame_path)
 		flatfield_data = flatfield_frame[0].data
@@ -266,198 +275,203 @@ class Photometry:
 		return clean_frame_data, clean_frame_header
 
 	@staticmethod
-	def extract_sources(frm_data, frm_header, tbl_path):
+	def extract_sources(frame_data, frame_header, table_path):
+		'''This function extracts sources from an image data array and returns a source table.
 
-		if not os.path.exists(tbl_path):
+		:parameter frame_data - The image data array
+		:parameter frame_header - The image header
+		:parameter table_path - The path to the source table
+
+		:return table - The source table
+		'''
+
+		if not os.path.exists(table_path):
 			print('Extracting sources')
-			wcs = WCS(frm_header)
-			mask, boxes = Photometry.make_mask(frm_data)
-			frame_mn, frame_md, frame_sd = sigma_clipped_stats(frm_data, mask=mask, sigma=Configuration.THRESHOLD)
+			wcs = WCS(frame_header)
+			
+			mask, boxes = Photometry.make_mask(frame_data)
+			
+			frame_mn, frame_md, frame_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.THRESHOLD)
+			
 			daofind = DAOStarFinder(fwhm=Configuration.FWHM, threshold=Configuration.SIG_SRC * frame_sd)
-			tbl = daofind(frm_data, mask=mask)
+			table = daofind(frame_data, mask=mask)
 
 			ra_list = []
-			de_list = []
-			for ln in tbl:
+			dec_list = []
+
+			for ln in table:
 				x = ln['xcentroid']
 				y = ln['ycentroid']
+
 				sky_pos = pixel_to_skycoord(x, y, wcs=wcs)
+				
 				ra = sky_pos.ra.deg
-				de = sky_pos.dec.deg
+				dec = sky_pos.dec.deg
+				
 				ra_list.append(ra)
-				de_list.append(de)
+				dec_list.append(dec)
 
-			tbl['ra'] = ra_list
-			tbl['dec'] = de_list
+			table['ra'] = ra_list
+			table['dec'] = dec_list
 
-			tbl.write(tbl_path, format=Configuration.TABLE_FORMAT)
+			table.write(table_path, format=Configuration.TABLE_FORMAT)
 
 		else:
 			print('Reading existing extracted table')
-			tbl = Table.read(tbl_path, format=Configuration.TABLE_FORMAT)
+			table = Table.read(table_path, format=Configuration.TABLE_FORMAT)
 
-		return tbl	
+		return table
 
 	@staticmethod
-	def frame_aperture_photometry(frame_data, frame_header, match_table):
+	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name=None):
+		'''This function performs aperture photometry on a FITS image and returns a table of photometric measurements.
 
-		# load directories
-		dirs = Utility.get_directories(location='output', create=False)
+		:parameter frame_data - The image data array
+		:parameter frame_header - The image header
+		:parameter match_table - The matched catalog table
+		:parameter master_table_path - The photometry table save path
 
-		# load mask
-		mask, boxes = Photometry.mk_mask(frame_data, frame_header)
+		:return master_table - The photometry table performed at the matched catalog positions
+		'''
 
-		# exposure time
-		exp_time = frame_header['EXPTIME']
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
 
-		# coordinates
-		wcs = WCS(frame_header)
+		img_field_path = output_directory + 'plt_' + output_name + Configuration.IMAGE_EXTENSION
+		img_colormag_path = output_directory + 'cm_' + output_name + Configuration.IMAGE_EXTENSION
 
-		# time
-		time = Time(frame_header['DATE'], format='isot', scale='utc')
-		jd = time.jd
+		if not os.path.exists(master_table_path):
+			print('Performing aperture photometry')
 
-		# calculate global background statistics
-		bkg_mn, bkg_md, bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
+			# get the mask
+			mask, boxes = Photometry.make_mask(frame_data)
 
-		# extract coordinates from table
-		sky_coords = []
-		for obj in match_table:
-			ra = obj['ra']
-			dec = obj['dec']
-			coord = (ra, dec)
-			sky_coords.append(coord)
+			# get the coordinates
+			wcs = WCS(frame_header)
 
-		sky_pos = SkyCoord(sky_coords, unit='deg')
-		pix_pos = skycoord_to_pixel(sky_pos, wcs=wcs)
-		pix_coords = []
-		for px in range(len(pix_pos[0])):
-			xp = pix_pos[0][px]
-			yp = pix_pos[1][px]
-			coord = (xp, yp)
-			pix_coords.append(coord)
+			# get the observation time
+			time = Time(frame_header['DATE'], format='isot', scale='utc')
+			jd = time.jd
 
-		# create apertures and annuli
-		apertures = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
-		aperture_area = apertures.area
-		annuli = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
+			# get the exposure time
+			exp_time = frame_header['EXPTIME']
 
-		# get the annuli background statistics
-		aperstats = ApertureStats(frame_data, annuli)
-		bkg_mean = aperstats.mean
-		bkg_sum = np.abs(frame_header['SKY'] + bkg_mean) * aperture_area
+			# calculate the background statistics
+			bkg_mn, bkg_md, bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
 
-		# perform aperture photometry at all input positions
-		phot_table = aperture_photometry(frame_data, apertures, mask=mask, wcs=wcs)
+			# extract coordinates from the input table
+			sky_coords = []
+			for obj in match_table:
+				ra = obj['ra']
+				dec = obj['dec']
+				coord = (ra, dec)
+				sky_coords.append(coord)
+			sky_pos = SkyCoord(sky_coords, unit='deg')
+			pix_pos = skycoord_to_pixel(sky_pos, wcs=wcs)
+			pix_coords = []
+			for px in range(len(pix_pos[0])):
+				xp = pix_pos[0][px]
+				yp = pix_pos[1][px]
+				coord = (xp, yp)
+				pix_coords.append(coord)
 
-		res_sum = (phot_table['aperture_sum'] - bkg_mean * aperture_area) * Observatory.gain()
+			# create apertures and annuli
+			apertures = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
+			annuli = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
+			aper_set = [apertures, annuli]
+			aperture_area = apertures.area
+			annulus_area = annuli.area
 
-		phot_table['residual_sum'] = res_sum
+			# perform photometry at all positions
+			phot_table = aperture_photometry(frame_data, aper_set, mask=mask, wcs=wcs)
+			bkg_loc_mean = phot_table['aperture_sum_1'] / annulus_area
+			bkg_loc_sum = bkg_loc_mean * aperture_area
+			res_loc_sum = phot_table['aperture_sum_0'] - bkg_loc_sum
 
-		# merge input and photometry tables into a master table
-		master_table = hstack([match_table, phot_table])
+			phot_table['annulus_mean'] = bkg_loc_mean
+			phot_table['aperture_bkg_sum'] = bkg_loc_sum
+			phot_table['aperture_res_sum'] = res_loc_sum
 
-		# calculate flux and magnitude
-		flux_list = []
-		flux_flag_list = []
-		flux_err_list = []
-		inst_mag_list = []
-		inst_mag_err_list = []
-		color_list = []
-		color_flag_list = []
-		delta_mag_list = []
+			# merge the input and photometry tables
+			master_table = hstack([match_table, phot_table])
 
-		for src in master_table:
-			flux = src['residual_sum']
-			if flux < 0:
-				flux_flag_list.append(True)
-				flux = abs(bkg_md)
-			else:
-				flux_flag_list.append(False)
-			flux_err = np.sqrt(flux + aperture_area * bkg_sd ** 2)
-			inst_mag = 25. -2.5*np.log10(flux) + 2.5*np.log10(exp_time)
-			inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
+			# calculate magnitudes and errors
+			flux_list = []
+			flux_err_list = []
+			inst_mag_list = []
+			inst_mag_err_list = []
+			color_list = []
+			delta_mag_list = []
+			flux_flag_list = []
+			color_flag_list = []
 
-			if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):
-				color = -9.999999
-				cat_mag = -9.999999
-				delta_mag = -9.999999
-				color_flag_list.append(True)
-			else:
-				b = src['phot_bp_mean_mag']
-				r = src['phot_rp_mean_mag']
-				color = b - r
-				cat_mag = src['phot_g_mean_mag']
-				delta_mag = cat_mag - inst_mag
-				color_flag_list.append(False)
-			
-			flux_list.append(flux)
-			flux_err_list.append(flux_err)
-			inst_mag_list.append(inst_mag)
-			inst_mag_err_list.append(inst_mag_err)
-			color_list.append(color)
-			delta_mag_list.append(delta_mag)
+			for src in master_table:
+				flux = src['aperture_res_sum']
 
-		master_table['flux'] = flux_list
-		master_table['flux_flag'] = flux_flag_list
-		master_table['flux_err'] = flux_err_list
-		master_table['inst_mag'] = inst_mag_list
-		master_table['inst_mag_err'] = inst_mag_err_list
-		master_table['color'] = color_list
-		master_table['color_flag'] = color_flag_list
-		master_table['delta_mag'] = delta_mag_list
+				if flux < 0:
+					flux_flag_list.append(True)
+					flux = abs(bkg_md)
+				else:
+					flux_flag_list.append(False)
 
-		# calculate transform and zero point
-		color_list = []
-		delta_list = []
+				flux_err = np.sqrt(flux + aperture_area * bkg_sd**2)
+				inst_mag = 25. - 2.5*np.log10(flux) + 2.5*np.log10(exp_time)
+				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
 
-		for src in master_table:
-			if (src['flux_flag'] == True) or (src['color_flag'] == True):
-				pass
-			else:
-				color = src['color']
-				delta = src['delta_mag']
+				if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):
+					color = -9.999999
+					cat_mag = -9.999999
+					delta_mag = -9.999999
+					color_flag_list.append(True)
+				else:
+					b = src['phot_bp_mean_mag']
+					r = src['phot_rp_mean_mag']
+					color = b - r
+					cat_mag = src['phot_g_mean_mag']
+					delta_mag = cat_mag - inst_mag
+					color_flag_list.append(False)
+
+				flux_list.append(flux)
+				flux_err_list.append(flux_err)
+				inst_mag_list.append(inst_mag)
+				inst_mag_err_list.append(inst_mag_err)
 				color_list.append(color)
-				delta_list.append(delta)
+				delta_mag_list.append(delta_mag)
 
-		yfit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
-		print('T:', slope, delta_slope)
-		print('ZP:', intercept, delta_intercept)
+			master_table['flux'] = flux_list
+			master_table['flux_flag'] = flux_flag_list
+			master_table['flux_err'] = flux_err_list
+			master_table['inst_mag'] = inst_mag_list
+			master_table['inst_mag_err'] = inst_mag_err_list
+			master_table['color'] = color_list
+			master_table['color_flag'] = color_flag_list
+			master_table['delta_mag'] = delta_mag_list
 
-		# Plot frame
-		plt.clf()
-		font = {'fontname':'Monospace', 'size':12}
-		plt.figure(figsize=(10, 10))
+			# calculate transform and zero point
+			color_list = []
+			delta_list = []
+			for src in master_table:
+				if (src['flux_flag'] == True) or (src['color_flag'] == True):
+					pass
+				else:
+					color = src['color']
+					delta = src['delta_mag']
+					color_list.append(color)
+					delta_list.append(delta)
+			yfit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
 
-		interval = MinMaxInterval()
-		vmin, vmax = interval.get_limits(frame_data)
-		norm = ImageNormalize(vmin=-150, vmax=18, stretch=LinearStretch())
+			# plot an annotated frame
+			Plot.field(frame_data, img_field_path, apertures, boxes)
 
-		plt.imshow(frame_data, cmap='inferno', origin='lower', norm=norm, interpolation='nearest')
-		apertures.plot(color='lime', lw=0.5, alpha=0.5)
-		eml_box = boxes['eml_box']
-		emt_box = boxes['emt_box']
-		emr_box = boxes['emr_box']
-		emb_box = boxes['emb_box']
-		eml_box.plot(color='cyan', ls='dashed')
-		emt_box.plot(color='lime', ls='dashed')
-		emr_box.plot(color='yellow', ls='dashed')
-		emb_box.plot(color='orange', ls='dashed')
-		plt.savefig(dirs['sources'] + 'field.png', dpi=400)
+			# plot a color-magnitude diagram
+			Plot.colormag(color_list, delta_list, yfit, img_colormag_path)
 
-		# Plot color-magnitude diagram
-		plt.clf()
-		font = {'fontname':'Monospace', 'size':12}
-		plt.figure(figsize=(10, 10))
-		plt.scatter(color_list, delta_list, s=1, color='gray')
-		plt.plot(color_list, yfit, color='blue')
-		plt.title('Color-Magnitude Diagram', **font)
-		plt.xlabel('Color Index [mag]', **font)
-		plt.ylabel('Delta Magnitude [mag]', **font)
-		plt.xticks(**font)
-		plt.yticks(**font)
-		plt.savefig(dirs['sources'] + 'colormag.png', dpi=400)
-		plt.close()
+			# save the table
+			if not os.path.exists(master_table_path):
+				master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
+
+		else:
+			print('Reading existing master photometry table')
+			master_table = Table.read(master_table_path, format=Configuration.TABLE_FORMAT)
 
 		return master_table
 
@@ -950,46 +964,62 @@ class Photometry:
 		# horizontal band
 		mask[ty-w:ty+w, 0:dx] = True
 
-		box_list = [eml_box, emt_box, emr_box, emb_box]
+		#box_list = [eml_box, emt_box, emr_box, emb_box]
 
-		return mask, box_list
+		boxes = {}
+		boxes['eml_box'] = eml_box
+		boxes['emt_box'] = emt_box
+		boxes['emr_box'] = emr_box
+		boxes['emb_box'] = emb_box
+
+		return mask, boxes
 
 	@staticmethod
 	def make_stack(date, field, frame_table):
+		'''This function creates a master stack for a particular field and night. The frame table is used for additional information in the stack header.
 
-		stk_dir = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
-		stk_name = 'stack_' + field + '_' + date + Configuration.FILE_EXTENSION
-		stk_path = stk_dir + stk_name
+		:parameter date - The date of the stack
+		:parameter field - The field of the stack
+		:parameter frame_table - The table of information for the individual frames used in the stack
+
+		:return stack_data - The stacked image data array
+		:return stack_header - The stacked image header
+		'''
+
+		stack_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
+		stack_subname = 'stack_' + field + '_' + date
+		stack_name = stack_subname + Configuration.FILE_EXTENSION
+		stack_path = stack_directory + stack_name
 
 		# image paths
-		img_stk_path = stk_dir + field + '_' + date + '.png'
-		img_bkg_path = stk_dir + 'bkg_' + field + '_' + date + '.png'
+		img_stack_path = stack_directory + 'plt_stk_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		img_bkg_path = stack_directory + 'plt_bkg_' + field + '_' + date + Configuration.IMAGE_EXTENSION
 
 		# histogram paths
-		hist_stk_path = stk_dir + 'hist_stk_' + field + '_' + date + '.png'
-		hist_bkg_path = stk_dir + 'hist_bkg_' + field + '_' + date + '.png'
+		hist_stack_path = stack_directory + 'hst_stk_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		hist_bkg_path = stack_directory + 'hst_bkg_' + field + '_' + date + Configuration.IMAGE_EXTENSION
 
-		if not os.path.exists(stk_path):
+		if not os.path.exists(stack_path):
 			# grab the individual frames
-			os.chdir(stk_dir)
-			stk_list = glob.glob('cln_*.fits')
-			num_stk_frames = len(stk_list)
-			print('Generating', num_stk_frames, 'frames into master stack (' + field + ', ' + date + ')')
+			os.chdir(stack_directory)
+			stack_list = glob.glob('cln_*.fits')
+			num_stack_frames = len(stack_list)
+			print('Generating', num_stack_frames, 'frames into master stack (' + field + ', ' + date + ')')
 
 			# combine the frames
-			stk_ccddata = ccdproc.combine(stack_list, method=Configuration.COMBINE_METHOD, unit=Configuration.UNIT, mem_limit=Configuration.MEMORY_LIMIT, dtype=Configuration.DATA_TYPE)
-			stk_data = np.asarray(stk_ccddata)
-			stk_data = stk_data.astype(Configuration.DATA_TYPE)
+			stack_ccddata = ccdproc.combine(stack_list, method=Configuration.COMBINE_METHOD, unit=Configuration.UNIT, mem_limit=Configuration.MEMORY_LIMIT, dtype=Configuration.DATA_TYPE)
+			stack_data = np.asarray(stack_ccddata)
+			stack_data = stack_data.astype(Configuration.DATA_TYPE)
 
-			if not os.path.exists(img_stk_path):
-				Plot.field(stk_data, img_stk_path)
+			if not os.path.exists(img_stack_path):
+				Plot.field(stack_data, img_stack_path)
 
-			if not os.path.exists(hist_stk_path):
-				Plot.histogram(stk_data, hist_stk_path)
+			if not os.path.exists(hist_stack_path):
+				Plot.histogram(stack_data, hist_stack_path)
 
 			# calculate the background statistics
 			print('\tCalculating background statistics')
-			bkg2d_data, bkg2d_md, bkg2d_sd, bkgsc_mn, bkgsc_md, bkgsc_sd = Photometry.measure_background(stk_data)
+			bkg2d_data, bkg2d_md, bkg2d_sd, bkgsc_mn, bkgsc_md, bkgsc_sd = Photometry.measure_background(stack_data)
 
 			if not os.path.exists(img_bkg_path):
 				Plot.field(bkg2d_data, img_bkg_path)
@@ -998,37 +1028,39 @@ class Photometry:
 				Plot.histogram(bkg2d_data, hist_bkg_path)
 
 			# edit the stack header
-			stk_hdu = fits.PrimaryHDU(stk_data)
-			stk_header = stk_hdu.header
-			stk_header['SIMPLE'] = ('T', 'Conform to FITS standard')
-			stk_header['BITPIX'] = (32, 'Number of bits per data pixel')
-			stk_header['NAXIS'] = (2, 'Number of axes')
-			stk_header['NAXIS1'] = (10560, 'Image width')
-			stk_header['NAXIS2'] = (10560, 'Image height')
-			stk_header['BZERO'] = (32768, 'Offset for unsigned short')
-			stk_header['BSCALE'] = (1, 'Default scaling factor')
-			stk_header['DATE'] = (date, 'Date of combined lights')
-			stk_header['EXPTIME'] = (300., 'Exposure time')
-			stk_header['IMAGETYP'] = ('LIGHT', 'Type of image')
-			stk_header['STKCB'] = ('yes', 'Status: lights combined')
-			stk_header['STKJD'] = (np.median(frame_table['jd'].tolist()), 'Median Julian date of combined light frames')
-			stk_header['STKNM'] = (num_stk_frames, 'Number of combined light frames')
-			fits.writeto(stk_path, stk_data, stk_header)
+			stk_hdu = fits.PrimaryHDU(stack_data)
+			stack_header = stk_hdu.header
+			stack_header['SIMPLE'] = ('T', 'Conform to FITS standard')
+			stack_header['BITPIX'] = (32, 'Number of bits per data pixel')
+			stack_header['NAXIS'] = (2, 'Number of axes')
+			stack_header['NAXIS1'] = (10560, 'Image width')
+			stack_header['NAXIS2'] = (10560, 'Image height')
+			stack_header['BZERO'] = (32768, 'Offset for unsigned short')
+			stack_header['BSCALE'] = (1, 'Default scaling factor')
+			stack_header['DATE'] = (date, 'Date of combined lights')
+			stack_header['EXPTIME'] = (300., 'Exposure time')
+			stack_header['IMAGETYP'] = ('LIGHT', 'Type of image')
+			stack_header['STKCB'] = ('yes', 'Status: lights combined')
+			stack_header['STKJD'] = (np.median(frame_table['jd'].tolist()), 'Median Julian date of combined light frames')
+			stack_header['STKNM'] = (num_stack_frames, 'Number of combined light frames')
+			fits.writeto(stack_path, stack_data, stack_header)
 
 			# solve the stack frame
 			print('\tSolving field')
 			field_id = field.split('_')[1]
-			Photometry.solve_field(stk_name, stk_dir, field_id, verbose=Configuration.VERBOSE)
+			Photometry.solve_field(stack_name, stack_directory, field_id, verbose=Configuration.VERBOSE)
 
 			print('\tStack generated (' + field + ', ' + date + ')\n')
+			stack_frame = fits.open(stack_path)
+			stack_header = stack_frame[0].header
 
 		else:
 			print('Reading existing stack (' + field + ', ' + date + ')\n')
-			stk_fits = fits.open(stk_path)
-			stk_data = stk_fits[0].data
-			stk_header = stk_fits[0].header
+			stack_frame = fits.open(stack_path)
+			stack_data = stack_frame[0].data
+			stack_header = stack_frame[0].header
 
-		return stk_data, stk_header
+		return stack_data, stack_header
 
 	@staticmethod
 	def match_catalogs(source_table, query_table, match_table_path):

@@ -3,6 +3,7 @@ class Configuration:
 	# hardware
 	MACHINE = 'epimetheus'
 	FILE_EXTENSION = '.fits'
+	IMAGE_EXTENSION = '.png'
 	TABLE_EXTENSION = '.dat'
 	TABLE_FORMAT = 'ascii.fixed_width'
 	OBSERVATORY = 'toros'
@@ -59,7 +60,7 @@ class Configuration:
 	QUERY_SOURCE = 'gaia-cone'
 
 	# plotting
-	CMAP = 'inferno'
+	CMAP = 'gray'
 	DPI = 300
 	FIGURE_SIZE = (10, 10)
 	FONT_NAME = 'Monospace'

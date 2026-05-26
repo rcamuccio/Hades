@@ -253,6 +253,34 @@ class Photometry:
 		return frame_data, frame_header
 
 	@staticmethod
+	def difference_frames(field, date):
+		'''This function creates a series of differenced images from a reference image and a series of aligned images at different epochs.
+
+		'''
+
+		print('Differencing available frames (' + field + ', ' + date + ')')
+
+		# grab the frames to subtract
+		frame_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
+		os.chdir(frame_directory)
+		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
+		num_frames = len(frame_list)
+
+		# define the reference frame for subtraction
+		reference_frame = 'stack_' + field + '_' + date + Configuration.FILE_EXTENSION
+		reference_frame_path = frame_directory + reference_frame
+
+		# loop through each frame to subtract
+		for frm in range(num_frames):
+			os.chdir(frame_directory)
+
+			# set the frame name and path
+			raw_frame_file = frame_list[frm]
+			dif_frame_file = 'dif_' + raw_frame_file
+			dif_frame_path = frame_directory + 'dif_' + raw_frame_file
+
+
+	@staticmethod
 	def divide_flat(raw_frame_data, raw_frame_header, flatfield_frame_path):
 		'''This function corrects an image data array with a normalized flatfield data array, saves the file, and returns both the corrected data array and header.
 

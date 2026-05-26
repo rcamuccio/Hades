@@ -117,23 +117,37 @@ The pipeline assumes the following directory format for all data files:
 ### Running the pipeline
 
 ```
-$ python -m scripts.main
+$ python -m scripts.main_pipeline
+```
+
+### Running the listener
+
+```
+$ python -m scripts.gcn_listener
 ```
 
 ## References
 
-- G. Dálya et al. (2018), GLADE: A Galaxy Catalogue for Multimessenger Searches in the Advanced Gravitational-Wave Detector Era, MNRAS, Volume 479, Issue 2, https://doi.org/10.1093/mnras/sty1703
+- C. Alard (2000), Image Subtraction Using a Space-Varying Kernel, Astronomy and Astrophysics Supplement, Volume 144, https://doi.org/10.1051/aas:2000214
 
-- G. Dálya et al. (2022), GLADE+: An Extended Galaxy Catalogue for Multimessenger Searches with Advanced Gravitational-Wave Detectors, MNRAS, Volume 514, Issue 1, https://doi.org/10.1093/mnras/stac1443
+- C. Alard and R. H. Lupton (1998), A Method for Optimal Image Subtraction, The Astrophysical Journal, Volume 503, Issue 1, https://iopscience.iop.org/article/10.1086/305984
+
+- G. Dálya et al. (2018), GLADE: A Galaxy Catalogue for Multimessenger Searches in the Advanced Gravitational-Wave Detector Era, Monthly Notices of the Royal Astronomical Society, Volume 479, Issue 2, https://doi.org/10.1093/mnras/sty1703
+
+- G. Dálya et al. (2022), GLADE+: An Extended Galaxy Catalogue for Multimessenger Searches with Advanced Gravitational-Wave Detectors, Monthly Notices of the Royal Astronomical Society, Volume 514, Issue 1, https://doi.org/10.1093/mnras/stac1443
 
 - LVK Collaboration (2022), LIGO/Virgo/KAGRA Public Alerts User Guide, https://emfollow.docs.ligo.org/userguide/
 
+- J. P. Miller et al. (2008), Optimal Image Subtraction Method: Summary Derivations, Applications, and Publicly Shared Application Using IDL, Publications of the Astronomical Society of the Pacific, Volume 120, Number 866, https://iopscience.iop.org/article/10.1086/588258/meta
+
+- R. J. Oelkers et al. (2015), Difference Image Analysis of Defocused Observations with CSTAR, The Astronomical Journal, Volume 149, Issue 2, ID 50, https://iopscience.iop.org/article/10.1088/0004-6256/149/2/50
+
+- R. J. Oelkers and K. G. Stassun (2018), Precision Light Curves from TESS Full-Frame Images: A Different Imaging Approach, The Astronomical Journal, Volume 156, Issue 3, ID 132, https://iopscience.iop.org/article/10.3847/1538-3881/aad68e
+
 ---
 
-This repository is a development fork of the TOROS pipeline (https://github.com/ryanoelkers/toros/).
-
 June 7, 2019<br>
-Last update: January 1, 2026
+Last update: May 25, 2026
 
 Richard Camuccio<br>
 rcamuccio@gmail.com

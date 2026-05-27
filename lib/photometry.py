@@ -34,20 +34,6 @@ import scipy.ndimage
 import shutil
 import subprocess
 
-#import warnings
-#warnings.filterwarnings('ignore')
-#warnings.filterwarnings('ignore', category=RuntimeWarning)
-#warnings.filterwarnings('ignore', category=Warning)
-#from astropy.io.fits.verify import VerifyWarning
-#from astropy.utils.exceptions import AstropyWarning
-#from astropy.wcs import FITSFixedWarning
-#warnings.simplefilter('ignore')
-#warnings.simplefilter('ignore', category=AstropyWarning)
-#warnings.simplefilter('ignore', category=VerifyWarning)
-#warnings.simplefilter('ignore', category=FITSFixedWarning)
-from astropy import log
-log.setLevel('WARNING')
-
 class Photometry:
 
 	@staticmethod
@@ -258,7 +244,7 @@ class Photometry:
 
 		'''
 
-		print('Differencing available frames (' + field + ', ' + date + ')')
+		print('This is where differencing would go... IF I HAD ONE')
 
 		# grab the frames to subtract
 		frame_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
@@ -266,9 +252,11 @@ class Photometry:
 		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
 		num_frames = len(frame_list)
 
-		# define the reference frame for subtraction
+		# define the reference frame for differencing
 		reference_frame = 'stack_' + field + '_' + date + Configuration.FILE_EXTENSION
 		reference_frame_path = frame_directory + reference_frame
+
+		# prepare the oisdifference.c file for differencing
 
 		# loop through each frame to subtract
 		for frm in range(num_frames):
@@ -278,6 +266,10 @@ class Photometry:
 			raw_frame_file = frame_list[frm]
 			dif_frame_file = 'dif_' + raw_frame_file
 			dif_frame_path = frame_directory + 'dif_' + raw_frame_file
+
+			# check to see if the difference file already exists
+
+			# run the differencing algorithm
 
 
 	@staticmethod
@@ -351,6 +343,11 @@ class Photometry:
 		return table
 
 	@staticmethod
+	def point_aperture_photometry(date, field, frame_data, frame_header, point_ra, point_dec):
+
+		return 
+
+	@staticmethod
 	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name=None):
 		'''This function performs aperture photometry on a FITS image and returns a table of photometric measurements.
 
@@ -379,6 +376,19 @@ class Photometry:
 			# get the observation time
 			time = Time(frame_header['DATE'], format='isot', scale='utc')
 			jd = time.jd
+
+			# get the airmass
+			latitude = Observatory.latitude()
+			longitude = Observatory.longitude()
+			elevation = Observatory.elevation()
+			location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
+
+			field_ra = float(Survey.get_field(field)[0])
+			field_dec = float(Survey.get_field(field)[1])
+
+			altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
+			airmass = Calculator.airmass(altitude)
+			print('TEST:', latitude, longitude, elevation, field_ra, field_dec, altitude, airmass)
 
 			# get the exposure time
 			exp_time = frame_header['EXPTIME']
@@ -442,7 +452,7 @@ class Photometry:
 					flux_flag_list.append(False)
 
 				flux_err = np.sqrt(flux + aperture_area * bkg_sd**2)
-				inst_mag = 25. - 2.5*np.log10(flux) + 2.5*np.log10(exp_time)
+				inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
 				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
 
 				if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):

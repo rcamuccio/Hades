@@ -28,7 +28,7 @@ class Configuration:
 	ANNULI_INNER = 18
 	ANNULI_OUTER = 20
 	APER_SIZE = 16
-	BKG_METHOD = '2d'
+	BKG_METHOD = 'flat'
 	BOX_SIZE = (60, 60)
 	COMBINE_METHOD = 'median'
 	DATA_TYPE = 'float32'
@@ -58,6 +58,7 @@ class Configuration:
 	# querying
 	QUERY_RADIUS = 1.
 	QUERY_SOURCE = 'gaia-cone'
+	ROW_LIMIT = -1
 
 	# plotting
 	CMAP = 'gray'

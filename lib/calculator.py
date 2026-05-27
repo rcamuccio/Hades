@@ -72,11 +72,11 @@ class Calculator:
 		return new_xlist, new_ylist
 
 	@staticmethod
-	def sky_to_altitude(location, time, ra, de):
+	def sky_to_altitude(location, time, ra, dec):
 
 		aa = AltAz(location=location, obstime=time)
 
-		coord = SkyCoord(str(ra), str(de), unit='deg')
+		coord = SkyCoord(str(ra), str(dec), unit='deg')
 		coord_transform = coord.transform_to(aa)
 
 		altitude = coord_transform.alt.degree

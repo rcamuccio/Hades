@@ -23,12 +23,20 @@ class Configuration:
 	INPUT_DATA_DIRECTORY = '/media/epimetheus/692e5e1e-6b16-4928-a25f-46dbabe207e6/toros_data/'
 	OUTPUT_DATA_DIRECTORY = '/media/epimetheus/ExtremeSSD/'
 
+	# toggles
+	SKIP_OVERSCAN = False
+	SKIP_DARK = False
+	SKIP_FLAT = False
+	SKIP_BACKGROUND = False
+	SKIP_SOLVE = False
+	SKIP_ALIGN = True
+
 	# photometry
 	AIRMASS_METHOD = 'ky1989' # simple, ky1989
-	ANNULI_INNER = 18
-	ANNULI_OUTER = 20
-	APER_SIZE = 16
-	BKG_METHOD = 'flat'
+	ANNULI_INNER = 22
+	ANNULI_OUTER = 25
+	APER_SIZE = 20
+	BKG_METHOD = '2d' # 2d, flat
 	BOX_SIZE = (60, 60)
 	COMBINE_METHOD = 'median'
 	DATA_TYPE = 'float32'
@@ -90,28 +98,3 @@ class Configuration:
 	SMTP = 'smtp.mail.yahoo.com'
 
 	AVAILABLE_TOPICS = ['gcn.circulars', 'gcn.heartbeat', 'gcn.notices.chime.frb', 'gcn.notices.dsa110.frb', 'gcn.notices.einstein_probe.wxt.alert', 'gcn.notices.icecube.gold_bronze_track_alerts', 'gcn.notices.icecube.lvk_nu_track_search', 'gcn.notices.superk.sn_alert', 'gcn.notices.swift.bat.guano', 'igwn.gwalert']
-	
-	# ARCHIVE
-
-	#KNOWN_VARIABLES = 'Y'
-	#BAD_DATES = '2024-10-03'
-	#NSKY_STARS = 20000
-
-	# pipeline toggles
-	#CLEAN_SKIP = 'N'
-	#WRITE_SKY = 'N'
-	#MASTER_SKIP = 'N'
-	#DIFFERENCE_SKIP = 'N'
-	#PHOTOMETRY_SKIP = 'N'
-	#LIGHTCURVE_SKIP = 'N'
-	#SYSTEMATICS_SKIP = 'N'
-
-	# reduction toggles
-	#SUBTRACT_BIAS = 'Y'
-	#SUBTRACT_DARK = 'Y'
-	#DIVIDE_FLAT = 'Y'
-	#CLIP_IMAGE = 'Y'
-	#SUBTRACT_SKY = 'Y'
-	#PLATE_SOLVE = 'Y'
-	#WRITE_SKY = 'Y'
-	#SOURCE_EXTRACTOR_PATH = '/usr/bin/source-extractor'

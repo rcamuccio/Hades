@@ -81,9 +81,14 @@ for dte in range(num_dates):
 	# perform photometry on the stack
 	master_table = Photometry.frame_aperture_photometry(date, field, stack_data, stack_header, match_table, master_table_path, output_name=output_name)
 
+	# perform timeseries on clean frames
 	test_ra = 148.2712725
 	test_dec = -6.5137330
-	target_table = Photometry.point_aperture_photometry(date, field, stack_data, stack_header, test_ra, test_dec)
+	timeseries_table = Photometry.timeseries(field, date, test_ra, test_dec)
+
+	#jd, airmass, flux, flux_error, inst_mag, inst_mag_error = Photometry.point_aperture_photometry(date, field, stack_data, stack_header, test_ra, test_dec)
+
+	#print(jd, airmass, flux, flux_error, inst_mag, inst_mag_error)
 
 	# difference frames
 	Photometry.difference_frames(field, date)

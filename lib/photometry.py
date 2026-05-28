@@ -45,6 +45,7 @@ class Photometry:
 
 		:return - Nothing is returned, but the aligned frame is re-written to the target frame path
 		'''
+
 		# open the reference frame
 		reference_frame = fits.open(reference_frame_path)
 		reference_frame_header = reference_frame[0].header
@@ -145,31 +146,37 @@ class Photometry:
 				jd = time.jd
 
 				# remove the overscan region
-				print('\t\tRemoving overscan')
-				clean_frame_data, clean_frame_header = Photometry.remove_overscan(raw_frame_data, raw_frame_header)
+				if not Configuration.SKIP_OVERSCAN:
+					print('\t\tRemoving overscan')
+					clean_frame_data, clean_frame_header = Photometry.remove_overscan(raw_frame_data, raw_frame_header)
 
 				# subtract the master dark
-				print('\t\tSubtracting dark')
-				clean_frame_data, clean_frame_header = Photometry.subtract_dark(clean_frame_data, clean_frame_header, dark_frame_path)
+				if not Configuration.SKIP_DARK:
+					print('\t\tSubtracting dark')
+					clean_frame_data, clean_frame_header = Photometry.subtract_dark(clean_frame_data, clean_frame_header, dark_frame_path)
 
 				# divide the flatfield
-				print('\t\tDividing flat')
-				clean_frame_data, clean_frame_header = Photometry.divide_flat(clean_frame_data, clean_frame_header, flat_frame_path)
+				if not Configuration.SKIP_FLAT:
+					print('\t\tDividing flat')
+					clean_frame_data, clean_frame_header = Photometry.divide_flat(clean_frame_data, clean_frame_header, flat_frame_path)
 
 				# subtract the background
-				print('\t\tSubtracting background')
-				clean_frame_data, clean_frame_header, bkg2d_ini_md, bkg2d_ini_sd, bkgsc_ini_mn, bkgsc_ini_md, bkgsc_ini_sd, bkg2d_res_md, bkg2d_res_sd, bkgsc_res_mn, bkgsc_res_md, bkgsc_res_sd = Photometry.subtract_background(clean_frame_data, clean_frame_header, raw_bkg_img_path, clean_bkg_img_path)
+				if not Configuration.SKIP_BACKGROUND:
+					print('\t\tSubtracting background')
+					clean_frame_data, clean_frame_header, bkg2d_ini_md, bkg2d_ini_sd, bkgsc_ini_mn, bkgsc_ini_md, bkgsc_ini_sd, bkg2d_res_md, bkg2d_res_sd, bkgsc_res_mn, bkgsc_res_md, bkgsc_res_sd = Photometry.subtract_background(clean_frame_data, clean_frame_header, raw_bkg_img_path, clean_bkg_img_path)
 
 				# solve the field
-				print('\t\tSolving field')
-				field_id = field.split('_')[1]
-				fits.writeto(clean_frame_path, clean_frame_data, clean_frame_header)
-				Photometry.solve_field(clean_frame, clean_frame_directory, field_id, verbose=Configuration.VERBOSE)
+				if not Configuration.SKIP_SOLVE:
+					print('\t\tSolving field')
+					field_id = field.split('_')[1]
+					fits.writeto(clean_frame_path, clean_frame_data, clean_frame_header)
+					Photometry.solve_field(clean_frame, clean_frame_directory, field_id, verbose=Configuration.VERBOSE)
 
 				# align the frames to the first
-				if frm > 0:
-					print('\t\tAligning to', reference_frame)
-					Photometry.align_frame(clean_frame_path, reference_frame_path)
+				if not Configuration.SKIP_ALIGN:
+					if frm > 0:
+						print('\t\tAligning to', reference_frame)
+						Photometry.align_frame(clean_frame_path, reference_frame_path)
 
 				# add a row to the frame table
 				table_row = (raw_frame_file, date, jd, exptime, bkg2d_ini_md, bkg2d_ini_sd, bkgsc_res_mn, bkgsc_res_md, bkgsc_res_sd)
@@ -369,8 +376,12 @@ class Photometry:
 			wcs = WCS(frame_header)
 
 			# get the observation time
-			time = Time(frame_header['DATE'], format='isot', scale='utc')
-			jd = time.jd
+			try:
+				time = Time(frame_header['STKJD'], format='jd', scale='utc')
+				jd = time
+			except KeyError:
+				time = Time(frame_header['DATE'], format='isot', scale='utc')
+				jd = time.jd
 
 			# get the airmass
 			latitude = Observatory.latitude()
@@ -378,8 +389,9 @@ class Photometry:
 			elevation = Observatory.elevation()
 			location = EarthLocation(lat=latitude, lon=longitude, height=elevation)
 
-			field_ra = float(Survey.get_field(field)[0])
-			field_dec = float(Survey.get_field(field)[1])
+			field_id = field.split('_')[1]
+			field_ra = float(Survey.get_field(field_id)[0])
+			field_dec = float(Survey.get_field(field_id)[1])
 
 			altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
 			airmass = Calculator.airmass(altitude)
@@ -509,6 +521,48 @@ class Photometry:
 		return master_table
 
 	@staticmethod
+	def timeseries(field, date, point_ra, point_dec):
+		'''This function creates a table of photometry measurements for a given point (RA, Dec) on a particular field and date.
+
+		:parameter field - The field ID
+		:parameter date - The date string
+		:parameter point_ra - The right ascension of the point (in degrees)
+		:parameter point_dec - The declination of the point (in degrees)
+
+		:return table - The table of photometry measurements
+		'''
+
+		table_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
+		table_path = table_directory + 'flux_' + field + '_' + date + '.dat'
+
+		if not os.path.exists(table_path):
+			table_cols = ('frm', 'jd', 'x', 'flx', 'flxerr', 'mag', 'magerr')
+			table_dtypes = (str, float, float, float, float, float, float)
+			table = Table(names=table_cols, dtype=table_dtypes)
+
+			os.chdir(table_directory)
+			frame_list = sorted(glob.glob('cln*.fits'))
+			num_frames = len(frame_list)
+
+			for i in range(num_frames):
+				frm = frame_list[i]
+				frame = fits.open(frm)
+				frame_data = frame[0].data
+				frame_header = frame[0].header
+
+				jd, airmass, flux, flux_error, inst_mag, inst_mag_error = Photometry.point_aperture_photometry(date, field, frame_data, frame_header, point_ra, point_dec)
+
+				table_row = (frm, jd, airmass, flux, flux_error, inst_mag, inst_mag_error)
+				table.add_row(table_row)
+
+			ascii.write(table, table_path, format='fixed_width')
+
+		else:
+			table = ascii.read(table_path, format='fixed_width', delimiter='|')
+
+		return table
+
+	@staticmethod
 	def point_aperture_photometry(date, field, frame_data, frame_header, point_ra, point_dec):
 
 		print('Performing point aperture photometry')
@@ -544,24 +598,18 @@ class Photometry:
 		xp = pix_position[0]
 		yp = pix_position[1]
 		pix_coord_tuple = (xp, yp)
-
-		# create aperture and annulus
+		
 		aperture = CircularAperture(pix_coord_tuple, r=Configuration.APER_SIZE)
 		annulus = CircularAnnulus(pix_coord_tuple, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
-		apers = [aperture, annulus]
-
-		# perform aperture photometry at the position
-		target_table = aperture_photometry(frame_data, apers, mask=mask, wcs=wcs)
-
-		# subtract the local background
-		aperture_sum = float(target_table['aperture_sum_0'].value[0])
-		annulus_sum = float(target_table['aperture_sum_1'].value[0])
-		annulus_mean = annulus_sum / annulus.area
-		aperture_background_sum = annulus_mean * aperture.area
-		aperture_residual = aperture_sum - aperture_background_sum
+		annulus_stats = ApertureStats(frame_data, annulus)
+		annulus_mean = annulus_stats.mean
+		annulus_sum = annulus_mean * aperture.area
+		target_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
+		aperture_sum = float(target_table['aperture_sum'].value[0])
+		aperture_residual = aperture_sum - annulus_mean * aperture.area
 
 		if aperture_residual < 0.:
-			flux = glob_bkg_md
+			flux = abs(glob_bkg_md)
 		else:
 			flux = aperture_residual
 
@@ -1490,72 +1538,6 @@ class Photometry:
 		subprocess.run(['rm', file_wcs])
 		subprocess.run(['rm', file_xyls])
 		subprocess.run(['mv', file_new, frame_name])
-
-	@staticmethod
-	def source_aperture_photometry(frame_data, frame_header, ra, dec):
-
-		# load directories
-		dirs = Utility.get_directories(location='output', create=False)
-
-		# load mask
-		mask, boxes = Photometry.mk_mask(frame_data, frame_header)
-
-		# gather exposure time information
-		exp_time = frame_header['EXPTIME']
-
-		# gather coordinate information
-		wcs = WCS(frame_header)
-
-		# gather time information
-		time = Time(frame_header['DATE'], format='isot', scale='utc')
-		jd = time.jd
-
-		# calculate global background statistics
-		bkg_mn, bkg_md, bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
-
-		# calculate airmass
-		location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
-		altitude = Calculator.altitude(location, time, ra, dec)
-		airmass = Calculator.airmass(altitude)
-
-		sky_pos = SkyCoord(ra, dec, unit='deg')
-		pix_pos = skycoord_to_pixel(sky_pos, wcs=wcs)
-		pix_coord = (pix_pos[0], pix_pos[1])
-
-		aperture = CircularAperture(pix_coord, r=Configuration.APER_SIZE)
-		aperture_area = aperture.area
-		annulus = CircularAnnulus(pix_coord, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
-
-		aperstats = ApertureStats(frame_data, annulus)
-		bkg_mean = aperstats.mean
-		bkg_sum = np.abs(frame_header['SKY'] + bkg_mean) * aperture_area
-
-		source_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
-
-		tot_sum = source_table['aperture_sum'][0]
-		res_sum = (tot_sum - bkg_mean * aperture_area) * Observatory.gain()
-		
-		flux = res_sum
-		if flux < 0:
-			flux = abs(bkg_md)
-
-		flux_err = np.sqrt(flux + aperture_area * bkg_sd ** 2)
-		inst_mag = 25. -2.5*np.log10(flux) + 2.5*np.log10(exp_time)
-		inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
-
-		print('RA:', ra, 'deg')
-		print('Dec:', dec, 'deg')
-		print('x:', pix_pos[0])
-		print('y:', pix_pos[1])
-		print('Bkg Mean:', bkg_mean)
-		print('Bkg Sum:', bkg_sum)
-		print('Total Flux:', tot_sum)
-		print('Residual Flux:', res_sum)
-		print('Flux Error:', flux_err)
-		print('Inst Mag:', inst_mag)
-		print('Inst Mag Error:', inst_mag_err)
-
-		return flux, flux_err, inst_mag, inst_mag_err, airmass, jd
 
 	@staticmethod
 	def subtract_background(raw_frame_data, raw_frame_header, ini_bkg_img_path, res_bkg_img_path):

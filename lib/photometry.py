@@ -343,11 +343,6 @@ class Photometry:
 		return table
 
 	@staticmethod
-	def point_aperture_photometry(date, field, frame_data, frame_header, point_ra, point_dec):
-
-		return 
-
-	@staticmethod
 	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name=None):
 		'''This function performs aperture photometry on a FITS image and returns a table of photometric measurements.
 
@@ -365,7 +360,7 @@ class Photometry:
 		img_colormag_path = output_directory + 'cm_' + output_name + Configuration.IMAGE_EXTENSION
 
 		if not os.path.exists(master_table_path):
-			print('Performing aperture photometry')
+			print('Performing frame aperture photometry')
 
 			# get the mask
 			mask, boxes = Photometry.make_mask(frame_data)
@@ -381,7 +376,7 @@ class Photometry:
 			latitude = Observatory.latitude()
 			longitude = Observatory.longitude()
 			elevation = Observatory.elevation()
-			location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
+			location = EarthLocation(lat=latitude, lon=longitude, height=elevation)
 
 			field_ra = float(Survey.get_field(field)[0])
 			field_dec = float(Survey.get_field(field)[1])
@@ -513,6 +508,69 @@ class Photometry:
 
 		return master_table
 
+	@staticmethod
+	def point_aperture_photometry(date, field, frame_data, frame_header, point_ra, point_dec):
+
+		print('Performing point aperture photometry')
+
+		# get the mask
+		mask, boxes = Photometry.make_mask(frame_data)
+
+		# get the coordinates
+		wcs = WCS(frame_header)
+
+		# get the observation time
+		try:
+			time = Time(frame_header['STKJD'], format='jd', scale='utc')
+			jd = time
+		except KeyError:
+			time = Time(frame_header['DATE'], format='isot', scale='utc')
+			jd = time.jd
+
+		# get the airmass
+		location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
+		altitude = Calculator.sky_to_altitude(location, time, point_ra, point_dec)
+		airmass = Calculator.airmass(altitude)
+
+		# get the exposure time
+		exp_time = frame_header['EXPTIME']
+
+		# calculate the background statistics
+		glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
+
+		# extract coordinates
+		sky_position = SkyCoord(point_ra, point_dec, unit='deg')
+		pix_position = skycoord_to_pixel(sky_position, wcs=wcs)
+		xp = pix_position[0]
+		yp = pix_position[1]
+		pix_coord_tuple = (xp, yp)
+
+		# create aperture and annulus
+		aperture = CircularAperture(pix_coord_tuple, r=Configuration.APER_SIZE)
+		annulus = CircularAnnulus(pix_coord_tuple, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
+		apers = [aperture, annulus]
+
+		# perform aperture photometry at the position
+		target_table = aperture_photometry(frame_data, apers, mask=mask, wcs=wcs)
+
+		# subtract the local background
+		aperture_sum = float(target_table['aperture_sum_0'].value[0])
+		annulus_sum = float(target_table['aperture_sum_1'].value[0])
+		annulus_mean = annulus_sum / annulus.area
+		aperture_background_sum = annulus_mean * aperture.area
+		aperture_residual = aperture_sum - aperture_background_sum
+
+		if aperture_residual < 0.:
+			flux = glob_bkg_md
+		else:
+			flux = aperture_residual
+
+		flux_error = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
+		inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
+		inst_mag_error = (2.5 * flux_error) / (np.log(10.) * flux)
+
+		return jd, airmass, flux, flux_error, inst_mag, inst_mag_error
+		
 	@staticmethod
 	def get_overscan(frame_data):
 

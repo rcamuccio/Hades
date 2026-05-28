@@ -7,17 +7,22 @@ import numpy as np
 class Calculator:
 
 	@staticmethod
-	def airmass(h, method='ky1994'):
+	def airmass(h_deg, method=Configuration.AIRMASS_METHOD):
+		'''This function calculates the airmass of a given altitude (in degrees).
 
-		# convert altitude to zenith distance
-		z = 90 - h
+		:parameter h_deg - The altitude (in degrees)
+		:parameter method - A string for the calculation method
 
-		if method == 'p2002':
-			# pickering 2002
-			x = 1 / np.sin(h + (244/(47*h**1.1)))
+		:return x - The airmass
+		'''
+
+		z_deg = 90. - h_deg
+		z_rad = np.deg2rad(z_deg)
+
+		if method == 'ky1989':
+			x = 1 / (np.cos(z_rad) + (0.50572*((6.07995 + h_deg)**-1.6364)))
 		else:
-			# kasten and young 1994
-			x = 1 / np.cos(np.deg2rad(z)) * 0.50572*((6.07995 + 90 - z)**-1.6364)
+			x = 1 / np.cos(z_rad)
 
 		return x
 

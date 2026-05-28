@@ -7,8 +7,12 @@ import numpy as np
 import os
 import time
 
+from astropy import log
+log.setLevel('WARNING')
+
 os.system('clear')
-print('[\033[1m' + 'Πλούτων' + '\033[0m]')
+#print('[\033[1m' + 'Πλούτων' + '\033[0m]')
+print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m]')
 print('\nRunning main pipeline\n')
 st = time.time()
 
@@ -19,11 +23,12 @@ flat_dir = input_dir + 'flat/'
 raw_dir = input_dir + 'raw/'
 
 # configure output directories
-output_dir = '/media/epimetheus/ExtremeSSD/'
-md_dir = output_dir + 'dark/'
-mf_dir = output_dir + 'flat/'
-cf_dir = output_dir + 'clean/'
-output_dir_list = [md_dir, mf_dir, cf_dir]
+output_directory = '/media/epimetheus/ExtremeSSD/'
+dark_directory = output_directory + 'dark/'
+flat_directory = output_directory + 'flat/'
+clean_frame_directory = output_directory + 'clean/'
+output_dir_list = [dark_directory, flat_directory, clean_frame_directory]
+
 for dr in output_dir_list:
 	if not os.path.exists(dr):
 		os.mkdir(dr)
@@ -41,7 +46,7 @@ num_dates = len(date_list)
 for dte in range(num_dates):
 	date = date_list[dte]
 
-	output_name = 'stk_' + str(date) + '_' + str(field)
+	output_name = 'stk_' + str(field) + '_' + str(date)
 	output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
 
 	query_table_path = output_directory + 'table_query' + Configuration.TABLE_EXTENSION
@@ -75,6 +80,13 @@ for dte in range(num_dates):
 
 	# perform photometry on the stack
 	master_table = Photometry.frame_aperture_photometry(date, field, stack_data, stack_header, match_table, master_table_path, output_name=output_name)
+
+	test_ra = 148.2712725
+	test_dec = -6.5137330
+	target_table = Photometry.point_aperture_photometry(date, field, stack_data, stack_header, test_ra, test_dec)
+
+	# difference frames
+	Photometry.difference_frames(field, date)
 
 fn = time.time()
 dt = np.around(fn - st, decimals=2)

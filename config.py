@@ -24,7 +24,7 @@ class Configuration:
 	OUTPUT_DATA_DIRECTORY = '/media/epimetheus/ExtremeSSD/'
 
 	# photometry
-	AIRMASS_METHOD = 'ky1994'
+	AIRMASS_METHOD = 'ky1989' # simple, ky1989
 	ANNULI_INNER = 18
 	ANNULI_OUTER = 20
 	APER_SIZE = 16

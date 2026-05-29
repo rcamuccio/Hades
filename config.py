@@ -18,7 +18,6 @@ class Configuration:
 	MAIN_DIRECTORY = '/home/epimetheus/Documents/'
 	CODE_DIRECTORY = MAIN_DIRECTORY + 'hades/'
 	OUTPUT_DIRECTORY = MAIN_DIRECTORY + 'output/'
-	DATA_DIRECTORY = '/media/epimetheus/Harbor/'
 
 	INPUT_DATA_DIRECTORY = '/media/epimetheus/692e5e1e-6b16-4928-a25f-46dbabe207e6/toros_data/'
 	OUTPUT_DATA_DIRECTORY = '/media/epimetheus/ExtremeSSD/'
@@ -42,6 +41,7 @@ class Configuration:
 	DATA_TYPE = 'float32'
 	FILTER_SIZE = (3, 3)
 	FOOTPRINT_RADIUS = 10
+	MATCH_TOLERANCE = 5.
 	MEMORY_LIMIT = 8e9
 	NPIXELS = 3
 	SIG_BKG = 2.5
@@ -65,7 +65,7 @@ class Configuration:
 
 	# querying
 	QUERY_RADIUS = 1.
-	QUERY_SOURCE = 'gaia-cone'
+	QUERY_SOURCE = 'gaia' # gaia, glade, vsx
 	ROW_LIMIT = -1
 
 	# plotting

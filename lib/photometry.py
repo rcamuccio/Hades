@@ -3,7 +3,6 @@ from lib.calculator import Calculator
 from lib.observatory import Observatory
 from lib.plot import Plot
 from lib.survey import Survey
-from lib.utility import Utility
 
 from astropy import units as u
 from astropy.coordinates import EarthLocation, SkyCoord
@@ -128,8 +127,8 @@ class Photometry:
 			clean_frame_name = 'cln_' + raw_frame_name
 			clean_frame_path = clean_frame_directory + clean_frame
 
-			raw_bkg_img_path = clean_frame_directory + 'bkg_' + raw_frame_name + '.png'
-			clean_bkg_img_path = clean_frame_directory + 'res_' + raw_frame_name + '.png'
+			img_bkg_path = clean_frame_directory + 'bkg/bkg_' + raw_frame_name + Configuration.IMAGE_EXTENSION
+			img_res_path = clean_frame_directory + 'res/res_' + raw_frame_name + Configuration.IMAGE_EXTENSION
 
 			# check if cleaned frame already exists
 			if not os.path.exists(clean_frame_path):
@@ -163,7 +162,7 @@ class Photometry:
 				# subtract the background
 				if not Configuration.SKIP_BACKGROUND:
 					print('\t\tSubtracting background')
-					clean_frame_data, clean_frame_header, bkg2d_ini_md, bkg2d_ini_sd, bkgsc_ini_mn, bkgsc_ini_md, bkgsc_ini_sd, bkg2d_res_md, bkg2d_res_sd, bkgsc_res_mn, bkgsc_res_md, bkgsc_res_sd = Photometry.subtract_background(clean_frame_data, clean_frame_header, raw_bkg_img_path, clean_bkg_img_path)
+					clean_frame_data, clean_frame_header, bkg2d_ini_md, bkg2d_ini_sd, bkgsc_ini_mn, bkgsc_ini_md, bkgsc_ini_sd, bkg2d_res_md, bkg2d_res_sd, bkgsc_res_mn, bkgsc_res_md, bkgsc_res_sd = Photometry.subtract_background(clean_frame_data, clean_frame_header, img_bkg_path, img_res_path)
 
 				# solve the field
 				if not Configuration.SKIP_SOLVE:
@@ -363,8 +362,9 @@ class Photometry:
 
 		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
 
-		img_field_path = output_directory + 'plt_' + output_name + Configuration.IMAGE_EXTENSION
-		img_colormag_path = output_directory + 'cm_' + output_name + Configuration.IMAGE_EXTENSION
+		hst_path = output_directory + 'hst/flux_' + output_name + Configuration.IMAGE_EXTENSION
+		field_path = output_directory + 'img/' + output_name + Configuration.IMAGE_EXTENSION
+		colormag_path = output_directory + 'plt/colormag_' + output_name + Configuration.IMAGE_EXTENSION
 
 		if not os.path.exists(master_table_path):
 			print('Performing frame aperture photometry')
@@ -384,26 +384,20 @@ class Photometry:
 				jd = time.jd
 
 			# get the airmass
-			latitude = Observatory.latitude()
-			longitude = Observatory.longitude()
-			elevation = Observatory.elevation()
-			location = EarthLocation(lat=latitude, lon=longitude, height=elevation)
-
+			location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
 			field_id = field.split('_')[1]
 			field_ra = float(Survey.get_field(field_id)[0])
 			field_dec = float(Survey.get_field(field_id)[1])
-
 			altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
 			airmass = Calculator.airmass(altitude)
-			print('TEST:', latitude, longitude, elevation, field_ra, field_dec, altitude, airmass)
 
 			# get the exposure time
 			exp_time = frame_header['EXPTIME']
 
 			# calculate the background statistics
-			bkg_mn, bkg_md, bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
+			glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
 
-			# extract coordinates from the input table
+			# extract and convert coordinates from the input table
 			sky_coords = []
 			for obj in match_table:
 				ra = obj['ra']
@@ -419,22 +413,20 @@ class Photometry:
 				coord = (xp, yp)
 				pix_coords.append(coord)
 
-			# create apertures and annuli
-			apertures = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
-			annuli = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
-			aper_set = [apertures, annuli]
-			aperture_area = apertures.area
-			annulus_area = annuli.area
+			# create the photometry apertures
+			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
+			annulus = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
 
-			# perform photometry at all positions
-			phot_table = aperture_photometry(frame_data, aper_set, mask=mask, wcs=wcs)
-			bkg_loc_mean = phot_table['aperture_sum_1'] / annulus_area
-			bkg_loc_sum = bkg_loc_mean * aperture_area
-			res_loc_sum = phot_table['aperture_sum_0'] - bkg_loc_sum
+			# measure the background within the annuli
+			annulus_stats = ApertureStats(frame_data, annulus)
+			annulus_mean = annulus_stats.mean
 
-			phot_table['annulus_mean'] = bkg_loc_mean
-			phot_table['aperture_bkg_sum'] = bkg_loc_sum
-			phot_table['aperture_res_sum'] = res_loc_sum
+			# perform aperture photometry at all source positions
+			phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
+
+			# calculate the residual flux
+			aperture_residual = phot_table['aperture_sum_0'] - annulus_mean * aperture.area
+			phot_table['aperture_residual'] = aperture_residual
 
 			# merge the input and photometry tables
 			master_table = hstack([match_table, phot_table])
@@ -450,15 +442,16 @@ class Photometry:
 			color_flag_list = []
 
 			for src in master_table:
-				flux = src['aperture_res_sum']
+				flux = src['aperture_residual']
 
-				if flux < 0:
+				if src['aperture_residual'] < 0.:
+					flux = abs(glob_bkg_md)
 					flux_flag_list.append(True)
 					flux = abs(bkg_md)
 				else:
 					flux_flag_list.append(False)
 
-				flux_err = np.sqrt(flux + aperture_area * bkg_sd**2)
+				flux_error = np.sqrt(flux + aperture.area * bkg_sd**2)
 				inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
 				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
 
@@ -505,12 +498,60 @@ class Photometry:
 			yfit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
 
 			# plot an annotated frame
-			Plot.field(frame_data, img_field_path, apertures, boxes)
+			Plot.field(frame_data, field_path, apertures, boxes)
+
+			plt.clf()
+			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+			plt.figure(figsize=Configuration.FIGURE_SIZE)
+			interval = ZScaleInterval()
+			vmin, vmax = interval.get_limits(frame_data)
+			plt.imshow(frame_data, cmap=Configuration.CMAP, origin='lower', vmin=vmin, vmax=vmax)
+			plt.colorbar()
+			plt.xlabel('x pixel', **font)
+			plt.ylabel('y pixel', **font)
+			if apertures != None:
+				apertures.plot(color='lime', lw=0.5, alpha=0.5)
+			if boxes != None:
+				eml_box = boxes['eml_box']
+				emt_box = boxes['emt_box']
+				emr_box = boxes['emr_box']
+				emb_box = boxes['emb_box']
+				eml_box.plot(color='cyan', ls='dashed')
+				emt_box.plot(color='lime', ls='dashed')
+				emr_box.plot(color='yellow', ls='dashed')
+				emb_box.plot(color='orange', ls='dashed')
+			if Configuration.SAVE_FIGURE:
+				plt.savefig(field_path, dpi=Configuration.DPI)
+			plt.close()
+
+			# plot a histogram of the stellar fluxes
+			plt.clf()
+			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+			plt.figure(figsize=Configuration.FIGURE_SIZE)
+			plt.hist(phot_table['aperture_sum_0'], bins=Configuration.HISTOGRAM_BINS, range=(-100, 200000), histtype=Configuration.HISTOGRAM_TYPE)
+			plt.yscale(Configuration.HISTOGRAM_SCALE)
+			plt.xlabel('Flux [ADU]', **font)
+			plt.ylabel('Count', **font)
+			if Configuration.SAVE_FIGURE:
+				plt.savefig(hst_path, dpi=Configuration.DPI)
+			plt.close()
 
 			# plot a color-magnitude diagram
-			Plot.colormag(color_list, delta_list, yfit, img_colormag_path)
+			plt.clf()
+			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+			plt.figure(figsize=Configuration.FIGURE_SIZE)
+			plt.scatter(color_list, delta_list, s=1, color='gray')
+			plt.plot(color_list, yfit, color='blue')
+			plt.title('Color-Magnitude Diagram', **font)
+			plt.xlabel('Color index [mag]', **font)
+			plt.ylabel('Delta magnitude [mag]', **font)
+			plt.xticks(**font)
+			plt.yticks(**font)
+			if Configuration.SAVE_FIGURE:
+				plt.savefig(colormag_path, dpi=Configuration.DPI)
+			plt.close()
 
-			# save the table
+			# save the photometry table
 			if not os.path.exists(master_table_path):
 				master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
 
@@ -1136,12 +1177,12 @@ class Photometry:
 		stack_path = stack_directory + stack_name
 
 		# image paths
-		img_stack_path = stack_directory + 'plt_stk_' + field + '_' + date + Configuration.IMAGE_EXTENSION
-		img_bkg_path = stack_directory + 'plt_bkg_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		#img_path = stack_directory + 'img/' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		img_bkg_path = stack_directory + 'bkg/bkg_stack_' + field + '_' + date + Configuration.IMAGE_EXTENSION
 
 		# histogram paths
-		hist_stack_path = stack_directory + 'hst_stk_' + field + '_' + date + Configuration.IMAGE_EXTENSION
-		hist_bkg_path = stack_directory + 'hst_bkg_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		hst_path = stack_directory + 'hst/' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		hst_bkg_path = stack_directory + 'hst/bkg_' + field + '_' + date + Configuration.IMAGE_EXTENSION
 
 		if not os.path.exists(stack_path):
 			# grab the individual frames
@@ -1155,11 +1196,11 @@ class Photometry:
 			stack_data = np.asarray(stack_ccddata)
 			stack_data = stack_data.astype(Configuration.DATA_TYPE)
 
-			if not os.path.exists(img_stack_path):
-				Plot.field(stack_data, img_stack_path)
+			#if not os.path.exists(img_path):
+				#Plot.field(stack_data, img_path)
 
-			if not os.path.exists(hist_stack_path):
-				Plot.histogram(stack_data, hist_stack_path)
+			if not os.path.exists(hst_path):
+				Plot.histogram(stack_data, hst_path)
 
 			# calculate the background statistics
 			print('\tCalculating background statistics')
@@ -1168,8 +1209,8 @@ class Photometry:
 			if not os.path.exists(img_bkg_path):
 				Plot.field(bkg2d_data, img_bkg_path)
 
-			if not os.path.exists(hist_bkg_path):
-				Plot.histogram(bkg2d_data, hist_bkg_path)
+			if not os.path.exists(hst_bkg_path):
+				Plot.histogram(bkg2d_data, hst_bkg_path)
 
 			# edit the stack header
 			stk_hdu = fits.PrimaryHDU(stack_data)
@@ -1223,7 +1264,7 @@ class Photometry:
 			query_coord = SkyCoord(query_table['ra'], query_table['dec'], unit='deg')
 
 			idx, d2d, d3d = query_coord.match_to_catalog_sky(source_coord)
-			t = d2d < 5 * u.arcsec
+			t = d2d < Configuration.MATCH_TOLERANCE * u.arcsec
 
 			query_table['sep_flag'] = t
 			query_table['idx'] = idx

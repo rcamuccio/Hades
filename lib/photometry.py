@@ -1187,18 +1187,21 @@ class Photometry:
 		if not os.path.exists(stack_path):
 			# grab the individual frames
 			os.chdir(stack_directory)
-			stack_list = glob.glob('cln_*.fits')
+			stack_list = sorted(glob.glob('cln_*.fits'))
 			num_stack_frames = len(stack_list)
 			print('Generating', num_stack_frames, 'frames into master stack (' + field + ', ' + date + ')')
+
+			# align the frames
+			for frm in stack_list:
+				frame_path = stack_directory + frm
+				print(frame_path)
 
 			# combine the frames
 			stack_ccddata = ccdproc.combine(stack_list, method=Configuration.COMBINE_METHOD, unit=Configuration.UNIT, mem_limit=Configuration.MEMORY_LIMIT, dtype=Configuration.DATA_TYPE)
 			stack_data = np.asarray(stack_ccddata)
 			stack_data = stack_data.astype(Configuration.DATA_TYPE)
 
-			#if not os.path.exists(img_path):
-				#Plot.field(stack_data, img_path)
-
+			# plot a histogram of the stack
 			if not os.path.exists(hst_path):
 				Plot.histogram(stack_data, hst_path)
 
@@ -1206,9 +1209,11 @@ class Photometry:
 			print('\tCalculating background statistics')
 			bkg2d_data, bkg2d_md, bkg2d_sd, bkgsc_mn, bkgsc_md, bkgsc_sd = Photometry.measure_background(stack_data)
 
+			# plot the background image
 			if not os.path.exists(img_bkg_path):
 				Plot.field(bkg2d_data, img_bkg_path)
 
+			# plot a histogram of the background
 			if not os.path.exists(hst_bkg_path):
 				Plot.histogram(bkg2d_data, hst_bkg_path)
 

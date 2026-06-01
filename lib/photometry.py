@@ -1192,9 +1192,13 @@ class Photometry:
 			print('Generating', num_stack_frames, 'frames into master stack (' + field + ', ' + date + ')')
 
 			# align the frames
-			for frm in stack_list:
-				frame_path = stack_directory + frm
-				print(frame_path)
+			reference_frame_path = stack_directory + stack_list[0]
+			for frm in range(num_stack_frames):
+				if frm > 0:
+					align_frame_path = stack_directory + stack_list[frm]
+					Photometry.align_frame(align_frame_path, reference_frame_path)
+
+			# clean up and redirect frames to stack
 
 			# combine the frames
 			stack_ccddata = ccdproc.combine(stack_list, method=Configuration.COMBINE_METHOD, unit=Configuration.UNIT, mem_limit=Configuration.MEMORY_LIMIT, dtype=Configuration.DATA_TYPE)

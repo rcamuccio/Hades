@@ -38,74 +38,26 @@ The code is run from the main HADES directory through a series of available scri
 
 The settings are controlled in the `config.py` file.
 
-The pipeline assumes the following directory format for all data files:
+The pipeline assumes the following input directory format for all data files (uncalibrated "raw" FITS files, along with associated bias, dark, and flat FITS calibration files. The pipeline further assumes that darks of two variety are available (both under the dark directory), namely two sets of darks with two different exposure times (one equal to the flat frames, one equal to the raw frames).
 
 ```
-[data_directory]
-	[bias]
-		[yyyy-mm-dd]
-			bias.fits
-			...
-		...
-	[calibration]
-		[tmp_bias]
-		[tmp_dark]
-		[tmp_flat]
-		bias.fits
-		dark.fits
-		flat.fits
-	[clean]
-		[yyyy-mm-dd]
-			[FIELD_xx.xxx]
-				img.fits
-				...
-			...
-		...
-	[darks]
+[input_data_directory]
+    [bias]
+        [yyyy-mm-dd]
+            bias.fits
+            ...
+        ...
+    [dark]
         [yyyy-mm-dd]
             dark.fits
             ...
         ...
-	[diff]
-        [yyyy-mm-dd]
-            [FIELD_xx.xxx]
-                img.fits
-                ...
-            ...
-        ...
-	[flats]
+    [flat]
         [yyyy-mm-dd]
             flat.fits
             ...
         ...
-	[flux]
-        [yyyy-mm-dd]
-            [FIELD_xx.xxx]
-                file1.flux
-                ...
-            ...
-	[lc]
-        [FIELD_xx.xxx]
-            file1.lc
-            ...
-        ...
-	[master]
-        [FIELD_xx.xxx]
-            [centroids]
-            [tmp_master]
-                xx_tmp_master.fits
-                ...
-            FIELD_xx.xxx_master.fits
-            FIELD_xx.xxx_star_list.txt
-        ...
-	[raw]
-        [yyyy-mm-dd]
-            [FIELD_xx.xxx]
-                img.fits
-                ...
-            ...
-        ...
-	[review]
+    [raw]
         [yyyy-mm-dd]
             [FIELD_xx.xxx]
                 img.fits
@@ -128,26 +80,29 @@ $ python -m scripts.gcn_listener
 
 ## References
 
-- C. Alard (2000), Image Subtraction Using a Space-Varying Kernel, Astronomy and Astrophysics Supplement, Volume 144, https://doi.org/10.1051/aas:2000214
+- C. Alard (2000), *Image Subtraction Using a Space-Varying Kernel*, Astronomy and Astrophysics Supplement, Volume 144, https://doi.org/10.1051/aas:2000214
 
-- C. Alard and R. H. Lupton (1998), A Method for Optimal Image Subtraction, The Astrophysical Journal, Volume 503, Issue 1, https://iopscience.iop.org/article/10.1086/305984
+- C. Alard and R. H. Lupton (1998), *A Method for Optimal Image Subtraction*, The Astrophysical Journal, Volume 503, Issue 1, https://iopscience.iop.org/article/10.1086/305984
 
-- G. Dálya et al. (2018), GLADE: A Galaxy Catalogue for Multimessenger Searches in the Advanced Gravitational-Wave Detector Era, Monthly Notices of the Royal Astronomical Society, Volume 479, Issue 2, https://doi.org/10.1093/mnras/sty1703
+- G. Dálya et al. (2018), *GLADE: A Galaxy Catalogue for Multimessenger Searches in the Advanced Gravitational-Wave Detector Era*, Monthly Notices of the Royal Astronomical Society, Volume 479, Issue 2, https://doi.org/10.1093/mnras/sty1703
 
-- G. Dálya et al. (2022), GLADE+: An Extended Galaxy Catalogue for Multimessenger Searches with Advanced Gravitational-Wave Detectors, Monthly Notices of the Royal Astronomical Society, Volume 514, Issue 1, https://doi.org/10.1093/mnras/stac1443
+- G. Dálya et al. (2022), *GLADE+: An Extended Galaxy Catalogue for Multimessenger Searches with Advanced Gravitational-Wave Detectors*, Monthly Notices of the Royal Astronomical Society, Volume 514, Issue 1, https://doi.org/10.1093/mnras/stac1443
 
-- LVK Collaboration (2022), LIGO/Virgo/KAGRA Public Alerts User Guide, https://emfollow.docs.ligo.org/userguide/
+- LVK Collaboration (2022), *LIGO/Virgo/KAGRA Public Alerts User Guide*, https://emfollow.docs.ligo.org/userguide/
 
-- J. P. Miller et al. (2008), Optimal Image Subtraction Method: Summary Derivations, Applications, and Publicly Shared Application Using IDL, Publications of the Astronomical Society of the Pacific, Volume 120, Number 866, https://iopscience.iop.org/article/10.1086/588258/meta
+- J. P. Miller et al. (2008), *Optimal Image Subtraction Method: Summary Derivations, Applications, and Publicly Shared Application Using IDL*, Publications of the Astronomical Society of the Pacific, Volume 120, Number 866, https://iopscience.iop.org/article/10.1086/588258/meta
 
-- R. J. Oelkers et al. (2015), Difference Image Analysis of Defocused Observations with CSTAR, The Astronomical Journal, Volume 149, Issue 2, ID 50, https://iopscience.iop.org/article/10.1088/0004-6256/149/2/50
+- R. J. Oelkers et al. (2015), *Difference Image Analysis of Defocused Observations with CSTAR*, The Astronomical Journal, Volume 149, Issue 2, ID 50, https://iopscience.iop.org/article/10.1088/0004-6256/149/2/50
 
-- R. J. Oelkers and K. G. Stassun (2018), Precision Light Curves from TESS Full-Frame Images: A Different Imaging Approach, The Astronomical Journal, Volume 156, Issue 3, ID 132, https://iopscience.iop.org/article/10.3847/1538-3881/aad68e
+- R. J. Oelkers and K. G. Stassun (2018), *Precision Light Curves from TESS Full-Frame Images: A Different Imaging Approach*, The Astronomical Journal, Volume 156, Issue 3, ID 132, https://iopscience.iop.org/article/10.3847/1538-3881/aad68e
 
 ---
 
 June 7, 2019<br>
-Last update: May 25, 2026
 
 Richard Camuccio<br>
 rcamuccio@gmail.com
+
+```
+[BootDP > ImageRedux > CAL > Hades]
+```

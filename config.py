@@ -41,6 +41,7 @@ class Configuration:
 	DATA_TYPE = 'float32'
 	FILTER_SIZE = (3, 3)
 	FOOTPRINT_RADIUS = 10
+	KEEP_ALIGN_FRAMES = False
 	MATCH_TOLERANCE = 5.
 	MEMORY_LIMIT = 8e9
 	NPIXELS = 3
@@ -83,8 +84,8 @@ class Configuration:
 
 	# listener
 	CATALOG = 'glade+'
-	CLIENT_ID = '30mai3vn918g150vbdm63crtut'
-	CLIENT_SECRET = '16895pg64pqb556jmsqdmj1nsjvvm37risqvmfn1329tcorpb6ht'
+	CLIENT_ID = 'client_id'
+	CLIENT_SECRET = 'client_secret'
 	EMAIL = 'toros.alerts@yahoo.com'
 	FIELD_GENERATION = 'N'
 	FIELD_PRIORITY = ['commissioning', 'ligo', 'science', 'main_survey']

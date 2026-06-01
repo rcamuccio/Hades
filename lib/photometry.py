@@ -36,7 +36,7 @@ import subprocess
 class Photometry:
 
 	@staticmethod
-	def align_frame(target_frame_path, reference_frame_path):
+	def align_frame(target_frame_path, reference_frame_path, align_frame_path):
 		'''This function aligns a target frame at one epoch with a reference frame at another epoch.
 
 		:parameter target_frame_path - The path of the target frame
@@ -72,7 +72,7 @@ class Photometry:
 		align_frame_hdu = fits.PrimaryHDU(align_frame_data, header=align_frame_header)
 
 		# save the aligned frame HDU object
-		align_frame_hdu.writeto(target_frame_path, overwrite=True)
+		align_frame_hdu.writeto(align_frame_path, overwrite=True)
 
 	@staticmethod
 	def clean_raw_frames(date, field):
@@ -425,7 +425,7 @@ class Photometry:
 			phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
 
 			# calculate the residual flux
-			aperture_residual = phot_table['aperture_sum_0'] - annulus_mean * aperture.area
+			aperture_residual = phot_table['aperture_sum'] - annulus_mean * aperture.area
 			phot_table['aperture_residual'] = aperture_residual
 
 			# merge the input and photometry tables
@@ -447,11 +447,10 @@ class Photometry:
 				if src['aperture_residual'] < 0.:
 					flux = abs(glob_bkg_md)
 					flux_flag_list.append(True)
-					flux = abs(bkg_md)
 				else:
 					flux_flag_list.append(False)
 
-				flux_error = np.sqrt(flux + aperture.area * bkg_sd**2)
+				flux_err = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
 				inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
 				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
 
@@ -498,7 +497,7 @@ class Photometry:
 			yfit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
 
 			# plot an annotated frame
-			Plot.field(frame_data, field_path, apertures, boxes)
+			Plot.field(frame_data, field_path, aperture, boxes)
 
 			plt.clf()
 			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
@@ -509,8 +508,8 @@ class Photometry:
 			plt.colorbar()
 			plt.xlabel('x pixel', **font)
 			plt.ylabel('y pixel', **font)
-			if apertures != None:
-				apertures.plot(color='lime', lw=0.5, alpha=0.5)
+			if aperture != None:
+				aperture.plot(color='lime', lw=0.5, alpha=0.5)
 			if boxes != None:
 				eml_box = boxes['eml_box']
 				emt_box = boxes['emt_box']
@@ -528,7 +527,7 @@ class Photometry:
 			plt.clf()
 			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
 			plt.figure(figsize=Configuration.FIGURE_SIZE)
-			plt.hist(phot_table['aperture_sum_0'], bins=Configuration.HISTOGRAM_BINS, range=(-100, 200000), histtype=Configuration.HISTOGRAM_TYPE)
+			plt.hist(phot_table['aperture_sum'], bins=Configuration.HISTOGRAM_BINS, range=(-100, 200000), histtype=Configuration.HISTOGRAM_TYPE)
 			plt.yscale(Configuration.HISTOGRAM_SCALE)
 			plt.xlabel('Flux [ADU]', **font)
 			plt.ylabel('Count', **font)
@@ -1187,20 +1186,30 @@ class Photometry:
 		if not os.path.exists(stack_path):
 			# grab the individual frames
 			os.chdir(stack_directory)
-			stack_list = sorted(glob.glob('cln_*.fits'))
-			num_stack_frames = len(stack_list)
-			print('Generating', num_stack_frames, 'frames into master stack (' + field + ', ' + date + ')')
+			align_list = sorted(glob.glob('cln_*' + Configuration.FILE_EXTENSION))
+			num_align_frames = len(align_list)
 
 			# align the frames
-			reference_frame_path = stack_directory + stack_list[0]
-			for frm in range(num_stack_frames):
+			print('Aligning frames')
+			reference_frame = align_list[0]
+			reference_frame_path = stack_directory + reference_frame
+			aln_reference_frame = 'aln_' + reference_frame
+			aln_reference_frame_path = stack_directory + aln_reference_frame
+			reference_frame = fits.open(reference_frame_path)
+			reference_frame_data = reference_frame[0].data
+			reference_frame_header = reference_frame[0].header
+			aln_reference_frame_hdu = fits.PrimaryHDU(reference_frame_data, header=reference_frame_header)
+			aln_reference_frame_hdu.writeto(aln_reference_frame_path)
+			for frm in range(num_align_frames):
 				if frm > 0:
-					align_frame_path = stack_directory + stack_list[frm]
-					Photometry.align_frame(align_frame_path, reference_frame_path)
-
-			# clean up and redirect frames to stack
+					target_frame_path = stack_directory + align_list[frm]
+					align_frame_path = stack_directory + 'aln_' + align_list[frm]
+					Photometry.align_frame(target_frame_path, reference_frame_path, align_frame_path)
 
 			# combine the frames
+			stack_list = sorted(glob.glob('aln_*' + Configuration.FILE_EXTENSION))
+			num_stack_frames = len(stack_list)
+			print('Generating', num_stack_frames, 'frames into master stack (' + field + ', ' + date + ')')
 			stack_ccddata = ccdproc.combine(stack_list, method=Configuration.COMBINE_METHOD, unit=Configuration.UNIT, mem_limit=Configuration.MEMORY_LIMIT, dtype=Configuration.DATA_TYPE)
 			stack_data = np.asarray(stack_ccddata)
 			stack_data = stack_data.astype(Configuration.DATA_TYPE)
@@ -1237,6 +1246,8 @@ class Photometry:
 			stack_header['STKCB'] = ('yes', 'Status: lights combined')
 			stack_header['STKJD'] = (np.median(frame_table['jd'].tolist()), 'Median Julian date of combined light frames')
 			stack_header['STKNM'] = (num_stack_frames, 'Number of combined light frames')
+
+			# save the stack frame
 			fits.writeto(stack_path, stack_data, stack_header)
 
 			# solve the stack frame
@@ -1244,15 +1255,26 @@ class Photometry:
 			field_id = field.split('_')[1]
 			Photometry.solve_field(stack_name, stack_directory, field_id, verbose=Configuration.VERBOSE)
 
-			print('\tStack generated (' + field + ', ' + date + ')\n')
+			# re-open the solved stack frame
 			stack_frame = fits.open(stack_path)
 			stack_header = stack_frame[0].header
 
+			print('\tStack generated (' + field + ', ' + date + ')\n')
+
 		else:
+			# open the existing stack frame
 			print('Reading existing stack (' + field + ', ' + date + ')\n')
 			stack_frame = fits.open(stack_path)
 			stack_data = stack_frame[0].data
 			stack_header = stack_frame[0].header
+
+		# clean up aligned frames
+		if not Configuration.KEEP_ALIGN_FRAMES:
+			os.chdir(stack_directory)
+			frame_list = glob.glob('aln_*' + Configuration.FILE_EXTENSION)
+			if len(frame_list) > 0:
+				for frm in frame_list:
+					subprocess.run(['rm', frm])
 
 		return stack_data, stack_header
 

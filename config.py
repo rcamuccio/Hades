@@ -11,14 +11,12 @@ class Configuration:
 
 	# products
 	FIELD = 'FIELD_42.074'
-	#DATES = ['2024-11-10', '2024-11-11', '2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16', '2024-11-17', '2024-11-18', '2024-11-19', '2024-11-20']
-	DATES = ['2024-11-10']
+	DATES = ['2024-11-10', '2024-11-11', '2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16', '2024-11-17', '2024-11-18', '2024-11-19', '2024-11-20']
+	#DATES = ['2024-11-10']
 
 	# directories
-	MAIN_DIRECTORY = '/home/epimetheus/Documents/'
-	CODE_DIRECTORY = MAIN_DIRECTORY + 'hades/'
-	OUTPUT_DIRECTORY = MAIN_DIRECTORY + 'output/'
-
+	HADES_DIRECTORY = '/home/epimetheus/Documents/hades/'
+	PLOUTON_DIRECTORY = '/home/epimetheus/Documents/plouton/'
 	INPUT_DATA_DIRECTORY = '/media/epimetheus/692e5e1e-6b16-4928-a25f-46dbabe207e6/toros_data/'
 	OUTPUT_DATA_DIRECTORY = '/media/epimetheus/ExtremeSSD/'
 
@@ -75,12 +73,16 @@ class Configuration:
 	FIGURE_SIZE = (10, 10)
 	FONT_NAME = 'Monospace'
 	FONT_SIZE = 12
+	GALACTIC_CENTER = True
+	GALACTIC_PLANE = True
 	HISTOGRAM_BINS = 'fd'
 	HISTOGRAM_LIMIT = 5
 	HISTOGRAM_SCALE = 'log'
 	HISTOGRAM_TYPE = 'step'
 	INTERVAL = 'zscale'
+	PROJECTION = 'aitoff' # aitoff, hammer, mollweide
 	SAVE_FIGURE = True
+	SKYMAP_MODE = 'comm_fields' # comm_fields, survey_fields
 
 	# listener
 	CATALOG = 'glade+'

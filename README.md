@@ -8,7 +8,7 @@
 
 Hades was developed on an Alienware Aurora R7 (`Epimetheus`) running Ubuntu 22.04.3 LTS. The general specifications of Epimetheus include an Intel Core i7-8700 x 12 processor, 64 GB of memory, and a disk capacity of 2.3 TB.
 
-Since Hades is written primarily in Python, it is highly recommended to run Hades in a controlled Conda environment. One can load the environment packages using the `hades.yml` file to initialize your environment.
+Since Hades is written primarily in Python, it is highly recommended to run Hades in a controlled Conda environment. One can load the environment packages using the `hades.yml` file to initialize an environment.
 
 The difference imaging portion of the image analysis pipeline is dependent on an algorithm written in C. One must have the cfitsio package installed on their system. For Ubuntu users, simply run
 
@@ -66,16 +66,22 @@ The pipeline assumes the following input directory format for all data files (un
         ...
 ```
 
-### Running the pipeline
+### Running the main pipeline
 
 ```
-$ python -m scripts.main_pipeline
+$ python -m scr.main_pipeline
 ```
 
-### Running the listener
+### Running the GCN listener
 
 ```
-$ python -m scripts.gcn_listener
+$ python -m scr.gcn_listener
+```
+
+### Creating survey plots
+
+```
+$ python -m scr.skymap_plot
 ```
 
 ## References

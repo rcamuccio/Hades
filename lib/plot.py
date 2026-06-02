@@ -1,7 +1,14 @@
 from config import Configuration
+from astropy.coordinates import SkyCoord
 from astropy.stats import sigma_clipped_stats
+from astropy.table import Table
 from astropy.visualization import ZScaleInterval
+import astropy.units as u
 import matplotlib.pyplot as plt
+import numpy as np
+
+import matplotlib as mpl
+mpl.rc('font', family=Configuration.FONT_NAME, size=Configuration.FONT_SIZE)
 
 class Plot:
 
@@ -112,6 +119,23 @@ class Plot:
 		plt.close()
 
 	@staticmethod
+	def stellar_histogram(flux_list, path, save=Configuration.SAVE_FIGURE):
+
+		plt.clf()
+		font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
+
+		plt.hist(flux_list, bins=Configuration.HISTOGRAM_BINS, range=(0, 100000), histtype=Configuration.HISTOGRAM_TYPE)
+
+		plt.yscale(Configuration.HISTOGRAM_SCALE)
+
+		plt.xlabel('Flux [ADU]', **font)
+		plt.ylabel('Count', **font)
+
+		plt.savefig(path, dpi=Configuration.DPI)
+		plt.close()
+
+	@staticmethod
 	def histogram(data, path, save=Configuration.SAVE_FIGURE):
 
 		plt.clf()
@@ -127,10 +151,10 @@ class Plot:
 
 		plt.yscale(Configuration.HISTOGRAM_SCALE)
 
-		plt.xlabel('Pixel Value [ADU]')
-		plt.ylabel('Pixel Count')
+		plt.xlabel('Pixel Value [ADU]', **font)
+		plt.ylabel('Count', **font)
 
-		plt.savefig(path, dpi=400)
+		plt.savefig(path, dpi=Configuration.DPI)
 		plt.close()
 
 	@staticmethod
@@ -175,3 +199,172 @@ class Plot:
 		
 		plt.savefig('plot-seeing.png', dpi=400)
 		plt.close()
+
+	@staticmethod
+	def skymap(ra_deg=None, dec_deg=None):
+		'''This function plots an all-sky map of coordinates.
+
+		:parameter ra_deg - The right ascension of one or more objects in degrees [0, 360)
+		:parameter dec_deg - The declination of one or more objects in degrees [-90, 90]
+
+		:return - Nothing is returned
+		'''
+
+		# generate the plot
+		plt.clf()
+		font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+		fig = plt.figure(figsize=Configuration.FIGURE_SIZE)
+		ax = fig.add_subplot(111, projection=Configuration.PROJECTION)
+
+		# draw the coordinates
+		if (ra_deg != None) and (dec_deg != None):
+			# ensure the input coordinates are array-like
+			ra_deg = np.asarray(ra_deg)
+			dec_deg = np.asarray(dec_deg)
+
+			# convert RA into range [-180, +180]
+			ra_shift = np.remainder(ra_deg + 180, 360) - 180
+
+			# convert the coordinates to radians
+			ra_rad = np.radians(ra_shift)
+			dec_rad = np.radians(dec_deg)
+
+			# draw the objects
+			ax.scatter(ra_rad, dec_rad, c='black', s=3)
+
+		# draw the galactic plane
+		if Configuration.GALACTIC_PLANE:
+			# generate the plane
+			l = np.linspace(0, 360, 2000) * u.deg
+			b = np.zeros_like(l)
+			gal_plane = SkyCoord(l=l, b=b, frame='galactic')
+
+			# convert the plane to equatorial coordinates
+			eq_plane = gal_plane.icrs
+			eq_plane_ra = eq_plane.ra.degree
+			eq_plane_dec = eq_plane.dec.degree
+
+			# convert RA into range [-180, +180]
+			ra_shift = np.remainder(eq_plane_ra + 180, 360) - 180
+			ra_rad = np.radians(ra_shift)
+			dec_rad = np.radians(eq_plane_dec)
+
+			# fix the discontinuity
+			jumps = np.where(np.abs(np.diff(ra_rad)) > np.pi/2)[0]
+			ra_plot = ra_rad.copy()
+			dec_plot = dec_rad.copy()
+			for idx in reversed(jumps):
+				ra_plot = np.insert(ra_plot, idx + 1, np.nan)
+				dec_plot = np.insert(dec_plot, idx + 1, np.nan)
+
+			# draw the plane
+			ax.plot(ra_plot, dec_plot, ls='--', lw=0.75, c='black', zorder=9)
+
+		# draw the galactic center
+		if Configuration.GALACTIC_CENTER:
+			gc = SkyCoord(l=0*u.deg, b=0*u.deg, frame='galactic').icrs
+			gc_ra = gc.ra.degree
+			gc_dec = gc.dec.degree
+			gc_ra_shift = np.remainder(gc_ra + 180, 360) - 180
+			gc_ra_rad = np.radians(gc_ra_shift)
+			gc_dec_rad = np.radians(gc_dec)
+			ax.scatter(gc_ra_rad, gc_dec_rad, marker='+', s=200, color='black', zorder=10)
+
+		if Configuration.SKYMAP_MODE == 'survey_fields':
+			field_path = Configuration.PLOUTON_DIRECTORY + 'fields/toros_fields.dat'
+			field_file = open(field_path, 'r')
+			gal_ra_list = []
+			gal_dec_list = []
+			egal_ra_list = []
+			egal_dec_list = []
+			for ln in field_file:
+				ln = ln.split()
+				if ln[0] != 'field_id':
+					ra = float(ln[1])
+					ra = np.remainder(ra + 180, 360) - 180
+					ra = np.radians(ra)
+					dec = float(ln[2])
+					dec = np.radians(dec)
+					l = float(ln[3])
+					b = float(ln[4])
+					if abs(b) <= Configuration.GALACTIC_PLANE:
+						gal_ra_list.append(ra)
+						gal_dec_list.append(dec)
+					else:
+						egal_ra_list.append(ra)
+						egal_dec_list.append(dec)
+			ax.scatter(gal_ra_list, gal_dec_list, marker='.', s=10, color='red')
+			ax.scatter(egal_ra_list, egal_dec_list, marker='.', s=10, color='blue')
+
+		elif Configuration.SKYMAP_MODE == 'comm_fields':
+			field_path = Configuration.PLOUTON_DIRECTORY + 'fields/comm_fields.dat'
+			field_file = open(field_path, 'r')
+			com_field_ra_list = []
+			com_field_dec_list = []
+			grb_field_ra_list = []
+			grb_field_dec_list = []
+			gw_field_ra_list = []
+			gw_field_dec_list = []
+			ot_field_ra_list = []
+			ot_field_dec_list = []
+			sn_field_ra_list = []
+			sn_field_dec_list = []
+			xrb_field_ra_list = []
+			xrb_field_dec_list = []
+			for ln in field_file:
+				ln = ln.split()
+				field_id = ln[0]
+				field_ra = float(ln[1])
+				field_ra = np.remainder(field_ra + 180, 360) - 180
+				field_ra = float(np.radians(field_ra))
+				field_dec = float(ln[2])
+				field_dec = float(np.radians(field_dec))
+				field_type = ln[3]
+				event_type = ln[4]
+				event_name = ln[5]
+				if field_type == 'C':
+					com_field_ra_list.append(field_ra)
+					com_field_dec_list.append(field_dec)
+				else:
+					if event_type == 'GW':
+						gw_field_ra_list.append(field_ra)
+						gw_field_dec_list.append(field_dec)
+					elif (event_type == 'LGRB') or (event_type == 'SGRB'):
+						grb_field_ra_list.append(field_ra)
+						grb_field_dec_list.append(field_dec)
+					elif event_type == 'OT':
+						ot_field_ra_list.append(field_ra)
+						ot_field_dec_list.append(field_dec)
+					elif (event_type == 'SNIA') or (event_type == 'SNII'):
+						sn_field_ra_list.append(field_ra)
+						sn_field_dec_list.append(field_dec)
+					elif event_type == 'XRB':
+						xrb_field_ra_list.append(field_ra)
+						xrb_field_dec_list.append(field_dec)
+			ax.scatter(com_field_ra_list, com_field_dec_list, marker='s', s=100, color='black', label='Commissioning')
+			ax.scatter(grb_field_ra_list, grb_field_dec_list, marker='s', s=100, color='green', label='GRB')
+			ax.scatter(ot_field_ra_list, ot_field_dec_list, marker='s', s=100, color='red', label='OT')
+			ax.scatter(sn_field_ra_list, sn_field_dec_list, marker='s', s=100, color='orange', label='SN')
+			ax.scatter(xrb_field_ra_list, xrb_field_dec_list, marker='s', s=100, color='blue', label='XRB')
+
+		# draw the meridians
+		ra_lines = np.arange(-150, 181, 30)
+		for ra in ra_lines:
+			dec = np.linspace(-90, 90, 500)
+			ra_array = np.full_like(dec, ra)
+			ax.plot(np.radians(ra_array), np.radians(dec), color='gray', alpha=0.75, linewidth=0.5)
+
+		# draw the parallels
+		dec_lines = np.arange(-75, 90, 15)
+		for dec in dec_lines:
+			ra = np.linspace(-180, 180, 1000)
+			dec_array = np.full_like(ra, dec)
+			ax.plot(np.radians(ra), np.radians(dec_array), color='gray', alpha=0.75, linewidth=0.5)
+
+		# set the tick labels
+		tick_labels = ['14h', '16h', '18h', '20h', '22h', '0h', '2h', '4h', '6h', '8h', '10h']
+		ax.set_xticklabels(tick_labels)
+
+		plt.legend()
+		plt.tight_layout()
+		plt.show()

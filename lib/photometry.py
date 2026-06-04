@@ -250,7 +250,7 @@ class Photometry:
 
 		'''
 
-		print('This is where differencing would go... IF I HAD ONE')
+		print('This is where a differencing function would go... IF I HAD ONE\n\n')
 
 		# grab the frames to subtract
 		frame_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
@@ -494,7 +494,6 @@ class Photometry:
 					delta = src['delta_mag']
 					color_list.append(color)
 					delta_list.append(delta)
-			yfit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
 
 			# plot an annotated frame
 			Plot.field(frame_data, field_path, aperture, boxes)
@@ -508,6 +507,8 @@ class Photometry:
 			plt.colorbar()
 			plt.xlabel('x pixel', **font)
 			plt.ylabel('y pixel', **font)
+			plt.xticks(**font)
+			plt.yticks(**font)
 			if aperture != None:
 				aperture.plot(color='lime', lw=0.5, alpha=0.5)
 			if boxes != None:
@@ -524,31 +525,10 @@ class Photometry:
 			plt.close()
 
 			# plot a histogram of the stellar fluxes
-			plt.clf()
-			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
-			plt.figure(figsize=Configuration.FIGURE_SIZE)
-			plt.hist(phot_table['aperture_sum'], bins=Configuration.HISTOGRAM_BINS, range=(-100, 200000), histtype=Configuration.HISTOGRAM_TYPE)
-			plt.yscale(Configuration.HISTOGRAM_SCALE)
-			plt.xlabel('Flux [ADU]', **font)
-			plt.ylabel('Count', **font)
-			if Configuration.SAVE_FIGURE:
-				plt.savefig(hst_path, dpi=Configuration.DPI)
-			plt.close()
+			Plot.stellar_histogram(phot_table['aperture_sum'], hst_path)
 
 			# plot a color-magnitude diagram
-			plt.clf()
-			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
-			plt.figure(figsize=Configuration.FIGURE_SIZE)
-			plt.scatter(color_list, delta_list, s=1, color='gray')
-			plt.plot(color_list, yfit, color='blue')
-			plt.title('Color-Magnitude Diagram', **font)
-			plt.xlabel('Color index [mag]', **font)
-			plt.ylabel('Delta magnitude [mag]', **font)
-			plt.xticks(**font)
-			plt.yticks(**font)
-			if Configuration.SAVE_FIGURE:
-				plt.savefig(colormag_path, dpi=Configuration.DPI)
-			plt.close()
+			Plot.colormag(color_list, delta_list, colormag_path)
 
 			# save the photometry table
 			if not os.path.exists(master_table_path):

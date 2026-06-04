@@ -247,22 +247,20 @@ class Survey:
 		:parameter field_id [str] - The hexadecimal code for the field
 
 		:return ra [float] - The right ascension of the field [deg]
-		:return de [float] - The declination of the field [deg]
+		:return dec [float] - The declination of the field [deg]
 		'''
 
-		dirs = Utility.get_directories(location='output', create=False)
-
 		# read the field list
-		field_path = dirs['analysis'] + 'toros_fields.dat'
+		field_path = Configuration.PLOUTON_DIRECTORY + 'fields/toros_fields.dat'
 		field_list = pd.read_csv(field_path, header=0, sep=' ')
 
 		# find the field
 		for i in range(len(field_list.field_id)):
 			if field_id == field_list.field_id[i]:
 				ra = float(field_list.iloc[i].ra)
-				de = float(field_list.iloc[i].dec)
+				dec = float(field_list.iloc[i].dec)
 
-		return ra, de
+		return ra, dec
 
 	@staticmethod
 	def sort_field_skymap(survey_fields, skymap, event_name):

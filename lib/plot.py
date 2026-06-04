@@ -1,4 +1,5 @@
 from config import Configuration
+from lib.calculator import Calculator
 from astropy.coordinates import SkyCoord
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
@@ -31,23 +32,34 @@ class Plot:
 		plt.close()
 
 	@staticmethod
-	def colormag(xlist, ylist, yfit, path, save=Configuration.SAVE_FIGURE):
+	def colormag(color_list, delta_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function draws a color-magnitude diagram.
 
-		plt.clf()
-		font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+		:parameter color_list - The list of catalog colors
+		:parameter delta_list - The list of difference magnitudes
+		:parameter save_path - The save path of the diagram
+		:parameter save_figure - A toggle to save or display the diagram
+
+		:return - Nothing is returned
+		'''
+
+		# calculate the linear fit
+		linear_fit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
+
+		# draw the diagram
 		plt.figure(figsize=Configuration.FIGURE_SIZE)
-		plt.scatter(xlist, ylist, s=1, color='gray')
-		plt.plot(xlist, yfit, color='blue')
-		plt.title('Color-Magnitude Diagram', **font)
-		plt.xlabel('Color index [mag]', **font)
-		plt.ylabel('Delta magnitude [mag]', **font)
-		plt.xticks(**font)
-		plt.yticks(**font)
+		plt.scatter(color_list, delta_list, s=1, color='gray')
+		plt.plot(color_list, linear_fit, ls='--', lw=0.75, color='black')
+		plt.title('Color-Magnitude Diagram')
+		plt.xlabel('Color index [mag]')
+		plt.ylabel('Delta magnitude [mag]')
 
-		if save:
-			plt.savefig(path, dpi=Configuration.DPI)
-
-		plt.close()
+		# save or display the diagram
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
 
 	@staticmethod
 	def extinction(xlist, ylist, yfit):
@@ -69,21 +81,25 @@ class Plot:
 		plt.close()
 
 	@staticmethod
-	def field(data, path, apertures=None, boxes=None, save=Configuration.SAVE_FIGURE):
+	def field(frame_data, apertures=None, boxes=None, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function 
 
-		plt.clf()
-		font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
-		plt.figure(figsize=Configuration.FIGURE_SIZE)
+		# calculate the range limits
 		interval = ZScaleInterval()
-		vmin, vmax = interval.get_limits(data)
-		plt.imshow(data, cmap=Configuration.CMAP, origin='lower', vmin=vmin, vmax=vmax)
-		plt.colorbar()
+		vmin, vmax = interval.get_limits(frame_data)
+
+		# draw the diagram
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
+		plt.imshow(frame_data, cmap=Configuration.CMAP, origin='lower', vmin=vmin, vmax=vmax)
 		plt.xlabel('x Pixel')
 		plt.ylabel('y Pixel')
+		plt.colorbar()
 
+		# draw the apertures
 		if apertures != None:
 			apertures.plot(color='lime', lw=0.5, alpha=0.5)
 
+		# draw the mask boxes
 		if boxes != None:
 			eml_box = boxes['eml_box']
 			emt_box = boxes['emt_box']
@@ -95,10 +111,12 @@ class Plot:
 			emr_box.plot(color='yellow', ls='dashed')
 			emb_box.plot(color='orange', ls='dashed')
 
-		if save:
-			plt.savefig(path, dpi=Configuration.DPI)
-
-		plt.close()
+		# save or display the figure
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
 
 	@staticmethod
 	def growth_radius(xlist, ylist):
@@ -119,21 +137,26 @@ class Plot:
 		plt.close()
 
 	@staticmethod
-	def stellar_histogram(flux_list, path, save=Configuration.SAVE_FIGURE):
+	def stellar_histogram(flux_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function draws a histogram of stellar fluxes.
 
-		plt.clf()
-		font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
+		:parameter flux_list - The list of stellar fluxes
+		:parameter save_path - The save path of the diagram
+		:parameter save_figure - A toggle to save or display the diagram
+
+		:return - Nothing is returned
+		'''
+
 		plt.figure(figsize=Configuration.FIGURE_SIZE)
-
-		plt.hist(flux_list, bins=Configuration.HISTOGRAM_BINS, range=(0, 100000), histtype=Configuration.HISTOGRAM_TYPE)
-
+		plt.hist(flux_list, bins=Configuration.HISTOGRAM_BINS, range=(0, 2.5e5), histtype=Configuration.HISTOGRAM_TYPE)
 		plt.yscale(Configuration.HISTOGRAM_SCALE)
-
-		plt.xlabel('Flux [ADU]', **font)
-		plt.ylabel('Count', **font)
-
-		plt.savefig(path, dpi=Configuration.DPI)
-		plt.close()
+		plt.xlabel('Flux [ADU]')
+		plt.ylabel('Count')
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
 
 	@staticmethod
 	def histogram(data, path, save=Configuration.SAVE_FIGURE):

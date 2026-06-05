@@ -496,39 +496,13 @@ class Photometry:
 					delta_list.append(delta)
 
 			# plot an annotated frame
-			Plot.field(frame_data, field_path, aperture, boxes)
-
-			plt.clf()
-			font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
-			plt.figure(figsize=Configuration.FIGURE_SIZE)
-			interval = ZScaleInterval()
-			vmin, vmax = interval.get_limits(frame_data)
-			plt.imshow(frame_data, cmap=Configuration.CMAP, origin='lower', vmin=vmin, vmax=vmax)
-			plt.colorbar()
-			plt.xlabel('x pixel', **font)
-			plt.ylabel('y pixel', **font)
-			plt.xticks(**font)
-			plt.yticks(**font)
-			if aperture != None:
-				aperture.plot(color='lime', lw=0.5, alpha=0.5)
-			if boxes != None:
-				eml_box = boxes['eml_box']
-				emt_box = boxes['emt_box']
-				emr_box = boxes['emr_box']
-				emb_box = boxes['emb_box']
-				eml_box.plot(color='cyan', ls='dashed')
-				emt_box.plot(color='lime', ls='dashed')
-				emr_box.plot(color='yellow', ls='dashed')
-				emb_box.plot(color='orange', ls='dashed')
-			if Configuration.SAVE_FIGURE:
-				plt.savefig(field_path, dpi=Configuration.DPI)
-			plt.close()
+			Plot.field(frame_data, aperture, boxes, field_path)
 
 			# plot a histogram of the stellar fluxes
 			Plot.stellar_histogram(phot_table['aperture_sum'], hst_path)
 
 			# plot a color-magnitude diagram
-			Plot.colormag(color_list, delta_list, colormag_path)
+			Plot.color_magnitude(color_list, delta_list, colormag_path)
 
 			# save the photometry table
 			if not os.path.exists(master_table_path):

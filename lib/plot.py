@@ -32,7 +32,7 @@ class Plot:
 		plt.close()
 
 	@staticmethod
-	def colormag(color_list, delta_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+	def color_magnitude(color_list, delta_list, save_path, save_figure=Configuration.SAVE_FIGURE):
 		'''This function draws a color-magnitude diagram.
 
 		:parameter color_list - The list of catalog colors
@@ -82,7 +82,16 @@ class Plot:
 
 	@staticmethod
 	def field(frame_data, apertures=None, boxes=None, save_path, save_figure=Configuration.SAVE_FIGURE):
-		'''This function 
+		'''This function draws an image with annotations.
+
+		:parameter frame_data - The image data array to be drawn
+		:parameter apertures - A set of apertures for optional display
+		:parameter boxes - A set of mask boxes for optional display
+		:parameter save_path - The save path of the diagram
+		:parameter save_figure - A toggle to save or display the diagram
+
+		:return - Nothing is returned
+		'''
 
 		# calculate the range limits
 		interval = ZScaleInterval()

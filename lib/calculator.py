@@ -1,5 +1,6 @@
 from config import Configuration
 from lib.utility import Utility
+
 from astropy.coordinates import AltAz, SkyCoord
 from scipy.optimize import curve_fit
 import numpy as np

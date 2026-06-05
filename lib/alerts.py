@@ -1,12 +1,13 @@
 from config import Configuration
 from lib.utility import Utility
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
 import requests
 import smtplib
 
-class Router:
+class Alerts:
 
 	@staticmethod
 	def filter_alert(value, topic):

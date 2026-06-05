@@ -1,5 +1,6 @@
 from config import Configuration
 from lib.calculator import Calculator
+
 from astropy.coordinates import SkyCoord
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
@@ -81,7 +82,7 @@ class Plot:
 		plt.close()
 
 	@staticmethod
-	def field(frame_data, apertures=None, boxes=None, save_path, save_figure=Configuration.SAVE_FIGURE):
+	def field(frame_data, apertures, boxes, save_path, save_figure=Configuration.SAVE_FIGURE):
 		'''This function draws an image with annotations.
 
 		:parameter frame_data - The image data array to be drawn
@@ -168,26 +169,32 @@ class Plot:
 			plt.show()
 
 	@staticmethod
-	def histogram(data, path, save=Configuration.SAVE_FIGURE):
+	def frame_histogram(frame_data, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function draws a histogram of pixel values.
 
-		plt.clf()
-		font = {'fontname':Configuration.FONT_NAME, 'size':Configuration.FONT_SIZE}
-		plt.figure(figsize=Configuration.FIGURE_SIZE)
+		:parameter frame_data - The image data array
+		:parameter save_path - The save path of the diagram
+		:parameter save_figure - A toggle to save or display the diagram
+
+		:return - Nothing is returned
+		'''
 
 		# calculate the histogram limits
-		data_mn, data_md, data_sd = sigma_clipped_stats(data, sigma=Configuration.SIG_BKG)
+		data_mn, data_md, data_sd = sigma_clipped_stats(frame_data, sigma=Configuration.SIG_BKG)
 		xmin = data_md - Configuration.HISTOGRAM_LIMIT * data_sd
 		xmax = data_md + Configuration.HISTOGRAM_LIMIT * data_sd
-
-		plt.hist(data.flatten(), bins=Configuration.HISTOGRAM_BINS, range=(xmin, xmax), histtype=Configuration.HISTOGRAM_TYPE)
-
+		
+		# draw the plot
+		plf.figure(figsize=Configuration.FIGURE_SIZE)
+		plt.hist(frame_data.flatten(), bins=Configuration.HISTOGRAM_BINS, range=(xmin, xmax), histtype=Configuration.HISTOGRAM_TYPE)
 		plt.yscale(Configuration.HISTOGRAM_SCALE)
-
 		plt.xlabel('Pixel Value [ADU]', **font)
 		plt.ylabel('Count', **font)
-
-		plt.savefig(path, dpi=Configuration.DPI)
-		plt.close()
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
 
 	@staticmethod
 	def lightcurve(xlist, ylist, elist):
@@ -303,7 +310,7 @@ class Plot:
 			ax.scatter(gc_ra_rad, gc_dec_rad, marker='+', s=200, color='black', zorder=10)
 
 		if Configuration.SKYMAP_MODE == 'survey_fields':
-			field_path = Configuration.PLOUTON_DIRECTORY + 'fields/toros_fields.dat'
+			field_path = Configuration.PLOUTON_DIRECTORY + 'fields/toros_fields' + Configuration.TABLE_EXTENSION
 			field_file = open(field_path, 'r')
 			gal_ra_list = []
 			gal_dec_list = []
@@ -329,7 +336,7 @@ class Plot:
 			ax.scatter(egal_ra_list, egal_dec_list, marker='.', s=10, color='blue')
 
 		elif Configuration.SKYMAP_MODE == 'comm_fields':
-			field_path = Configuration.PLOUTON_DIRECTORY + 'fields/comm_fields.dat'
+			field_path = Configuration.PLOUTON_DIRECTORY + 'fields/comm_fields' + Configuration.TABLE_EXTENSION
 			field_file = open(field_path, 'r')
 			com_field_ra_list = []
 			com_field_dec_list = []
@@ -353,7 +360,6 @@ class Plot:
 				field_dec = float(np.radians(field_dec))
 				field_type = ln[3]
 				event_type = ln[4]
-				event_name = ln[5]
 				if field_type == 'C':
 					com_field_ra_list.append(field_ra)
 					com_field_dec_list.append(field_dec)

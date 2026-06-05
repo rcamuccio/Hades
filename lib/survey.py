@@ -2,6 +2,7 @@ from config import Configuration
 from lib.calculator import Calculator
 from lib.observatory import Observatory
 from lib.utility import Utility
+
 from astroplan import Observer
 from astropy import units as u
 from astropy.coordinates import EarthLocation, get_sun, SkyCoord
@@ -241,17 +242,29 @@ class Survey:
 		return final_df
 
 	@staticmethod
+	def get_field_information(field_id):
+
+		field_path = Configuration.PLOUTON_DIRECTORY + 'fields/comm_fields' + Configuration.TABLE_EXTENSION
+		field_file = open(field_path, 'r')
+		for ln in field_file:
+			ln = ln.split()
+			if ln[0] == field_id:
+				date_list = ln[-1].split('/')
+		
+		return date_list
+
+	@staticmethod
 	def get_field(field_id):
 		'''This function returns the right ascension and declination of the given field ID.
 
-		:parameter field_id [str] - The hexadecimal code for the field
+		:parameter field_id [str] - The hexadecimal code for the field (e.g. xx.xxx)
 
 		:return ra [float] - The right ascension of the field [deg]
 		:return dec [float] - The declination of the field [deg]
 		'''
 
 		# read the field list
-		field_path = Configuration.PLOUTON_DIRECTORY + 'fields/toros_fields.dat'
+		field_path = Configuration.PLOUTON_DIRECTORY + 'fields/toros_fields' + Configuration.TABLE_EXTENSION
 		field_list = pd.read_csv(field_path, header=0, sep=' ')
 
 		# find the field

@@ -21,7 +21,6 @@ from photutils.detection import DAOStarFinder
 from photutils.segmentation import detect_threshold, detect_sources
 from photutils.utils import circular_footprint
 from reproject import reproject_interp
-
 import astropy.wcs as pywcs
 import ccdproc
 import glob
@@ -1170,7 +1169,7 @@ class Photometry:
 
 			# plot a histogram of the stack
 			if not os.path.exists(hst_path):
-				Plot.histogram(stack_data, hst_path)
+				Plot.frame_histogram(stack_data, hst_path)
 
 			# calculate the background statistics
 			print('\tCalculating background statistics')
@@ -1178,11 +1177,11 @@ class Photometry:
 
 			# plot the background image
 			if not os.path.exists(img_bkg_path):
-				Plot.field(bkg2d_data, img_bkg_path)
+				Plot.field(bkg2d_data, None, None, img_bkg_path)
 
 			# plot a histogram of the background
 			if not os.path.exists(hst_bkg_path):
-				Plot.histogram(bkg2d_data, hst_bkg_path)
+				Plot.frame_histogram(sbkg2d_data, hst_bkg_path)
 
 			# edit the stack header
 			stk_hdu = fits.PrimaryHDU(stack_data)
@@ -1593,7 +1592,7 @@ class Photometry:
 
 		# save the initial background
 		if not os.path.exists(ini_bkg_img_path):
-			Plot.field(bkg2d_ini_data, ini_bkg_img_path)
+			Plot.field(bkg2d_ini_data, None, None, ini_bkg_img_path)
 
 		# subtract the initial background
 		bkg_method = Configuration.BKG_METHOD
@@ -1607,7 +1606,7 @@ class Photometry:
 
 		# save the residual background
 		if not os.path.exists(res_bkg_img_path):
-			Plot.field(bkg2d_res_data, res_bkg_img_path)
+			Plot.field(bkg2d_res_data, None, None, res_bkg_img_path)
 			
 		# edit the header
 		cf_header = raw_frame_header

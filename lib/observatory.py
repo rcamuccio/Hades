@@ -1,4 +1,5 @@
 from config import Configuration
+
 import numpy as np
 
 class Observatory:

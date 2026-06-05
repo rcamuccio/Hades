@@ -1,4 +1,5 @@
 from config import Configuration
+
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table

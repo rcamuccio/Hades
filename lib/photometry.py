@@ -347,166 +347,164 @@ class Photometry:
 		return table
 
 	@staticmethod
-	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name=None):
+	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name):
 		'''This function performs aperture photometry on a FITS image and returns a table of photometric measurements.
 
 		:parameter frame_data - The image data array
 		:parameter frame_header - The image header
 		:parameter match_table - The matched catalog table
 		:parameter master_table_path - The photometry table save path
+		:parameter output_name - A string for naming the output products
 
 		:return master_table - The photometry table performed at the matched catalog positions
 		'''
 
+		print('Performing frame aperture photometry')
+
+		# main output directory
 		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
 
+		# histogram paths
 		hst_flux_path = output_directory + 'hst/flux_' + output_name + Configuration.IMAGE_EXTENSION
 		hst_inst_mag_path = output_directory + 'hst/inst_mag_' + output_name + Configuration.IMAGE_EXTENSION
 		hst_gaia_mag_path = output_directory + 'hst/gaia_mag_' + output_name + Configuration.IMAGE_EXTENSION
+		
+		# field path
 		field_path = output_directory + 'img/' + output_name + Configuration.IMAGE_EXTENSION
+		
+		# color-magnitude diagram path
 		colormag_path = output_directory + 'plt/colormag_' + output_name + Configuration.IMAGE_EXTENSION
 
+		# generate the mask
+		mask, boxes = Photometry.make_mask(frame_data)
+
+		# get the observation time
+		try:
+			time = Time(frame_header['STKJD'], format='jd', scale='utc')
+			jd = time
+		except KeyError:
+			time = Time(frame_header['DATE'], format='isot', scale='utc')
+			jd = time.jd
+
+		# get the airmass
+		location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
+		field_ra = float(Survey.get_field(field)[0])
+		field_dec = float(Survey.get_field(field)[1])
+		altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
+		airmass = Calculator.airmass(altitude)
+
+		# get the exposure time
+		exp_time = frame_header['EXPTIME']
+
+		# calculate the background statistics
+		glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
+
+		# extract and convert coordinates from the input table
+		wcs = WCS(frame_header)
+		sky_coords = []
+		for obj in match_table:
+			ra = obj['ra']
+			dec = obj['dec']
+			coord = (ra, dec)
+			sky_coords.append(coord)
+		sky_pos = SkyCoord(sky_coords, unit='deg')
+		pix_pos = skycoord_to_pixel(sky_pos, wcs=wcs)
+		pix_coords = []
+		for px in range(len(pix_pos[0])):
+			xp = pix_pos[0][px]
+			yp = pix_pos[1][px]
+			coord = (xp, yp)
+			pix_coords.append(coord)
+
+		# create the photometry apertures
+		aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
+		annulus = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
+
+		# measure the background within the annuli
+		annulus_stats = ApertureStats(frame_data, annulus)
+		annulus_mean = annulus_stats.mean
+
+		# perform aperture photometry at all source positions
+		phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
+
+		# calculate the residual flux
+		aperture_residual = phot_table['aperture_sum'] - annulus_mean * aperture.area
+		phot_table['aperture_residual'] = aperture_residual
+
+		# merge the input and photometry tables
+		master_table = hstack([match_table, phot_table])
+
+		# calculate magnitudes and errors
+		flux_list = []
+		flux_err_list = []
+		inst_mag_list = []
+		inst_mag_err_list = []
+		color_list = []
+		delta_mag_list = []
+		flux_flag_list = []
+		color_flag_list = []
+
+		for src in master_table:
+			flux = src['aperture_residual']
+
+			if src['aperture_residual'] < 0.:
+				flux = abs(glob_bkg_md)
+				flux_flag_list.append(True)
+			else:
+				flux_flag_list.append(False)
+
+			flux_err = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
+			inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
+			inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
+
+			if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):
+				color = -9.999999
+				cat_mag = -9.999999
+				delta_mag = -9.999999
+				color_flag_list.append(True)
+			else:
+				b = src['phot_bp_mean_mag']
+				r = src['phot_rp_mean_mag']
+				color = b - r
+				cat_mag = src['phot_g_mean_mag']
+				delta_mag = cat_mag - inst_mag
+				color_flag_list.append(False)
+
+			flux_list.append(flux)
+			flux_err_list.append(flux_err)
+			inst_mag_list.append(inst_mag)
+			inst_mag_err_list.append(inst_mag_err)
+			color_list.append(color)
+			delta_mag_list.append(delta_mag)
+
+		master_table['flux'] = flux_list
+		master_table['flux_flag'] = flux_flag_list
+		master_table['flux_err'] = flux_err_list
+		master_table['inst_mag'] = inst_mag_list
+		master_table['inst_mag_err'] = inst_mag_err_list
+		master_table['color'] = color_list
+		master_table['color_flag'] = color_flag_list
+		master_table['delta_mag'] = delta_mag_list
+
+		# save the photometry table
 		if not os.path.exists(master_table_path):
-			print('Performing frame aperture photometry')
+			master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
 
-			# get the mask
-			mask, boxes = Photometry.make_mask(frame_data)
-
-			# get the coordinates
-			wcs = WCS(frame_header)
-
-			# get the observation time
-			try:
-				time = Time(frame_header['STKJD'], format='jd', scale='utc')
-				jd = time
-			except KeyError:
-				time = Time(frame_header['DATE'], format='isot', scale='utc')
-				jd = time.jd
-
-			# get the airmass
-			location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
-			field_ra = float(Survey.get_field(field)[0])
-			field_dec = float(Survey.get_field(field)[1])
-			altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
-			airmass = Calculator.airmass(altitude)
-
-			# get the exposure time
-			exp_time = frame_header['EXPTIME']
-
-			# calculate the background statistics
-			glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
-
-			# extract and convert coordinates from the input table
-			sky_coords = []
-			for obj in match_table:
-				ra = obj['ra']
-				dec = obj['dec']
-				coord = (ra, dec)
-				sky_coords.append(coord)
-			sky_pos = SkyCoord(sky_coords, unit='deg')
-			pix_pos = skycoord_to_pixel(sky_pos, wcs=wcs)
-			pix_coords = []
-			for px in range(len(pix_pos[0])):
-				xp = pix_pos[0][px]
-				yp = pix_pos[1][px]
-				coord = (xp, yp)
-				pix_coords.append(coord)
-
-			# create the photometry apertures
-			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
-			annulus = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
-
-			# measure the background within the annuli
-			annulus_stats = ApertureStats(frame_data, annulus)
-			annulus_mean = annulus_stats.mean
-
-			# perform aperture photometry at all source positions
-			phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
-
-			# calculate the residual flux
-			aperture_residual = phot_table['aperture_sum'] - annulus_mean * aperture.area
-			phot_table['aperture_residual'] = aperture_residual
-
-			# merge the input and photometry tables
-			master_table = hstack([match_table, phot_table])
-
-			# calculate magnitudes and errors
-			flux_list = []
-			flux_err_list = []
-			inst_mag_list = []
-			inst_mag_err_list = []
-			color_list = []
-			delta_mag_list = []
-			flux_flag_list = []
-			color_flag_list = []
-
-			for src in master_table:
-				flux = src['aperture_residual']
-
-				if src['aperture_residual'] < 0.:
-					flux = abs(glob_bkg_md)
-					flux_flag_list.append(True)
-				else:
-					flux_flag_list.append(False)
-
-				flux_err = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
-				inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
-				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
-
-				if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):
-					color = -9.999999
-					cat_mag = -9.999999
-					delta_mag = -9.999999
-					color_flag_list.append(True)
-				else:
-					b = src['phot_bp_mean_mag']
-					r = src['phot_rp_mean_mag']
-					color = b - r
-					cat_mag = src['phot_g_mean_mag']
-					delta_mag = cat_mag - inst_mag
-					color_flag_list.append(False)
-
-				flux_list.append(flux)
-				flux_err_list.append(flux_err)
-				inst_mag_list.append(inst_mag)
-				inst_mag_err_list.append(inst_mag_err)
-				color_list.append(color)
-				delta_mag_list.append(delta_mag)
-
-			master_table['flux'] = flux_list
-			master_table['flux_flag'] = flux_flag_list
-			master_table['flux_err'] = flux_err_list
-			master_table['inst_mag'] = inst_mag_list
-			master_table['inst_mag_err'] = inst_mag_err_list
-			master_table['color'] = color_list
-			master_table['color_flag'] = color_flag_list
-			master_table['delta_mag'] = delta_mag_list
-
-			# calculate transform and zero point
+		# calculate the transform and zero point
+		if not os.path.exists(colormag_path):
 			color_list = []
 			delta_list = []
 			for src in master_table:
-				if (src['flux_flag'] == True) or (src['color_flag'] == True):
-					pass
-				else:
+				if (src['flux_flag'] == False) and (src['color_flag'] == False):
 					color = src['color']
 					delta = src['delta_mag']
 					color_list.append(color)
 					delta_list.append(delta)
-
-			# plot an annotated frame
-			Plot.field(frame_data, aperture, boxes, field_path)
-
-			# plot a color-magnitude diagram
 			Plot.color_magnitude(color_list, delta_list, colormag_path)
 
-			# save the photometry table
-			if not os.path.exists(master_table_path):
-				master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
-
-		else:
-			print('Reading existing master photometry table')
-			master_table = Table.read(master_table_path, format=Configuration.TABLE_FORMAT)
+		# draw an annotated frame
+		if not os.path.exists(field_path):
+			Plot.field(frame_data, aperture, boxes, field_path)
 
 		# draw a histogram of the stellar fluxes
 		if not os.path.exists(hst_flux_path):
@@ -521,6 +519,69 @@ class Photometry:
 			Plot.stellar_gaia_histogram(master_table['phot_rp_mean_mag'], master_table['phot_g_mean_mag'], master_table['phot_bp_mean_mag'], hst_gaia_mag_path)
 
 		return master_table
+
+	@staticmethod
+	def select_stars(source_table):
+
+		lower_filter = source_table['phot_g_mean_mag'] > 14
+		filtered_table = source_table[lower_filter]
+
+		upper_filter = filtered_table['phot_g_mean_mag'] < 16
+		filtered_table = filtered_table[upper_filter]
+
+		variable_filter = filtered_table['phot_variable_flag'] != 'VARIABLE'
+		filtered_table = filtered_table[variable_filter]
+
+		qso_filter = filtered_table['in_qso_candidates'] != True
+		filtered_table = filtered_table[qso_filter]
+
+		galaxy_filter = filtered_table['in_galaxy_candidates'] != True
+		filtered_table = filtered_table[galaxy_filter]
+
+		edge_x_filter = filtered_table['xcenter'] > 
+
+		return filtered_table
+
+	@staticmethod
+	def frame_timeseries(date, field, source_table):
+		'''This function performs photometry for sources in a provided input catalog on a particular date and field.
+
+		:parameter date - The date string
+		:parameter field - The field ID
+		:parameter source_table - The table of sources
+
+		:return -
+		'''
+
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+
+		os.chdir(output_directory)
+		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
+		num_frames = len(frame_list)
+
+		print('Performing timeseries on', len(source_table), 'sources')
+
+		for i in range(len(source_table)):
+			ra = float(source_table['ra'][i])
+			dec = float(source_table['dec'][i])
+			mmag = float(source_table['inst_mag'][i])
+			time_list = []
+			mag_list = []
+			dmag_list = []
+			for frm in range(num_frames):
+				frame = fits.open(frame_list[frm])
+				frame_data = frame[0].data
+				frame_header = frame[0].header
+				jd, airmass, flux, flux_error, inst_mag, inst_mag_error = Photometry.point_aperture_photometry(date, field, frame_data, frame_header, ra, dec)
+				dmag = mmag - inst_mag
+				time_list.append(jd)
+				mag_list.append(inst_mag)
+				dmag_list.append(dmag)
+			print(int(source_table['id'][i]))
+			print(time_list)
+			print(mag_list)
+			print(dmag_list)
+			print()
 
 	@staticmethod
 	def timeseries(field, date, point_ra, point_dec):
@@ -566,8 +627,6 @@ class Photometry:
 
 	@staticmethod
 	def point_aperture_photometry(date, field, frame_data, frame_header, point_ra, point_dec):
-
-		print('Performing point aperture photometry')
 
 		# get the mask
 		mask, boxes = Photometry.make_mask(frame_data)
@@ -618,6 +677,13 @@ class Photometry:
 		flux_error = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
 		inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
 		inst_mag_error = (2.5 * flux_error) / (np.log(10.) * flux)
+
+		jd = float(jd)
+		airmass = float(airmass)
+		flux = float(flux)
+		flux_error = float(flux_error)
+		inst_mag = float(inst_mag)
+		inst_mag_error = float(inst_mag_error)
 
 		return jd, airmass, flux, flux_error, inst_mag, inst_mag_error
 		

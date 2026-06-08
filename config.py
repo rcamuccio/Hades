@@ -10,9 +10,9 @@ class Configuration:
 	VERBOSE = False
 
 	# products
-	FIELD = 'FIELD_42.074'
-	DATES = ['2024-11-10', '2024-11-11', '2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16', '2024-11-17', '2024-11-18', '2024-11-19', '2024-11-20']
-	#DATES = ['2024-11-10']
+	FIELD = '42.074'
+	SOURCE_RA = 148.2712725
+	SOURCE_DEC = -6.5137330
 
 	# directories
 	HADES_DIRECTORY = '/home/epimetheus/Documents/hades/'

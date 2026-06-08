@@ -10,8 +10,11 @@ import time
 from astropy import log
 log.setLevel('WARNING')
 
+import logging
+logger = logging.getLogger('astroquery')
+logger.setLevel(logging.INFO)
+
 os.system('clear')
-#print('[\033[1m' + 'Πλούτων' + '\033[0m]')
 print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m] - Running main pipeline\n')
 st = time.time()
 
@@ -27,36 +30,37 @@ dark_directory = output_data_directory + 'dark/'
 flat_directory = output_data_directory + 'flat/'
 clean_frame_directory = output_data_directory + 'clean/'
 output_data_directory_list = [dark_directory, flat_directory, clean_frame_directory]
-for dr in output_data_directory_list:
-	if not os.path.exists(dr):
-		os.mkdir(dr)
 
 # grab the dates
-field = Configuration.FIELD
-field_id = field.split('_')[1]
+field_id = Configuration.FIELD
 ra = float(Survey.get_field(field_id)[0])
 dec = float(Survey.get_field(field_id)[1])
-date_list = Configuration.DATES
+date_list = Survey.get_field_information(field_id)
 num_dates = len(date_list)
 
 # run the main pipeline
 for dte in range(num_dates):
 	date = date_list[dte]
+	out_name = 'FIELD_' + str(field_id) + '_' + str(date)
 
-	out_name = str(field) + '_' + str(date)
-	out_directory = clean_frame_directory + date + '/' + field + '/'
+	# define the output directories
+	date_dark_directory = dark_directory + date + '/FIELD_' + field_id + '/'
+	date_flat_directory = flat_directory + date + '/FIELD_' + field_id + '/'
+	date_clean_frame_directory = clean_frame_directory + date + '/FIELD_' + field_id + '/'
+	bkg_directory = date_clean_frame_directory + 'bkg/'
+	hst_directory = date_clean_frame_directory + 'hst/'
+	img_directory = date_clean_frame_directory + 'img/'
+	plt_directory = date_clean_frame_directory + 'plt/'
+	res_directory = date_clean_frame_directory + 'res/'
+	tbl_directory = date_clean_frame_directory + 'tbl/'
 
-	bkg_directory = out_directory + 'bkg/'
-	hst_directory = out_directory + 'hst/'
-	img_directory = out_directory + 'img/'
-	plt_directory = out_directory + 'plt/'
-	res_directory = out_directory + 'res/'
-	tbl_directory = out_directory + 'tbl/'
-	out_directory_list = [bkg_directory, hst_directory, img_directory, plt_directory, res_directory, tbl_directory]
-	for dr in out_directory_list:
+	# create the output directories
+	directory_list = [date_dark_directory, date_flat_directory, date_clean_frame_directory, bkg_directory, hst_directory, img_directory, plt_directory, res_directory, tbl_directory]
+	for dr in directory_list:
 		if not os.path.exists(dr):
-			os.mkdir(dr)
+			os.makedirs(dr)
 
+	# define the output tables
 	tbl_query_aavso_path = tbl_directory + 'tbl_query_aavso' + Configuration.TABLE_EXTENSION
 	tbl_query_gaia_path = tbl_directory + 'tbl_query_gaia' + Configuration.TABLE_EXTENSION
 	tbl_query_glade_path = tbl_directory + 'tbl_query_glade' + Configuration.TABLE_EXTENSION
@@ -74,10 +78,10 @@ for dte in range(num_dates):
 	Photometry.make_flat(date)
 
 	# reduce the frames
-	frame_table = Photometry.clean_raw_frames(date, field)
+	frame_table = Photometry.clean_raw_frames(date, field_id)
 
 	# make a stack
-	stack_data, stack_header = Photometry.make_stack(date, field, frame_table)
+	stack_data, stack_header = Photometry.make_stack(date, field_id, frame_table)
 
 	# create a queried source catalog
 	query_table = Query.gaia_cone(ra, dec, Configuration.QUERY_RADIUS, tbl_query_gaia_path)
@@ -89,20 +93,19 @@ for dte in range(num_dates):
 	match_table = Photometry.match_catalogs(source_table, query_table, tbl_match_path)
 
 	# perform photometry on the stack
-	master_table = Photometry.frame_aperture_photometry(date, field, stack_data, stack_header, match_table, tbl_master_path, output_name=out_name)
+	master_table = Photometry.frame_aperture_photometry(date, field_id, stack_data, stack_header, match_table, tbl_master_path, output_name=out_name)
 
 	# perform timeseries on clean frames
 	test_ra = 148.2712725
 	test_dec = -6.5137330
-	timeseries_table = Photometry.timeseries(field, date, test_ra, test_dec)
+	timeseries_table = Photometry.timeseries(field_id, date, test_ra, test_dec)
 
 	# difference frames
-	Photometry.difference_frames(field, date)
+	Photometry.difference_frames(field_id, date)
 
 # create global
 
 
-
 fn = time.time()
 dt = np.around(fn - st, decimals=2)
-print('\nMain pipeline finished in', dt, 's')
+print('\n[\033[1m' + 'ᾍδης ἀπέρχεται' + '\033[0m] - Main pipeline finished (' + str(dt) + 's)\n')

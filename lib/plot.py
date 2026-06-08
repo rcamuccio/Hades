@@ -147,7 +147,7 @@ class Plot:
 		plt.close()
 
 	@staticmethod
-	def stellar_histogram(flux_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+	def stellar_flux_histogram(flux_list, save_path, save_figure=Configuration.SAVE_FIGURE):
 		'''This function draws a histogram of stellar fluxes.
 
 		:parameter flux_list - The list of stellar fluxes
@@ -159,6 +159,86 @@ class Plot:
 
 		plt.figure(figsize=Configuration.FIGURE_SIZE)
 		plt.hist(flux_list, bins=Configuration.HISTOGRAM_BINS, range=(0, 2.5e5), histtype=Configuration.HISTOGRAM_TYPE)
+		plt.yscale(Configuration.HISTOGRAM_SCALE)
+		plt.xlabel('Flux [ADU]')
+		plt.ylabel('Count')
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
+
+	@staticmethod
+	def stellar_gaia_histogram(r_mag_list, g_mag_list, b_mag_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function draws a histogram of stellar Gaia magnitudes.
+
+		:parameter r_mag_list - The list of Gaia Rp magnitudes
+		:parameter g_mag_list - The list of Gaia Gp magnitudes
+		:parameter b_mag_list - The list of Gaia Bp magnitudes
+		:parameter save_path - The save path of the diagram
+		:parameter save_figure - A toggle to save or display the diagram
+
+		:return - Nothing is returned
+		'''
+
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
+		plt.hist(r_mag_list, bins=Configuration.HISTOGRAM_BINS, histtype=Configuration.HISTOGRAM_TYPE, color='red', label='Gaia Rp')
+		plt.hist(g_mag_list, bins=Configuration.HISTOGRAM_BINS, histtype=Configuration.HISTOGRAM_TYPE, color='green', label='Gaia G')
+		plt.hist(b_mag_list, bins=Configuration.HISTOGRAM_BINS, histtype=Configuration.HISTOGRAM_TYPE, color='blue', label='Gaia Bp')
+		plt.yscale(Configuration.HISTOGRAM_SCALE)
+		plt.xlabel('Gaia magnitude [mag]')
+		plt.ylabel('Count')
+		plt.legend()
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
+
+	@staticmethod
+	def stellar_magnitude_histogram(mag_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function draws a histogram of stellar magnitudes.
+
+		:parameter mag_list - The list of stellar magnitudes
+		:parameter save_path - The save path of the diagram
+		:parameter save_figure - A toggle to save or display the diagram
+
+		:return - Nothing is returned
+		'''
+
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
+		plt.hist(mag_list, bins=Configuration.HISTOGRAM_BINS, range=(-12, 4), histtype=Configuration.HISTOGRAM_TYPE)
+		plt.yscale(Configuration.HISTOGRAM_SCALE)
+		plt.xlabel('Instrumental magnitude [mag]')
+		plt.ylabel('Count')
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
+
+	@staticmethod
+	def stellar_histogram(flux_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function draws a histogram of stellar fluxes.
+
+		:parameter flux_list - The list of stellar fluxes
+		:parameter save_path - The save path of the diagram
+		:parameter save_figure - A toggle to save or display the diagram
+
+		:return - Nothing is returned
+		'''
+
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
+
+		if Configuration.HISTOGRAM_FLUX == 'flux':
+			plt.hist(flux_list, bins=Configuration.HISTOGRAM_BINS, range=(0, 2.5e5), histtype=Configuration.HISTOGRAM_TYPE)
+			plt.xlabel('Flux [ADU]')
+		elif Configuration.HISTOGRAM_FLUX == 'mag':
+			plt.hist(flux_list, bins=Configuration.HISTOGRAM_BINS, histtype=Configuration.HISTOGRAM_TYPE)
+			plt.xlabel('Instrumental magnitude [mag]')
+		elif Configuration.HISTOGRAM_FLUX == 'gaia':
+			plt.hist(flux_list, bins=Configuration.HISTOGRAM_BINS, histtype=Configuration.HISTOGRAM_TYPE)
+			plt.xlabel('Gaia magnitude [mag]')
 		plt.yscale(Configuration.HISTOGRAM_SCALE)
 		plt.xlabel('Flux [ADU]')
 		plt.ylabel('Count')

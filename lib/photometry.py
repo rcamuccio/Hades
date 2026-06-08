@@ -83,11 +83,11 @@ class Photometry:
 		:return frame_table - A table with the statistics of each raw data frame
 		'''
 
-		print('Cleaning available raw frames (' + field + ', ' + date + ')')
+		print('Cleaning available raw frames (FIELD_' + field + ', ' + date + ')')
 
 		# set the input and output directories
-		raw_frame_directory = Configuration.INPUT_DATA_DIRECTORY + 'raw/' + date + '/' + field + '/'
-		clean_frame_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
+		raw_frame_directory = Configuration.INPUT_DATA_DIRECTORY + 'raw/' + date + '/FIELD_' + field + '/'
+		clean_frame_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
 
 		# create the output directory
 		if not os.path.exists(clean_frame_directory):
@@ -98,7 +98,7 @@ class Photometry:
 		flat_frame_path = Configuration.OUTPUT_DATA_DIRECTORY + 'flat/' + date + '/ff_' + date + Configuration.FILE_EXTENSION
 
 		# generate a frame table
-		frame_table_path = clean_frame_directory + 'stat_' + field + '_' + date + '.dat'
+		frame_table_path = clean_frame_directory + 'stat_FIELD_' + field + '_' + date + Configuration.TABLE_EXTENSION
 		table_columns = ('frm', 'dte', 'jd', 'tex', 'bmd', 'bsd', 'rmn', 'rmd', 'rsd')
 		table_datatypes = (str, str, float, float, float, float, float, float, float)
 		frame_table = Table(names=table_columns, dtype=table_datatypes)
@@ -166,9 +166,8 @@ class Photometry:
 				# solve the field
 				if not Configuration.SKIP_SOLVE:
 					print('\t\tSolving field')
-					field_id = field.split('_')[1]
 					fits.writeto(clean_frame_path, clean_frame_data, clean_frame_header)
-					Photometry.solve_field(clean_frame, clean_frame_directory, field_id, verbose=Configuration.VERBOSE)
+					Photometry.solve_field(clean_frame, clean_frame_directory, field, verbose=Configuration.VERBOSE)
 
 				# align the frames to the first
 				if not Configuration.SKIP_ALIGN:
@@ -252,13 +251,13 @@ class Photometry:
 		print('This is where a differencing function would go... IF I HAD ONE\n\n')
 
 		# grab the frames to subtract
-		frame_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
+		frame_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
 		os.chdir(frame_directory)
 		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
 		num_frames = len(frame_list)
 
 		# define the reference frame for differencing
-		reference_frame = 'stack_' + field + '_' + date + Configuration.FILE_EXTENSION
+		reference_frame = 'stack_FIELD_' + field + '_' + date + Configuration.FILE_EXTENSION
 		reference_frame_path = frame_directory + reference_frame
 
 		# prepare the oisdifference.c file for differencing
@@ -359,9 +358,11 @@ class Photometry:
 		:return master_table - The photometry table performed at the matched catalog positions
 		'''
 
-		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
 
-		hst_path = output_directory + 'hst/flux_' + output_name + Configuration.IMAGE_EXTENSION
+		hst_flux_path = output_directory + 'hst/flux_' + output_name + Configuration.IMAGE_EXTENSION
+		hst_inst_mag_path = output_directory + 'hst/inst_mag_' + output_name + Configuration.IMAGE_EXTENSION
+		hst_gaia_mag_path = output_directory + 'hst/gaia_mag_' + output_name + Configuration.IMAGE_EXTENSION
 		field_path = output_directory + 'img/' + output_name + Configuration.IMAGE_EXTENSION
 		colormag_path = output_directory + 'plt/colormag_' + output_name + Configuration.IMAGE_EXTENSION
 
@@ -384,9 +385,8 @@ class Photometry:
 
 			# get the airmass
 			location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
-			field_id = field.split('_')[1]
-			field_ra = float(Survey.get_field(field_id)[0])
-			field_dec = float(Survey.get_field(field_id)[1])
+			field_ra = float(Survey.get_field(field)[0])
+			field_dec = float(Survey.get_field(field)[1])
 			altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
 			airmass = Calculator.airmass(altitude)
 
@@ -497,9 +497,6 @@ class Photometry:
 			# plot an annotated frame
 			Plot.field(frame_data, aperture, boxes, field_path)
 
-			# plot a histogram of the stellar fluxes
-			Plot.stellar_histogram(phot_table['aperture_sum'], hst_path)
-
 			# plot a color-magnitude diagram
 			Plot.color_magnitude(color_list, delta_list, colormag_path)
 
@@ -510,6 +507,18 @@ class Photometry:
 		else:
 			print('Reading existing master photometry table')
 			master_table = Table.read(master_table_path, format=Configuration.TABLE_FORMAT)
+
+		# draw a histogram of the stellar fluxes
+		if not os.path.exists(hst_flux_path):
+			Plot.stellar_flux_histogram(master_table['aperture_sum'], hst_flux_path)
+
+		# draw a histogram of the instrumental magnitudes
+		if not os.path.exists(hst_inst_mag_path):
+			Plot.stellar_magnitude_histogram(master_table['inst_mag'], hst_inst_mag_path)
+
+		# draw a histogram of the Gaia magnitudes
+		if not os.path.exists(hst_gaia_mag_path):
+			Plot.stellar_gaia_histogram(master_table['phot_rp_mean_mag'], master_table['phot_g_mean_mag'], master_table['phot_bp_mean_mag'], hst_gaia_mag_path)
 
 		return master_table
 
@@ -525,8 +534,8 @@ class Photometry:
 		:return table - The table of photometry measurements
 		'''
 
-		table_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
-		table_path = table_directory + 'flux_' + field + '_' + date + '.dat'
+		table_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+		table_path = table_directory + 'flux_FIELD_' + field + '_' + date + '.dat'
 
 		if not os.path.exists(table_path):
 			table_cols = ('frm', 'jd', 'x', 'flx', 'flxerr', 'mag', 'magerr')
@@ -1123,18 +1132,18 @@ class Photometry:
 		:return stack_header - The stacked image header
 		'''
 
-		stack_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/' + field + '/'
-		stack_subname = 'stack_' + field + '_' + date
+		stack_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+		stack_subname = 'stack_FIELD_' + field + '_' + date
 		stack_name = stack_subname + Configuration.FILE_EXTENSION
 		stack_path = stack_directory + stack_name
 
 		# image paths
 		#img_path = stack_directory + 'img/' + field + '_' + date + Configuration.IMAGE_EXTENSION
-		img_bkg_path = stack_directory + 'bkg/bkg_stack_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		img_bkg_path = stack_directory + 'bkg/bkg_stack_FIELD_' + field + '_' + date + Configuration.IMAGE_EXTENSION
 
 		# histogram paths
-		hst_path = stack_directory + 'hst/' + field + '_' + date + Configuration.IMAGE_EXTENSION
-		hst_bkg_path = stack_directory + 'hst/bkg_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		hst_path = stack_directory + 'hst/FIELD_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		hst_bkg_path = stack_directory + 'hst/bkg_FIELD_' + field + '_' + date + Configuration.IMAGE_EXTENSION
 
 		if not os.path.exists(stack_path):
 			# grab the individual frames
@@ -1162,7 +1171,7 @@ class Photometry:
 			# combine the frames
 			stack_list = sorted(glob.glob('aln_*' + Configuration.FILE_EXTENSION))
 			num_stack_frames = len(stack_list)
-			print('Generating', num_stack_frames, 'frames into master stack (' + field + ', ' + date + ')')
+			print('Generating', num_stack_frames, 'frames into master stack (FIELD_' + field + ', ' + date + ')')
 			stack_ccddata = ccdproc.combine(stack_list, method=Configuration.COMBINE_METHOD, unit=Configuration.UNIT, mem_limit=Configuration.MEMORY_LIMIT, dtype=Configuration.DATA_TYPE)
 			stack_data = np.asarray(stack_ccddata)
 			stack_data = stack_data.astype(Configuration.DATA_TYPE)
@@ -1205,18 +1214,17 @@ class Photometry:
 
 			# solve the stack frame
 			print('\tSolving field')
-			field_id = field.split('_')[1]
-			Photometry.solve_field(stack_name, stack_directory, field_id, verbose=Configuration.VERBOSE)
+			Photometry.solve_field(stack_name, stack_directory, field, verbose=Configuration.VERBOSE)
 
 			# re-open the solved stack frame
 			stack_frame = fits.open(stack_path)
 			stack_header = stack_frame[0].header
 
-			print('\tStack generated (' + field + ', ' + date + ')\n')
+			print('\tStack generated (FIELD_' + field + ', ' + date + ')\n')
 
 		else:
 			# open the existing stack frame
-			print('Reading existing stack (' + field + ', ' + date + ')\n')
+			print('Reading existing stack (FIELD_' + field + ', ' + date + ')\n')
 			stack_frame = fits.open(stack_path)
 			stack_data = stack_frame[0].data
 			stack_header = stack_frame[0].header

@@ -100,7 +100,7 @@ for dte in range(num_dates):
 	filtered_table = Photometry.select_stars(master_table)
 
 	# perform photometry on the clean frames
-	Photometry.frame_timeseries(date, field, filtered_table)
+	Photometry.frame_timeseries(date, field, match_table)
 
 	# perform timeseries on clean frames
 	#timeseries_table = Photometry.timeseries(field, date, Configuration.SOURCE_RA, Configuration.SOURCE_DEC)

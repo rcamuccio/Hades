@@ -496,10 +496,11 @@ class Photometry:
 			delta_list = []
 			for src in master_table:
 				if (src['flux_flag'] == False) and (src['color_flag'] == False):
-					color = src['color']
-					delta = src['delta_mag']
-					color_list.append(color)
-					delta_list.append(delta)
+					if not np.isinf(src['aperture_sum']):
+						color = float(src['color'])
+						delta = float(src['delta_mag'])
+						color_list.append(color)
+						delta_list.append(delta)
 			Plot.color_magnitude(color_list, delta_list, colormag_path)
 
 		# draw an annotated frame
@@ -538,7 +539,7 @@ class Photometry:
 		galaxy_filter = filtered_table['in_galaxy_candidates'] != True
 		filtered_table = filtered_table[galaxy_filter]
 
-		edge_x_filter = filtered_table['xcenter'] > 
+		#edge_x_filter = filtered_table['xcenter'] > 
 
 		return filtered_table
 
@@ -561,27 +562,13 @@ class Photometry:
 
 		print('Performing timeseries on', len(source_table), 'sources')
 
-		for i in range(len(source_table)):
-			ra = float(source_table['ra'][i])
-			dec = float(source_table['dec'][i])
-			mmag = float(source_table['inst_mag'][i])
-			time_list = []
-			mag_list = []
-			dmag_list = []
-			for frm in range(num_frames):
-				frame = fits.open(frame_list[frm])
-				frame_data = frame[0].data
-				frame_header = frame[0].header
-				jd, airmass, flux, flux_error, inst_mag, inst_mag_error = Photometry.point_aperture_photometry(date, field, frame_data, frame_header, ra, dec)
-				dmag = mmag - inst_mag
-				time_list.append(jd)
-				mag_list.append(inst_mag)
-				dmag_list.append(dmag)
-			print(int(source_table['id'][i]))
-			print(time_list)
-			print(mag_list)
-			print(dmag_list)
-			print()
+		for frm in frame_list:
+			frame_string = frm.split(Configuration.FILE_EXTENSION)[0]
+			phot_table_path = output_directory + 'tbl/' + frame_string + Configuration.TABLE_EXTENSION
+			frame = fits.open(frm)
+			frame_data = frame[0].data
+			frame_header = frame[0].header
+			Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, source_table, phot_table_path, frame_string)
 
 	@staticmethod
 	def timeseries(field, date, point_ra, point_dec):

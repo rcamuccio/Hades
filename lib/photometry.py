@@ -558,9 +558,12 @@ class Photometry:
 
 		os.chdir(output_directory)
 		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
-		num_frames = len(frame_list)
+		n_frames = len(frame_list)
+		n_sources = len(source_table)
 
-		print('Performing timeseries on', len(source_table), 'sources')
+		table_path_list = []
+
+		print('Performing timeseries on', n_sources, 'sources')
 
 		for frm in frame_list:
 			frame_string = frm.split(Configuration.FILE_EXTENSION)[0]
@@ -569,6 +572,24 @@ class Photometry:
 			frame_data = frame[0].data
 			frame_header = frame[0].header
 			Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, source_table, phot_table_path, frame_string)
+			table_path_list.append(phot_table_path)
+
+		table_list = []
+		for tbl in table_path_list:
+			table = Table.read(tbl, format=Configuration.TABLE_FORMAT)
+			table_list.append(table)
+
+		n_epochs = len(table_list)
+
+		mags = np.zeros((n_sources, n_epochs))
+
+		for i, table in enumerate(table_list):
+			mags[:, i] = table['inst_mag']
+
+		for i in range(n_sources):
+			print(i)
+			print(mags[i])
+			print()
 
 	@staticmethod
 	def timeseries(field, date, point_ra, point_dec):

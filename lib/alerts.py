@@ -1,5 +1,4 @@
 from config import Configuration
-from lib.utility import Utility
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -14,48 +13,50 @@ class Alerts:
 
 		# GCN Kafka Alerts
 		if topic == 'gcn.circulars':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			Router.gcn_circulars(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			Alerts.gcn_circulars(value, topic)
 
 		elif topic == 'gcn.heartbeat':
-			Router.gcn_heartbeat(value, topic)
+			pass
+			#Alerts.gcn_heartbeat(value, topic)
 
 		elif topic == 'gcn.notices.chime.frb':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			#Router.gcn_notices_chime_frb(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			#Alerts.gcn_notices_chime_frb(value, topic)
 
 		elif topic == 'gcn.notices.dsa110.frb':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			#Router.gcn_notices_dsa110_frb(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			#Alerts.gcn_notices_dsa110_frb(value, topic)
 
 		elif topic == 'gcn.notices.einstein_probe.wxt.alert':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			Router.gcn_notices_einstein_probe_wxt_alert(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			Alerts.gcn_notices_einstein_probe_wxt_alert(value, topic)
 
 		elif topic == 'gcn.notices.icecube.gold_bronze_track_alerts':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			#Router.gcn_notices_icecube_gold_bronze_track_alerts(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			#Alerts.gcn_notices_icecube_gold_bronze_track_alerts(value, topic)
 
 		elif topic == 'gcn.notices.icecube.lvk_nu_track_search':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			Router.gcn_notices_icecube_lvk_nu_track_search(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			Alerts.gcn_notices_icecube_lvk_nu_track_search(value, topic)
 
 		elif topic =='gcn.notices.superk.sn_alert':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			Router.gcn_notices_superk_sn_alert(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			Alerts.gcn_notices_superk_sn_alert(value, topic)
 
 		elif topic == 'gcn.notices.swift.bat.guano':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			Router.gcn_notices_swift_bat_guano(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			Alerts.gcn_notices_swift_bat_guano(value, topic)
 
 		elif topic == 'igwn.gwalert':
-			Utility.log('GCN Kafka Alert (' + str(topic) + ').', 'info')
-			Router.igwn_gwalert(value, topic)
+			print('GCN Kafka Alert (' + str(topic) + ')')
+			Alerts.igwn_gwalert(value, topic)
 
 		# Unknown Alerts
 		else:
-			Utility.log('Unknown Alert (' + str(topic) + '). Printing value to terminal.', 'info')
+			print()
 			print(value)
+			print()
 
 	@staticmethod
 	def gcn_circulars(value, topic, alert=False):
@@ -281,51 +282,46 @@ class Alerts:
 							record_event_dt = record_coincident_event['event_dt']
 						except KeyError:
 							record_event_dt = -999.
-
 						try:
 							record_localization = record_coincident_event['localization']
 							try:
 								record_ra = record_localization['ra']
 							except KeyError:
 								record_ra = -999.
-
 							try:
 								record_dec = record_localization['dec']
 							except KeyError:
 								record_dec = -999.
-
 							try:
 								record_ra_dec_error = record_localization['ra_dec_error']
 							except KeyError:
 								record_ra_dec_error = -999.
-
 							try:
 								record_containment_probability = record_localization['containment_probability']
 							except KeyError:
 								record_containment_probability = -999.
-
 							try:
 								record_systematic_included = record_localization['systematic_included']
 							except KeyError:
 								record_systematic_included = False
-
 						except KeyError:
 							record_localization = {}
-
 						try:
 							record_id = record_coincident_event['id'][0]
 						except KeyError:
 							record_id = 'unknown: id'
-
 						try:
 							record_event_pval_generic = record_coincident_event['event_pval_generic']
 						except KeyError:
 							record_event_pval_generic = -999.
-
 						try:
 							record_event_pval_bayesian = record_coincident_event['event_pval_bayesian']
 						except KeyError:
 							record_event_pval_bayesian = -999.
+				except KeyError:
+					record_coincident_events = None
+		except KeyError:
+			record_n_events_coincident = None
 
 		try:
 			record_most_probable_direction = record['most_probable_direction']
@@ -474,20 +470,6 @@ class Alerts:
 			luminosity_distance_error = record['luminosity_distance_error']
 		except KeyError:
 			luminosity_distance_error = None
-
-		server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
-		server.ehlo()
-		server.login(Configuration.EMAIL, Configuration.PAS)
-		msg = MIMEMultipart()
-		msg['From'] = Configuration.EMAIL
-		msg['To'] = ', '.join(Configuration.MAILING_LIST)
-		msg['Subject'] = 'ALERT: Super-Kamioka Neutrino Detection Experiment (Super-Kamiokande)\n'
-		body = 'Text body.'
-		msg.attach(MIMEText(body, 'plain'))
-		sms = msg.as_string()
-		server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
-		server.quit()
-		Utility.log('Alert message sent to mailing list recipients [' + topic + '].', 'info')
 
 	@staticmethod
 	def gcn_notices_swift_bat_guano(value, topic):

@@ -33,6 +33,22 @@ class Plot:
 		plt.close()
 
 	@staticmethod
+	def photometric_precision(mag_list, rms_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
+		plt.scatter(mag_list, rms_list, s=1, color='gray')
+		plt.yscale('log')
+		plt.title('Photometric Precision')
+		plt.xlabel('Gaia G Mean Magnitude [mag]')
+		plt.ylabel('RMS [mag]')
+
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
+
+	@staticmethod
 	def color_magnitude(color_list, delta_list, save_path, save_figure=Configuration.SAVE_FIGURE):
 		'''This function draws a color-magnitude diagram.
 

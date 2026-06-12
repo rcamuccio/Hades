@@ -2,6 +2,7 @@ from config import Configuration
 from lib.photometry import Photometry
 from lib.query import Query
 from lib.survey import Survey
+
 import glob
 import numpy as np
 import os
@@ -41,7 +42,6 @@ num_dates = len(date_list)
 # run the main pipeline
 for dte in range(num_dates):
 	date = date_list[dte]
-	out_name = 'FIELD_' + str(field) + '_' + str(date)
 
 	# define the output directories
 	date_dark_directory = dark_directory + date + '/FIELD_' + field + '/'
@@ -62,12 +62,12 @@ for dte in range(num_dates):
 			os.makedirs(dr)
 
 	# define the output tables
-	tbl_query_aavso_path = tbl_directory + 'tbl_query_aavso' + Configuration.TABLE_EXTENSION
-	tbl_query_gaia_path = tbl_directory + 'tbl_query_gaia' + Configuration.TABLE_EXTENSION
-	tbl_query_glade_path = tbl_directory + 'tbl_query_glade' + Configuration.TABLE_EXTENSION
-	tbl_source_path = tbl_directory + 'tbl_source' + Configuration.TABLE_EXTENSION
-	tbl_match_path = tbl_directory + 'tbl_match' + Configuration.TABLE_EXTENSION
-	tbl_master_path = tbl_directory + 'tbl_master' + Configuration.TABLE_EXTENSION
+	tbl_query_aavso_path = tbl_directory + 'query_aavso' + Configuration.TABLE_EXTENSION
+	tbl_query_gaia_path = tbl_directory + 'query_gaia' + Configuration.TABLE_EXTENSION
+	tbl_query_glade_path = tbl_directory + 'query_glade' + Configuration.TABLE_EXTENSION
+	tbl_source_path = tbl_directory + 'source' + Configuration.TABLE_EXTENSION
+	tbl_match_path = tbl_directory + 'match' + Configuration.TABLE_EXTENSION
+	tbl_master_path = tbl_directory + 'master' + Configuration.TABLE_EXTENSION
 
 	# make a master (flat) dark
 	Photometry.make_dark(date, 'flat')
@@ -82,6 +82,7 @@ for dte in range(num_dates):
 	frame_table = Photometry.clean_raw_frames(date, field)
 
 	# make a stack
+	stack_name = 'stack_FIELD_' + str(field) + '_' + str(date)
 	stack_data, stack_header = Photometry.make_stack(date, field, frame_table)
 
 	# create a queried source catalog
@@ -94,10 +95,10 @@ for dte in range(num_dates):
 	match_table = Photometry.match_catalogs(source_table, query_table, tbl_match_path)
 
 	# perform photometry on the stack
-	master_table = Photometry.frame_aperture_photometry(date, field, stack_data, stack_header, match_table, tbl_master_path, output_name=out_name)
+	master_table = Photometry.frame_aperture_photometry(date, field, stack_data, stack_header, match_table, tbl_master_path, output_name=stack_name)
 
 	# select stars for photometry
-	filtered_table = Photometry.select_stars(master_table)
+	#filtered_table = Photometry.select_stars(master_table)
 
 	# perform photometry on the clean frames
 	Photometry.frame_timeseries(date, field, match_table)

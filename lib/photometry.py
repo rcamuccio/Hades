@@ -545,12 +545,12 @@ class Photometry:
 		return filtered_table
 
 	@staticmethod
-	def frame_timeseries(date, field, source_table):
+	def frame_timeseries(date, field, input_table):
 		'''This function performs photometry for sources in a provided input catalog on a particular date and field.
 
 		:parameter date - The date string
 		:parameter field - The field ID
-		:parameter source_table - The table of sources
+		:parameter input_table - The table of sources
 
 		:return -
 		'''
@@ -578,12 +578,12 @@ class Photometry:
 			date_list.append(jd)
 
 			# perform photometry on the frame
-			table = Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, source_table, table_path, frame_string)
+			table = Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, input_table, table_path, frame_string)
 			table_list.append(table)
 
 		n_frames = len(frame_list)
 		n_epochs = len(table_list)
-		n_sources = len(source_table)
+		n_sources = len(input_table)
 
 		fluxes = np.zeros((n_sources, n_epochs))
 		flux_errors = np.zeros((n_sources, n_epochs))
@@ -596,18 +596,32 @@ class Photometry:
 			mags[:, i] = table['inst_mag']
 			mag_errors[:, i] = table['inst_mag_err']
 
+		plot_mag_list = []
+		plot_rms_list = []
 
-		for i in range(n_sources):
-			print(i)
-			print(date_list)
-			print(fluxes[i])
-			print(flux_errors[i])
-			print(mags[i])
-			print(mag_errors[i])
-			print()
+		table_columns = ('jd', 'flx', 'flxerr', 'mag', 'magerr')
+		table_dtypes = (float, float, float, float, float)
+		for src in range(n_sources):
+			source_table = Table(names=table_columns, dtype=table_dtypes)
+			source_table_path = output_directory + '/pho/' + str(src) + Configuration.TABLE_EXTENSION
+			rms_list = []
+			if not os.path.exists(source_table_path):
+				for dte in range(len(date_list)):
+					table_row = (date_list[dte], fluxes[src][dte], flux_errors[src][dte], mags[src][dte], mag_errors[src][dte])
+					source_table.add_row(table_row)
+					rms_list.append(mag_errors[src][dte])
+				ascii.write(source_table, source_table_path, format='fixed_width')
+
+				rms = float(np.sqrt(np.mean(np.square(rms_list))))
+				plot_mag_list.append(input_table['phot_g_mean_mag'][src])
+				plot_rms_list.append(rms)
+
+		plot_path = None
+
+		Plot.photometric_precision(plot_mag_list, plot_rms_list, plot_path, save_figure=False)
 
 	@staticmethod
-	def timeseries(field, date, point_ra, point_dec):
+	def point_timeseries(field, date, point_ra, point_dec):
 		'''This function creates a table of photometry measurements for a given point (RA, Dec) on a particular field and date.
 
 		:parameter field - The field ID

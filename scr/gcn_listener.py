@@ -1,11 +1,11 @@
 from config import Configuration
-from lib.router import Router
-from lib.utility import Utility
+from lib.alerts import Alerts
+
 from gcn_kafka import Consumer
 import os
 
 os.system('clear')
-Utility.log('Beginning listener for astronomical alerts.', 'info')
+print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m] - Running GCN listener\n')
 
 consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET)
 consumer.subscribe(Configuration.AVAILABLE_TOPICS)
@@ -18,10 +18,12 @@ while True:
 		message_value = message.value()
 
 		if message_error:
-			Utility.log(message_error, 'debug')
-			Utility.log(message_offset, 'debug')
-			Utility.log(message_topic, 'debug')
-			Utility.log(message_value, 'debug')
+			print()
+			print(message_error)
+			print(message_offset)
+			print(message_topic)
+			print(message_value)
+			print()
 
 		else:
-			Router.filter_alert(message_value, message_topic)
+			Alerts.filter_alert(message_value, message_topic)

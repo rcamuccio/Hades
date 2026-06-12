@@ -265,11 +265,11 @@ class Plot:
 		xmax = data_md + Configuration.HISTOGRAM_LIMIT * data_sd
 		
 		# draw the plot
-		plf.figure(figsize=Configuration.FIGURE_SIZE)
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
 		plt.hist(frame_data.flatten(), bins=Configuration.HISTOGRAM_BINS, range=(xmin, xmax), histtype=Configuration.HISTOGRAM_TYPE)
 		plt.yscale(Configuration.HISTOGRAM_SCALE)
-		plt.xlabel('Pixel Value [ADU]', **font)
-		plt.ylabel('Count', **font)
+		plt.xlabel('Pixel Value [ADU]')
+		plt.ylabel('Count')
 		if save_figure:
 			plt.savefig(save_path, dpi=Configuration.DPI)
 			plt.close()

@@ -71,7 +71,8 @@ class Photometry:
 		align_frame_hdu = fits.PrimaryHDU(align_frame_data, header=align_frame_header)
 
 		# save the aligned frame HDU object
-		align_frame_hdu.writeto(align_frame_path, overwrite=True)
+		if not os.path.exists(align_frame_path):
+			align_frame_hdu.writeto(align_frame_path)
 
 	@staticmethod
 	def clean_raw_frames(date, field):
@@ -558,37 +559,51 @@ class Photometry:
 
 		os.chdir(output_directory)
 		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
-		n_frames = len(frame_list)
-		n_sources = len(source_table)
-
+		date_list = []
+		table_list = []
 		table_path_list = []
 
-		print('Performing timeseries on', n_sources, 'sources')
-
 		for frm in frame_list:
+			# set the table path
 			frame_string = frm.split(Configuration.FILE_EXTENSION)[0]
-			phot_table_path = output_directory + 'tbl/' + frame_string + Configuration.TABLE_EXTENSION
+			table_path = output_directory + 'tbl/' + frame_string + Configuration.TABLE_EXTENSION
+			table_path_list.append(table_path)
+
+			# open the frame
 			frame = fits.open(frm)
 			frame_data = frame[0].data
 			frame_header = frame[0].header
-			Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, source_table, phot_table_path, frame_string)
-			table_path_list.append(phot_table_path)
+			time = Time(frame_header['DATE'], format='isot', scale='utc')
+			jd = float(time.jd)
+			date_list.append(jd)
 
-		table_list = []
-		for tbl in table_path_list:
-			table = Table.read(tbl, format=Configuration.TABLE_FORMAT)
+			# perform photometry on the frame
+			table = Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, source_table, table_path, frame_string)
 			table_list.append(table)
 
+		n_frames = len(frame_list)
 		n_epochs = len(table_list)
+		n_sources = len(source_table)
 
+		fluxes = np.zeros((n_sources, n_epochs))
+		flux_errors = np.zeros((n_sources, n_epochs))
 		mags = np.zeros((n_sources, n_epochs))
+		mag_errors = np.zeros((n_sources, n_epochs))
 
 		for i, table in enumerate(table_list):
+			fluxes[:, i] = table['flux']
+			flux_errors[:, i] = table['flux_err']
 			mags[:, i] = table['inst_mag']
+			mag_errors[:, i] = table['inst_mag_err']
+
 
 		for i in range(n_sources):
 			print(i)
+			print(date_list)
+			print(fluxes[i])
+			print(flux_errors[i])
 			print(mags[i])
+			print(mag_errors[i])
 			print()
 
 	@staticmethod
@@ -1213,11 +1228,11 @@ class Photometry:
 
 		# image paths
 		#img_path = stack_directory + 'img/' + field + '_' + date + Configuration.IMAGE_EXTENSION
-		img_bkg_path = stack_directory + 'bkg/bkg_stack_FIELD_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		img_bkg_path = stack_directory + 'bkg/bkg_' + stack_subname + Configuration.IMAGE_EXTENSION
 
 		# histogram paths
-		hst_path = stack_directory + 'hst/FIELD_' + field + '_' + date + Configuration.IMAGE_EXTENSION
-		hst_bkg_path = stack_directory + 'hst/bkg_FIELD_' + field + '_' + date + Configuration.IMAGE_EXTENSION
+		hst_path = stack_directory + 'hst/' + stack_subname + Configuration.IMAGE_EXTENSION
+		hst_bkg_path = stack_directory + 'hst/bkg_' + stack_subname + Configuration.IMAGE_EXTENSION
 
 		if not os.path.exists(stack_path):
 			# grab the individual frames
@@ -1235,7 +1250,8 @@ class Photometry:
 			reference_frame_data = reference_frame[0].data
 			reference_frame_header = reference_frame[0].header
 			aln_reference_frame_hdu = fits.PrimaryHDU(reference_frame_data, header=reference_frame_header)
-			aln_reference_frame_hdu.writeto(aln_reference_frame_path)
+			if not os.path.exists(aln_reference_frame_path):
+				aln_reference_frame_hdu.writeto(aln_reference_frame_path)
 			for frm in range(num_align_frames):
 				if frm > 0:
 					target_frame_path = stack_directory + align_list[frm]
@@ -1264,7 +1280,7 @@ class Photometry:
 
 			# plot a histogram of the background
 			if not os.path.exists(hst_bkg_path):
-				Plot.frame_histogram(sbkg2d_data, hst_bkg_path)
+				Plot.frame_histogram(bkg2d_data, hst_bkg_path)
 
 			# edit the stack header
 			stk_hdu = fits.PrimaryHDU(stack_data)

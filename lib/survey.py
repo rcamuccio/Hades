@@ -86,7 +86,7 @@ class Survey:
 		tot_idx = 1
 
 		if not os.path.isfile(field_path):
-			Utility.log('No existing survey fields for ' + str(Configuration.OBSERVATORY).upper(), 'info')
+			print('No existing survey fields for', Configuration.OBSERVATORY.upper())
 
 			# set up the field data frame and start with the first field
 			if Observatory.latitude() < 0e0:
@@ -115,8 +115,8 @@ class Survey:
 				# create array of declination strips
 				declination_strips = 90 - np.arange(0, field_number) * field_sep
 
-			Utility.log('Number of declination strips: ' + str(field_number), 'info')
-			Utility.log('Generating survey fields for ' + str(Configuration.OBSERVATORY).upper(), 'info')
+			print('Number declination strips:', field_number)
+			print('Generating survey fields for', Configuration.OBSERVATORY.upper())
 
 			# loop through and generate the fields
 			eo = 0
@@ -167,19 +167,19 @@ class Survey:
 
 			field_list.to_csv(field_path, sep=' ', header=True, index=False, float_format='%.3f')
 
-			Utility.log('Field generation complete!', 'info')
-			Utility.log('The main survey for ' + str(Configuration.OBSERVATORY).upper() + ' consists of:', 'info')
-			Utility.log('    Total survey fields: ' + str(tot_idx), 'info')
-			Utility.log('    Galactic fields: ' + str(gal_idx), 'info')
-			Utility.log('    Extragalactic fields: ' + str(tot_idx - gal_idx), 'info')
+			print('Field generation complete')
+			print('The main survey for', Configuration.OBSERVATORY.upper(), 'consists of:')
+			print('\tTotal survey fields:', tot_idx)
+			print('\tGalactic fields:', gal_idx)
+			print('\tExtragalactic fields:', tot_idx - gal_idx)
 
 		else:
 			# if the file exists already, then just read the field list in
-			Utility.log('Reading extant survey fields.', 'info')
+			print('Reading extant survey fields')
 			field_list = pd.read_csv(field_path, header=0, sep=' ')
 
 		fn = time.time()
-		Utility.log('Survey fields generated in ' + str(np.around((fn - st), decimals=2)) + ' s.', 'info')
+		print('Survey fields generated in', np.around((fn - st), decimals=2), 's')
 
 		return field_list
 

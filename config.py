@@ -10,9 +10,9 @@ class Configuration:
 	VERBOSE = False
 
 	# products
-	FIELD = '42.074'
-	SOURCE_RA = 148.2712725
-	SOURCE_DEC = -6.5137330
+	FIELD = '36.007'
+	SOURCE_RA = 10.1958012
+	SOURCE_DEC = -21.9258309
 
 	# directories
 	HADES_DIRECTORY = '/home/epimetheus/Documents/hades/'
@@ -85,6 +85,8 @@ class Configuration:
 	SKYMAP_MODE = 'comm_fields' # comm_fields, survey_fields
 
 	# listener
+	ALERT_DISPLAY = True
+	ALERT_SEND = False
 	CATALOG = 'glade+'
 	CLIENT_ID = 'client_id'
 	CLIENT_SECRET = 'client_secret'

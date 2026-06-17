@@ -140,7 +140,10 @@ class Photometry:
 				raw_frame_data = raw_frame[0].data
 				raw_frame_header = raw_frame[0].header
 
+				if raw_frame_header['EXPTIME'] != Observatory.exposure_time('light'):
+					raw_frame_header['EXPTIME'] = Observatory.exposure_time('light')
 				exptime = raw_frame_header['EXPTIME']
+
 				time = Time(raw_frame_header['DATE'], format='isot', scale='utc')
 				jd = time.jd
 
@@ -500,6 +503,7 @@ class Photometry:
 					if not np.isinf(src['aperture_sum']):
 						color = float(src['color'])
 						delta = float(src['delta_mag'])
+						print(src['aperture_sum'], color, delta)
 						color_list.append(color)
 						delta_list.append(delta)
 			Plot.color_magnitude(color_list, delta_list, colormag_path)
@@ -556,6 +560,9 @@ class Photometry:
 		'''
 
 		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+
+		# photometric precision diagram path
+		photprec_path = output_directory + 'plt/photprec_FIELD_' + str(field) + '_' + str(date) + Configuration.IMAGE_EXTENSION
 
 		os.chdir(output_directory)
 		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
@@ -616,9 +623,8 @@ class Photometry:
 				plot_mag_list.append(input_table['phot_g_mean_mag'][src])
 				plot_rms_list.append(rms)
 
-		plot_path = None
-
-		Plot.photometric_precision(plot_mag_list, plot_rms_list, plot_path, save_figure=False)
+		if not os.path.exists(photprec_path):
+			Plot.photometric_precision(plot_mag_list, plot_rms_list, photprec_path)
 
 	@staticmethod
 	def point_timeseries(field, date, point_ra, point_dec):

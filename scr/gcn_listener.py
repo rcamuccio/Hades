@@ -7,7 +7,7 @@ import os
 os.system('clear')
 print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m] - Running GCN listener\n')
 
-consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET)
+consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET, **{'log_level': 0})
 consumer.subscribe(Configuration.AVAILABLE_TOPICS)
 
 while True:

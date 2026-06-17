@@ -22,11 +22,11 @@ class Alerts:
 
 		elif topic == 'gcn.notices.chime.frb':
 			print('GCN Kafka Alert (' + str(topic) + ')')
-			#Alerts.gcn_notices_chime_frb(value, topic)
+			Alerts.gcn_notices_chime_frb(value, topic)
 
 		elif topic == 'gcn.notices.dsa110.frb':
 			print('GCN Kafka Alert (' + str(topic) + ')')
-			#Alerts.gcn_notices_dsa110_frb(value, topic)
+			Alerts.gcn_notices_dsa110_frb(value, topic)
 
 		elif topic == 'gcn.notices.einstein_probe.wxt.alert':
 			print('GCN Kafka Alert (' + str(topic) + ')')
@@ -59,67 +59,78 @@ class Alerts:
 			print()
 
 	@staticmethod
-	def gcn_circulars(value, topic, alert=False):
+	def gcn_circulars(value, topic, send_alert=Configuration.ALERT_SEND, display_alert=Configuration.ALERT_DISPLAY):
 
 		record = json.loads(value)
 
 		try:
 			record_schema = record['$schema']
 		except KeyError:
-			record_schema = 'unknown: $schema'
+			record_schema = None
 
 		try:
 			record_event_id = record['eventId']
 		except KeyError:
-			record_event_id = 'unknown: eventId'
+			record_event_id = None
 
 		try:
 			record_submitter = record['submitter']
 		except KeyError:
-			record_submitter = 'unknown: submitter'
+			record_submitter = None
 
 		try:
 			record_submitted_how = record['submittedHow']
 		except KeyError:
-			record_submitted_how = 'unknown: submittedHow'
+			record_submitted_how = None
 
 		try:
 			record_subject = record['subject']
 		except KeyError:
-			record_subject = 'unknown: subject'
+			record_subject = None
 
 		try:
 			record_circular_id = record['circularId']
 		except KeyError:
-			record_circular_id = -999.
+			record_circular_id = None
 
 		try:
 			record_format = record['format']
 		except KeyError:
-			record_format = 'unknown: format'
+			record_format = None
 
 		try:
 			record_body = record['body']
 		except KeyError:
-			record_body = 'unknown: body'
+			record_body = None
 
 		try:
 			record_created_on = record['createdOn']
 		except KeyError:
-			record_created_on = -999.
+			record_created_on = None
 
-		if alert:
+		if display_alert:
+			print('---')
+			print('\tSchema:', record_schema)
+			print('\tEvent ID:', record_event_id)
+			print('\tSubmitter:', record_submitter)
+			print('\tSubmitted How:', record_submitted_how)
+			print('\tSubject:', record_subject)
+			print('\tCircular ID:', record_circular_id)
+			print('\tFormat:', record_format)
+			print('\tBody:', record_body)
+			print('\tCreated On:', record_created_on)
+			print('---')
+
+		if send_alert:
 			server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
 			server.ehlo()
 			server.login(Configuration.EMAIL, Configuration.PAS)
-
 			msg = MIMEMultipart()
 			msg['From'] = Configuration.EMAIL
 			msg['To'] = ', '.join(Configuration.MAILING_LIST)
 			msg['Subject'] = 'Alert Received: GCN Circular #' + str(record_circular_id) + '\n'
-			body = 'WXT Alert ' + str(record_id) + ' Received'
+			body = record_body
 			msg.attach(MIMEText(body, 'plain'))
-
 			sms = msg.as_string()
 			server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
 			server.quit()
@@ -130,6 +141,433 @@ class Alerts:
 		record = json.loads(value)
 
 	@staticmethod
+	def gcn_notices_chime_frb(value, topic):
+
+		record = json.loads(value)
+
+		try:
+			record_schema = record['$schema']
+		except KeyError:
+			record_schema = None
+
+		try:
+			record_alert_type = record['alert_type']
+		except KeyError:
+			record_alert_type = None
+
+		# initial
+		if record_alert_type == 'initial':
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_snr = record['snr']
+			except KeyError:
+				record_snr = None
+
+			try:
+				record_ra = record['ra']
+			except KeyError:
+				record_ra = None
+
+			try:
+				record_dec = record['dec']
+			except KeyError:
+				record_dec = None
+
+			try:
+				record_ra_dec_error = record['ra_dec_error']
+			except KeyError:
+				record_ra_dec_error = None
+
+			try:
+				record_dm = record['dm']
+			except KeyError:
+				record_dm = None
+
+			try:
+				record_dm_error = record['dm_error']
+			except KeyError:
+				record_dm_error = None
+
+			try:
+				record_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
+			except KeyError:
+				record_dm_gal_ne_2001_max = None
+
+			try:
+				record_trigger_time_inf_freq = record['trigger_time_inf_freq']
+			except KeyError:
+				record_trigger_time_inf_freq = None
+
+			try:
+				record_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
+			except KeyError:
+				record_trigger_time_inf_freq_error = None
+
+			try:
+				record_importance = record['importance']
+			except KeyError:
+				record_importance = None
+
+			try:
+				record_sampling_time = record['sampling_time']
+			except KeyError:
+				record_sampling_time = None
+
+			try:
+				record_spectral_band = record['spectral_band']
+			except KeyError:
+				record_spectral_band = None
+
+			try:
+				record_spectral_band_units = record['spectral_band_units']
+			except KeyError:
+				record_spectral_band_units = None
+
+			try:
+				record_npol = record['npol']
+			except KeyError:
+				record_npol = None
+
+			try:
+				record_tsys = record['tsys']
+			except KeyError:
+				record_tsys = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+		# retraction
+		elif record_alert_type == 'retraction':
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+		# subtraction
+		elif record_alert_type == 'subsequent':
+			try:
+				record_known_source = record['known_source']
+			except KeyError:
+				record_known_source = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_snr = record['snr']
+			except KeyError:
+				record_snr = None
+
+			try:
+				record_ra = record['ra']
+			except KeyError:
+				record_ra = None
+
+			try:
+				record_dec = record['dec']
+			except KeyError:
+				record_dec = None
+
+			try:
+				record_ra_dec_error = record['ra_dec_error']
+			except KeyError:
+				record_ra_dec_error = None
+
+			try:
+				record_dm = record['dm']
+			except KeyError:
+				record_dm = None
+
+			try:
+				record_dm_error = record['dm_error']
+			except KeyError:
+				record_dm_error = None
+
+			try:
+				record_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
+			except KeyError:
+				record_dm_gal_ne_2001_max = None
+
+			try:
+				record_trigger_time_inf_freq = record['trigger_time_inf_freq']
+			except KeyError:
+				record_trigger_time_inf_freq = None
+
+			try:
+				record_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
+			except KeyError:
+				record_trigger_time_inf_freq_error = None
+
+			try:
+				record_importance = record['importance']
+			except KeyError:
+				record_importance = None
+
+			try:
+				record_association_probability = record['association_probability']
+			except KeyError:
+				record_association_probability = None
+
+			try:
+				record_sampling_time = record['sampling_time']
+			except KeyError:
+				record_sampling_time = None
+
+			try:
+				record_spectral_band = record['spectral_band']
+			except KeyError:
+				record_spectral_band = None
+
+			try:
+				record_spectral_band_units = record['spectral_band_units']
+			except KeyError:
+				record_spectral_band_units = None
+
+			try:
+				record_npol = record['npol']
+			except KeyError:
+				record_npol = None
+
+			try:
+				record_tsys = record['tsys']
+			except KeyError:
+				record_tsys = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+		# update
+		elif record_alert_type == 'update':
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_update_message = record['update_message']
+			except KeyError:
+				record_update_message = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+	@staticmethod
+	def gcn_notices_dsa110_frb(value, topic):
+
+		record = json.loads(value)
+
+		try:
+			record_schema = record['$schema']
+		except KeyError:
+			record_schema = None
+
+		try:
+			record_alert_type = record['alert_type']
+		except KeyError:
+			record_alert_type = None
+
+		if record_alert_type == 'initial':
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_snr = record['snr']
+			except KeyError:
+				record_snr = None
+
+			try:
+				record_dm = record['dm']
+			except KeyError:
+				record_dm = None
+
+			try:
+				record_event_duration = record['event_duration']
+			except KeyError:
+				record_event_duration = None
+
+			try:
+				record_ra = record['ra']
+			except KeyError:
+				record_ra = None
+
+			try:
+				record_dec = record['dec']
+			except KeyError:
+				record_dec = None
+
+			try:
+				record_ra_dec_error = record['ra_dec_error']
+			except KeyError:
+				record_ra_dec_error = None
+
+			try:
+				record_importance = record['importance']
+			except KeyError:
+				record_importance = None
+
+		elif record_alert_type == 'retraction':
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+		elif record_alert_type == 'subsequent':
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_known_source = record['known_source']
+			except KeyError:
+				record_known_source = None
+
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_snr = record['snr']
+			except KeyError:
+				record_snr = None
+
+			try:
+				record_dm = record['dm']
+			except KeyError:
+				record_dm = None
+
+			try:
+				record_event_duration = record['event_duration']
+			except KeyError:
+				record_event_duration = None
+
+			try:
+				record_ra = record['ra']
+			except KeyError:
+				record_ra = None
+
+			try:
+				record_dec = record['dec']
+			except KeyError:
+				record_dec = None
+
+			try:
+				record_ra_dec_error = record['ra_dec_error']
+			except KeyError:
+				record_ra_dec_error = None
+
+			try:
+				record_importance = record['importance']
+			except KeyError:
+				record_importance = None
+
+		elif record_alert_type == 'update':
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+	@staticmethod
 	def gcn_notices_einstein_probe_wxt_alert(value, topic, alert=False):
 
 		record = json.loads(value)
@@ -137,74 +575,83 @@ class Alerts:
 		try:
 			record_schema = record['$schema']
 		except KeyError:
-			record_schema = 'unknown: $schema'
+			record_schema = None
+		print('\t$schema:', record_schema)
 
 		try:
 			record_instrument = record['instrument']
 		except KeyError:
-			record_instrument = 'unknown: instrument'
+			record_instrument = None
+		print('\tInstrument:', record_instrument)
 
 		try:
 			record_trigger_time = record['trigger_time']
 		except KeyError:
-			record_trigger_time = 'unknown: trigger_time'
+			record_trigger_time = None
+		print('\tTrigger time:', record_trigger_time)
 
 		try:
 			record_id = record['id'][0]
 		except KeyError:
-			record_id = 'unknown: id'
+			record_id = None
+		print('\tID:', record_id)
 
 		try:
 			record_ra = record['ra']
 		except KeyError:
-			record_ra = -999.
+			record_ra = None
+		print('\tRA:', record_ra)
 
 		try:
 			record_dec = record['dec']
 		except KeyError:
-			record_dec = -999.
+			record_dec = None
+		print('\tDec:', record_dec)
 
 		try:
 			record_ra_dec_error = record['ra_dec_error']
 		except KeyError:
-			record_ra_dec_error = -999.
+			record_ra_dec_error = None
+		print('\tRA/Dec error:', record_ra_dec_error)
 
 		try:
 			record_image_energy_range = record['image_energy_range']
-			record_image_energy_range_min = image_energy_range[0]
-			record_image_energy_range_max = image_energy_range[1]
+			record_image_energy_range_min = record_image_energy_range[0]
+			record_image_energy_range_max = record_image_energy_range[1]
 		except KeyError:
-			record_image_energy_range = [-999., -999.]
-			record_image_energy_range_min = image_energy_range[0]
-			record_image_energy_range_max = image_energy_range[1]
+			record_image_energy_range = [None, None]
+			record_image_energy_range_min = record_image_energy_range[0]
+			record_image_energy_range_max = record_image_energy_range[1]
+		print('\tImage energy range:', record_image_energy_range_min, record_image_energy_range_max)
 
 		try:
 			record_net_count_rate = record['net_count_rate']
 		except KeyError:
-			record_net_count_rate = -999.
+			record_net_count_rate = None
+		print('\tNet count rate:', record_net_count_rate)
 
 		try:
 			record_image_snr = record['image_snr']
 		except KeyError:
-			record_image_snr = -999.
+			record_image_snr = None
+		print('\tImage SNR:', record_image_snr)
 
 		try:
 			record_additional_info = record['additional_info']
 		except KeyError:
-			record_additional_info = 'unknown: additional_info'
+			record_additional_info = None
+		print('\tAdditional info:', record_additional_info)
 
 		if alert:
 			server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
 			server.ehlo()
 			server.login(Configuration.EMAIL, Configuration.PAS)
-
 			msg = MIMEMultipart()
 			msg['From'] = Configuration.EMAIL
 			msg['To'] = ', '.join(Configuration.MAILING_LIST)
 			msg['Subject'] = 'Alert Received: Einstein Probe WXT ID ' + str(record_id) + '\n'
 			body = 'Event coordinates:\n' + '    RA: ' + str(record_ra) + ' deg\n' + '    Dec: ' + str(record_dec) + ' deg\n' + '    Error: ' + str(record_ra_dec_error) + ' deg\n'
 			msg.attach(MIMEText(body, 'plain'))
-
 			sms = msg.as_string()
 			server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
 			server.quit()
@@ -360,116 +807,114 @@ class Alerts:
 		record = json.loads(value)
 		
 		try:
-			schema = record['$schema']
+			record_schema = record['$schema']
 		except KeyError:
-			schema = None
+			record_schema = None
 
 		try:
-			mission = record['mission']
+			record_mission = record['mission']
 		except KeyError:
-			mission = None
+			record_mission = None
 
 		try:
-			messenger = record['messenger']
+			record_messenger = record['messenger']
 		except KeyError:
-			messenger = None
+			record_messenger = None
 
 		try:
-			iid = record['id']
+			record_id = record['id']
 		except KeyError:
-			idd = None
+			record_id = None
 
 		try:
-			record_number = record['record_number']
+			record_record_number = record['record_number']
 		except KeyError:
-			record_number = None
+			record_record_number = None
 
 		try:
-			trigger_number = record['trigger_number']
+			record_trigger_number = record['trigger_number']
 		except KeyError:
-			trigger_number = None
+			record_trigger_number = None
 
 		try:
-			alert_datetime = record['alert_datetime']
+			record_alert_datetime = record['alert_datetime']
 		except KeyError:
-			alert_datetime = None
+			record_alert_datetime = None
 
 		try:
-			alert_tense = record['current']
+			record_alert_tense = record['current']
 		except KeyError:
-			alert_tense = None
+			record_alert_tense = None
 
 		try:
-			alert_type = record['alert_type']
+			record_alert_type = record['alert_type']
 		except KeyError:
-			alert_type = None
+			record_alert_type = None
 
 		try:
-			trigger_time = record['trigger_time']
+			record_trigger_time = record['trigger_time']
 		except KeyError:
-			trigger_time = None
+			record_trigger_time = None
 
 		try:
-			processed_sample = record['processed_sample']
+			record_processed_sample = record['processed_sample']
 		except KeyError:
-			processed_sample = None
+			record_processed_sample = None
 
 		try:
-			pipeline = record['pipeline']
+			record_pipeline = record['pipeline']
 		except KeyError:
-			pipeline = None
+			record_pipeline = None
 
 		try:
-			n_events = record['n_events']
+			record_n_events = record['n_events']
 		except KeyError:
-			n_events = None
+			record_n_events = None
 
 		try:
-			n_ibd_events = record['n_ibd_events']
+			record_n_ibd_events = record['n_ibd_events']
 		except KeyError:
-			n_ibd_events = None
+			record_n_ibd_events = None
 
 		try:
-			detection_interval = record['detection_interval']
+			record_detection_interval = record['detection_interval']
 		except KeyError:
-			detection_interval = None
+			record_detection_interval = None
 
 		try:
-			rate_energy_range = record['rate_energy_range']
-			rate_energy_range_min = rate_energy_range[0]
-			rate_energy_range_max = rate_energy_range[1]
+			record_rate_energy_range = record['rate_energy_range']
 		except KeyError:
-			rate_energy_range = None
+			record_rate_energy_range = None
 
 		try:
-			ra = record['ra']
+			record_ra = record['ra']
 		except KeyError:
-			ra = None
+			record_ra = None
 
 		try:
-			dec = record['dec']
+			record_dec = record['dec']
 		except KeyError:
-			dec = None
+			record_dec = None
 
 		try:
-			ra_dec_error = record['ra_dec_error']
+			record_ra_dec_error = record['ra_dec_error']
 		except KeyError:
-			ra_dec_error = None
+			reord_ra_dec_error = None
 
 		try:
-			containment_probability = record['containment_probability']
+			record_containment_probability = record['containment_probability']
 		except KeyError:
-			containment_probability = None
+			record_containment_probability = None
 
 		try:
-			luminosity_distance = record['luminosity_distance']
+			record_luminosity_distance = record['luminosity_distance']
 		except KeyError:
-			luminosity_distance = None
+			record_luminosity_distance = None
 
 		try:
-			luminosity_distance_error = record['luminosity_distance_error']
+			record_luminosity_distance_error = record['luminosity_distance_error']
 		except KeyError:
-			luminosity_distance_error = None
+			record_luminosity_distance_error = None
 
 	@staticmethod
 	def gcn_notices_swift_bat_guano(value, topic):

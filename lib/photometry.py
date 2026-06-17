@@ -499,13 +499,12 @@ class Photometry:
 			color_list = []
 			delta_list = []
 			for src in master_table:
-				if (src['flux_flag'] == False) and (src['color_flag'] == False):
-					if not np.isinf(src['aperture_sum']):
-						color = float(src['color'])
-						delta = float(src['delta_mag'])
-						print(src['aperture_sum'], color, delta)
-						color_list.append(color)
-						delta_list.append(delta)
+				#if not (src['flux_flag'] and src['color_flag'] and np.isinf(src['color']) and np.isinf(src['delta_mag']) and np.isnan(src['color']) and np.isnan(src['delta_mag'])):
+				color = float(src['color'])
+				delta = float(src['delta_mag'])
+				if not (np.isinf(color) or np.isnan(color) or np.isinf(delta) or np.isnan(delta)):
+					color_list.append(color)
+					delta_list.append(delta)
 			Plot.color_magnitude(color_list, delta_list, colormag_path)
 
 		# draw an annotated frame

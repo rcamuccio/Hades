@@ -85,11 +85,10 @@ class Configuration:
 	SKYMAP_MODE = 'comm_fields' # comm_fields, survey_fields
 
 	# listener
-	ALERT_DISPLAY = True
-	ALERT_SEND = False
+	ALERT = True
 	CATALOG = 'glade+'
-	CLIENT_ID = 'client_id'
-	CLIENT_SECRET = 'client_secret'
+	CLIENT_ID = '7vjhnkra2bveb93u0d2dqdmtks'
+	CLIENT_SECRET = '1v840t3ljqgob81m8kk0903edss4ul4huf5h3tq931f15lsjhoab'
 	EMAIL = 'toros.alerts@yahoo.com'
 	FIELD_GENERATION = 'N'
 	FIELD_PRIORITY = ['commissioning', 'ligo', 'science', 'main_survey']

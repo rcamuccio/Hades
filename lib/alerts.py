@@ -13,16 +13,18 @@ class Alerts:
 
 		# GCN Kafka Alerts
 		if topic == 'gcn.circulars':
-			print('GCN Kafka Alert (' + str(topic) + ')')
+			print('\nGCN Kafka Alert (' + str(topic) + ')')
 			Alerts.gcn_circulars(value, topic)
+			print()
 
 		elif topic == 'gcn.heartbeat':
 			pass
 			#Alerts.gcn_heartbeat(value, topic)
 
 		elif topic == 'gcn.notices.chime.frb':
-			print('GCN Kafka Alert (' + str(topic) + ')')
+			print('\nGCN Kafka Alert (' + str(topic) + ')')
 			Alerts.gcn_notices_chime_frb(value, topic)
+			print()
 
 		elif topic == 'gcn.notices.dsa110.frb':
 			print('GCN Kafka Alert (' + str(topic) + ')')
@@ -59,7 +61,15 @@ class Alerts:
 			print()
 
 	@staticmethod
-	def gcn_circulars(value, topic, send_alert=Configuration.ALERT_SEND, display_alert=Configuration.ALERT_DISPLAY):
+	def gcn_circulars(value, topic, alert=Configuration.ALERT):
+		'''This function processes GCN Circulars via GCN Kafka.
+
+		:parameter value - The value of the message
+		:parameter topic - The topic of the message
+		:parameter alert - A toggle for broadcasting the alert
+
+		:return - Nothing is returned
+		'''
 
 		record = json.loads(value)
 
@@ -108,28 +118,25 @@ class Alerts:
 		except KeyError:
 			record_created_on = None
 
-		if display_alert:
-			print('---')
-			print('\tSchema:', record_schema)
-			print('\tEvent ID:', record_event_id)
-			print('\tSubmitter:', record_submitter)
-			print('\tSubmitted How:', record_submitted_how)
-			print('\tSubject:', record_subject)
-			print('\tCircular ID:', record_circular_id)
-			print('\tFormat:', record_format)
-			print('\tBody:', record_body)
-			print('\tCreated On:', record_created_on)
-			print('---')
+		print('\tSchema:', record_schema)
+		print('\t\tEvent ID:', record_event_id)
+		print('\t\tSubmitter:', record_submitter)
+		print('\t\tSubmitted How:', record_submitted_how)
+		print('\t\tSubject:', record_subject)
+		print('\t\tCircular ID:', record_circular_id)
+		print('\t\tFormat:', record_format)
+		#print('\t\tBody:', record_body)
+		print('\t\tCreated On:', record_created_on)
 
-		if send_alert:
+		if alert:
 			server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
 			server.ehlo()
 			server.login(Configuration.EMAIL, Configuration.PAS)
 			msg = MIMEMultipart()
 			msg['From'] = Configuration.EMAIL
 			msg['To'] = ', '.join(Configuration.MAILING_LIST)
-			msg['Subject'] = 'Alert Received: GCN Circular #' + str(record_circular_id) + '\n'
-			body = record_body
+			msg['Subject'] = 'TOROS Alert: ' + str(topic) + '\n'
+			body = str(record_circular_id) + '\n' + str(record_body)
 			msg.attach(MIMEText(body, 'plain'))
 			sms = msg.as_string()
 			server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
@@ -141,7 +148,15 @@ class Alerts:
 		record = json.loads(value)
 
 	@staticmethod
-	def gcn_notices_chime_frb(value, topic):
+	def gcn_notices_chime_frb(value, topic, alert=Configuration.ALERT):
+		'''This function processes GCN Notices from the Canadian Hydrogen Intensity Mapping Experiment (CHIME) via GCN Kafka.
+
+		:parameter value - The value of the message
+		:parameter topic - The topic of the message
+		:parameter alert - A toggle for broadcasting the alert
+
+		:return - Nothing is returned
+		'''
 
 		record = json.loads(value)
 
@@ -154,6 +169,9 @@ class Alerts:
 			record_alert_type = record['alert_type']
 		except KeyError:
 			record_alert_type = None
+
+		print('\tSchema:', record_schema)
+		print('\tAlert type:', record_alert_type)
 
 		# initial
 		if record_alert_type == 'initial':
@@ -252,6 +270,39 @@ class Alerts:
 			except KeyError:
 				record_description = None
 
+			print('\t\tID:', record_id)
+			print('\t\tTrigger time:', record_trigger_time)
+			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\t\tSNR:', record_snr)
+			print('\t\tRA:', record_ra, 'deg')
+			print('\t\tDec:', record_dec, 'deg')
+			print('\t\tRA/Dec error:', ra_dec_error, 'deg')
+			print('\t\tDM:', record_dm, 'pc/cm^3')
+			print('\t\tDM error:', record_dm_error, 'pc/cm^3')
+			print('\t\tDM (galactic, NE2001):', record_dm_gal_ne_2001_max, 'pc/cm^3')
+			print('\t\tTrigger time (inf freq):', record_trigger_time_inf_freq)
+			print('\t\tTrigger time (inf freq) error:', record_trigger_time_inf_freq_error, 's')
+			print('\t\tImportance:', record_importance)
+			print('\t\tSampling time:', record_sampling_time, 'ms')
+			print('\t\tSpectral band:', record_spectral_band, record_spectral_band_units)
+			print('\t\tNumber of polarizations:', record_npol)
+			print('\t\tSystem temperature:', record_tsys, 'K')
+			print('\t\tDescription:', record_description)
+
+			if alert:
+				server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
+				server.ehlo()
+				server.login(Configuration.EMAIL, Configuration.PAS)
+				msg = MIMEMultipart()
+				msg['From'] = Configuration.EMAIL
+				msg['To'] = ', '.join(Configuration.MAILING_LIST)
+				msg['Subject'] = 'TOROS Alert: ' + str(topic) + '\n'
+				body = str(record_id) + '\nRA: ' + str(record_ra) + ' deg\nDec: ' + str(record_dec) + ' deg\n'
+				msg.attach(MIMEText(body, 'plain'))
+				sms = msg.as_string()
+				server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
+				server.quit()
+
 		# retraction
 		elif record_alert_type == 'retraction':
 			try:
@@ -274,7 +325,26 @@ class Alerts:
 			except KeyError:
 				record_description = None
 
-		# subtraction
+			print('\t\tID:', record_id)
+			print('\t\tTrigger time:', record_trigger_time)
+			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\t\tDescription:', record_description)
+
+			if alert:
+				server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
+				server.ehlo()
+				server.login(Configuration.EMAIL, Configuration.PAS)
+				msg = MIMEMultipart()
+				msg['From'] = Configuration.EMAIL
+				msg['To'] = ', '.join(Configuration.MAILING_LIST)
+				msg['Subject'] = 'TOROS Alert: ' + str(topic) + '\n'
+				body = str(record_id) + '\nRetraction'
+				msg.attach(MIMEText(body, 'plain'))
+				sms = msg.as_string()
+				server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
+				server.quit()
+
+		# subsequent
 		elif record_alert_type == 'subsequent':
 			try:
 				record_known_source = record['known_source']
@@ -381,6 +451,41 @@ class Alerts:
 			except KeyError:
 				record_description = None
 
+			print('\t\tID:', record_id)
+			print('\t\tKnown source:', record_known_source)
+			print('\t\tTrigger time:', record_trigger_time)
+			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\t\tSNR:', record_snr)
+			print('\t\tRA:', record_ra, 'deg')
+			print('\t\tDec:', record_dec, 'deg')
+			print('\t\tRA/Dec error:', ra_dec_error, 'deg')
+			print('\t\tDM:', record_dm, 'pc/cm^3')
+			print('\t\tDM error:', record_dm_error, 'pc/cm^3')
+			print('\t\tDM (galactic, NE2001):', record_dm_gal_ne_2001_max, 'pc/cm^3')
+			print('\t\tTrigger time (inf freq):', record_trigger_time_inf_freq)
+			print('\t\tTrigger time (inf freq) error:', record_trigger_time_inf_freq_error, 's')
+			print('\t\tImportance:', record_importance)
+			print('\t\tAssociation probability:', record_association_probability)
+			print('\t\tSampling time:', record_sampling_time, 'ms')
+			print('\t\tSpectral band:', record_spectral_band, record_spectral_band_units)
+			print('\t\tNumber of polarizations:', record_npol)
+			print('\t\tSystem temperature:', record_tsys, 'K')
+			print('\t\tDescription:', record_description)
+
+			if alert:
+				server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
+				server.ehlo()
+				server.login(Configuration.EMAIL, Configuration.PAS)
+				msg = MIMEMultipart()
+				msg['From'] = Configuration.EMAIL
+				msg['To'] = ', '.join(Configuration.MAILING_LIST)
+				msg['Subject'] = 'TOROS Alert: ' + str(topic) + '\n'
+				body = str(record_id) + '\nRA: ' + str(record_ra) + ' deg\nDec: ' + str(record_dec) + ' deg\n'
+				msg.attach(MIMEText(body, 'plain'))
+				sms = msg.as_string()
+				server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
+				server.quit()
+
 		# update
 		elif record_alert_type == 'update':
 			try:
@@ -407,6 +512,26 @@ class Alerts:
 				record_description = record['description']
 			except KeyError:
 				record_description = None
+
+			print('\t\tID:', record_id)
+			print('\t\tTrigger time:', record_trigger_time)
+			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\t\tUpdate message:', record_update_message)
+			print('\t\tDescription:', record_description)
+
+			if alert:
+				server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
+				server.ehlo()
+				server.login(Configuration.EMAIL, Configuration.PAS)
+				msg = MIMEMultipart()
+				msg['From'] = Configuration.EMAIL
+				msg['To'] = ', '.join(Configuration.MAILING_LIST)
+				msg['Subject'] = 'TOROS Alert: ' + str(topic) + '\n'
+				body = str(record_id) + '\n' + str(record_update_message)
+				msg.attach(MIMEText(body, 'plain'))
+				sms = msg.as_string()
+				server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
+				server.quit()
 
 	@staticmethod
 	def gcn_notices_dsa110_frb(value, topic):
@@ -641,20 +766,6 @@ class Alerts:
 		except KeyError:
 			record_additional_info = None
 		print('\tAdditional info:', record_additional_info)
-
-		if alert:
-			server = smtplib.SMTP_SSL(Configuration.SMTP, Configuration.PORT)
-			server.ehlo()
-			server.login(Configuration.EMAIL, Configuration.PAS)
-			msg = MIMEMultipart()
-			msg['From'] = Configuration.EMAIL
-			msg['To'] = ', '.join(Configuration.MAILING_LIST)
-			msg['Subject'] = 'Alert Received: Einstein Probe WXT ID ' + str(record_id) + '\n'
-			body = 'Event coordinates:\n' + '    RA: ' + str(record_ra) + ' deg\n' + '    Dec: ' + str(record_dec) + ' deg\n' + '    Error: ' + str(record_ra_dec_error) + ' deg\n'
-			msg.attach(MIMEText(body, 'plain'))
-			sms = msg.as_string()
-			server.sendmail(Configuration.EMAIL, Configuration.MAILING_LIST, sms)
-			server.quit()
 
 	@staticmethod
 	def gcn_notices_icecube_lvk_nu_track_search(value, topic):
@@ -1132,4 +1243,3 @@ class Alerts:
 	def igwn_gwalert(value, topic):
 
 		record = json.loads(value)
-		print(record)

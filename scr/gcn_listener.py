@@ -5,14 +5,14 @@ from gcn_kafka import Consumer
 import os
 import sys
 
-try:
-	os.system('clear')
-	print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m] - Running GCN listener\n')
+os.system('clear')
+print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m] - Running GCN listener\n')
 
-	consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET, **{'log_level': 0})
-	consumer.subscribe(Configuration.AVAILABLE_TOPICS)
+consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET, **{'log_level': 0})
+consumer.subscribe(Configuration.AVAILABLE_TOPICS)
 
-	while True:
+while True:
+	try:
 		for message in consumer.consume(timeout=1):
 			message_error = message.error()
 			message_offset = message.offset()
@@ -30,9 +30,12 @@ try:
 			else:
 				Alerts.filter_alert(message_value, message_topic)
 
-except KeyboardInterrupt:
-	print('\n\n[\033[1m' + 'ᾍδης ἀπέρχεται' + '\033[0m] - GCN listener terminated')
-	try:
-		sys.exit(130)
-	except SystemExit:
-		os._exit(130)
+	except KeyboardInterrupt:
+		print('\n\n[\033[1m' + 'ᾍδης ἀπέρχεται' + '\033[0m] - GCN listener terminated')
+		try:
+			sys.exit(130)
+		except SystemExit:
+			os._exit(130)
+
+	except Exception as e:
+		print(f'{type(e).__name__}: {e}')

@@ -1,6 +1,4 @@
 from config import Configuration
-from lib.calculator import Calculator
-
 from astropy.coordinates import SkyCoord
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
@@ -49,19 +47,17 @@ class Plot:
 			plt.show()
 
 	@staticmethod
-	def color_magnitude(color_list, delta_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+	def color_magnitude(color_list, delta_list, linear_fit, save_path, save_figure=Configuration.SAVE_FIGURE):
 		'''This function draws a color-magnitude diagram.
 
 		:parameter color_list - The list of catalog colors
 		:parameter delta_list - The list of difference magnitudes
+		:parameter linear_fit - the linear fit to the data
 		:parameter save_path - The save path of the diagram
 		:parameter save_figure - A toggle to save or display the diagram
 
 		:return - Nothing is returned
-		'''
-
-		# calculate the linear fit
-		linear_fit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
+		'''		
 
 		# draw the diagram
 		plt.figure(figsize=Configuration.FIGURE_SIZE)

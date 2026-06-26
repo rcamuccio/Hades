@@ -1,7 +1,4 @@
 from config import Configuration
-
-#from email.mime.text import MIMEText
-#from email.mime.multipart import MIMEMultipart'
 from email.message import EmailMessage
 import json
 import requests
@@ -120,14 +117,14 @@ class Alerts:
 			record_created_on = None
 
 		print('\tSchema:', record_schema)
-		print('\t\tEvent ID:', record_event_id)
-		print('\t\tSubmitter:', record_submitter)
-		print('\t\tSubmitted How:', record_submitted_how)
-		print('\t\tSubject:', record_subject)
-		print('\t\tCircular ID:', record_circular_id)
-		print('\t\tFormat:', record_format)
-		#print('\t\tBody:', record_body)
-		print('\t\tCreated On:', record_created_on)
+		print('\tEvent ID:', record_event_id)
+		print('\tSubmitter:', record_submitter)
+		print('\tSubmitted How:', record_submitted_how)
+		print('\tSubject:', record_subject)
+		print('\tCircular ID:', record_circular_id)
+		print('\tFormat:', record_format)
+		#print('\tBody:', record_body)
+		print('\tCreated On:', record_created_on)
 
 		if alert:
 			body = str(record_circular_id) + '\n' + str(record_body)
@@ -184,374 +181,336 @@ class Alerts:
 		except KeyError:
 			record_alert_type = None
 
-		print('\tSchema:', record_schema)
-		print('\tAlert type:', record_alert_type)
-
 		# initial
 		if record_alert_type == 'initial':
-			# [string] time of the trigger [ISO 8601]
 			try:
 				record_trigger_time = record['trigger_time']
 			except KeyError:
 				record_trigger_time = None
 
-			# [number | array] number: trigger time uncertainty [s, 1-sigma], with symmetric uncertainty; array[number]: trigger time uncertainty [s, 1-sigma], with asymmetric uncertainty
 			try:
 				record_trigger_time_error = record['trigger_time_error']
 			except KeyError:
 				record_trigger_time_error = None
 
-			# [string | array] string: instrument-specific trigger ID or alternate ID; array[string]: if multiple instrument-specific trigger IDs are present
 			try:
 				record_id = record['id']
 			except KeyError:
 				record_id = None
 
-			# [number] signal-to-noise ratio of the burst [dimensionless]
 			try:
 				record_snr = record['snr']
 			except KeyError:
 				record_snr = None
 
-			# [number] ICRS right ascension [deg], utilizes the J2000 epoch and an equatorial coordinate system
 			try:
 				record_ra = record['ra']
 			except KeyError:
 				record_ra = None
 
-			# [number] ICRS declination [deg], utilizes the J2000 epoch and an equatorial coordinate system
 			try:
 				record_dec = record['dec']
 			except KeyError:
 				record_dec = None
 
-			# ---
 			try:
 				record_ra_dec_error = record['ra_dec_error']
 			except KeyError:
 				record_ra_dec_error = None
 
-			# [number] dispersion measure (DM) of the burst [pc/cm^3], representing the integrated column density of free electrons along the line of sight
 			try:
 				record_dm = record['dm']
 			except KeyError:
 				record_dm = None
 
-			# [number | array] number: uncertainty associated with the dispersion measure [pc/cm^3, 1-sigma], with symmetric uncertainty; array[number]: uncertainty associated with the dispersion measure [pc/cm^3, 1-sigma], with asymmetric uncertainty
 			try:
 				record_dm_error = record['dm_error']
 			except KeyError:
 				record_dm_error = None
 
-			# [number] estimated contribution to the dispersion measure [pc/cm^3] from the Galaxy using the NE2001 model
 			try:
 				record_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
 			except KeyError:
 				record_dm_gal_ne_2001_max = None
 
-			# [string] time of the trigger at infinite frequency [ISO 8601]
 			try:
 				record_trigger_time_inf_freq = record['trigger_time_inf_freq']
 			except KeyError:
 				record_trigger_time_inf_freq = None
 
-			# [number] error on the trigger time at infinite frequency [s]
 			try:
 				record_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
 			except KeyError:
 				record_trigger_time_inf_freq_error = None
 
-			# [number] a machine learning score separating RFI (0) from an astrophysical signal (1)
 			try:
 				record_importance = record['importance']
 			except KeyError:
 				record_importance = None
 
-			# [number] time resolution of the FRB search at the host observatory [ms]
 			try:
 				record_sampling_time = record['sampling_time']
 			except KeyError:
 				record_sampling_time = None
 
-			# [array] observed spectral band, expressed in the specified 'units' field
 			try:
 				record_spectral_band = record['spectral_band']
 			except KeyError:
 				record_spectral_band = None
 
-			# [string] units for the spectral data; default unit is keV; options: keV, nm, MHz
 			try:
 				record_spectral_band_units = record['spectral_band_units']
 			except KeyError:
 				record_spectral_band_units = None
 
-			# [number] the number of polarizations of the real-time FRB search
 			try:
 				record_npol = record['npol']
 			except KeyError:
 				record_npol = None
 
-			# [number] the system temperature of the real-time FRB search [K]
 			try:
 				record_tsys = record['tsys']
 			except KeyError:
 				record_tsys = None
 
-			# [string] message description
-			try:
-				record_description = record['description']
-			except KeyError:
-				record_description = None
-
-			print('\t\tID:', record_id)
-			print('\t\tTrigger time:', record_trigger_time)
-			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
-			print('\t\tSNR:', record_snr)
-			print('\t\tRA:', record_ra, 'deg')
-			print('\t\tDec:', record_dec, 'deg')
-			print('\t\tRA/Dec error:', record_ra_dec_error, 'deg')
-			print('\t\tDM:', record_dm, 'pc/cm^3')
-			print('\t\tDM error:', record_dm_error, 'pc/cm^3')
-			print('\t\tDM (galactic, NE2001):', record_dm_gal_ne_2001_max, 'pc/cm^3')
-			print('\t\tTrigger time (inf freq):', record_trigger_time_inf_freq)
-			print('\t\tTrigger time (inf freq) error:', record_trigger_time_inf_freq_error, 's')
-			print('\t\tImportance:', record_importance)
-			print('\t\tSampling time:', record_sampling_time, 'ms')
-			print('\t\tSpectral band:', record_spectral_band, record_spectral_band_units)
-			print('\t\tNumber of polarizations:', record_npol)
-			print('\t\tSystem temperature:', record_tsys, 'K')
-			print('\t\tDescription:', record_description)
-
-			if alert:
-				body = str(record_id) + '\nRA: ' + str(record_ra) + ' deg\nDec: ' + str(record_dec) + ' deg'
-				Alerts.send_alert(topic, body)
-
-		# retraction
-		elif record_alert_type == 'retraction':
-			# [string | array] string: instrument-specific trigger ID or alternate ID; array[string]: if multiple instrument-specific trigger IDs are present
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
-
-			# [string] time of the trigger [ISO 8601]
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
-
-			# [number | array] number: trigger time uncertainty [s, 1-sigma], with symmetric uncertainty; array[number]: trigger time uncertainty [s, 1-sigma], with asymmetric uncertainty
-			try:
-				record_trigger_time_error = record['trigger_time_error']
-			except KeyError:
-				record_trigger_time_error = None
-
-			# [string] message description
-			try:
-				record_description = record['description']
-			except KeyError:
-				record_description = None
-
-			print('\t\tID:', record_id)
-			print('\t\tTrigger time:', record_trigger_time)
-			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
-			print('\t\tDescription:', record_description)
-
-			if alert:
-				body = str(record_id) + '\nRetraction'
-				Alerts.send_alert(topic, body)
-
-		# subsequent
-		elif record_alert_type == 'subsequent':
-			# [string] Transient Name Server name of the known source (if a repeating FRB source)
-			try:
-				record_known_source = record['known_source']
-			except KeyError:
-				record_known_source = None
-
-			# [string] time of the trigger [ISO 8601]
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
-
-			# [number | array] number: trigger time uncertainty [s, 1-sigma], with symmetric uncertainty; array[number]: trigger time uncertainty [s, 1-sigma], with asymmetric uncertainty
-			try:
-				record_trigger_time_error = record['trigger_time_error']
-			except KeyError:
-				record_trigger_time_error = None
-
-			# [string | array] string: instrument-specific trigger ID or alternate ID; array[string]: if multiple instrument-specific trigger IDs are present
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
-
-			# [number] signal-to-noise ratio of the burst [dimensionless]
-			try:
-				record_snr = record['snr']
-			except KeyError:
-				record_snr = None
-
-			# [number] ICRS right ascension [deg], utilizes the J2000 epoch and an equatorial coordinate system
-			try:
-				record_ra = record['ra']
-			except KeyError:
-				record_ra = None
-
-			# [number] ICRS declination [deg], utilizes the J2000 epoch and an equatorial coordinate system
-			try:
-				record_dec = record['dec']
-			except KeyError:
-				record_dec = None
-
-			# ---
-			try:
-				record_ra_dec_error = record['ra_dec_error']
-			except KeyError:
-				record_ra_dec_error = None
-
-			# [number] dispersion measure (DM) of the burst [pc/cm^3], representing the integrated column density of free electrons along the line of sight
-			try:
-				record_dm = record['dm']
-			except KeyError:
-				record_dm = None
-
-			# [number | array] number: uncertainty associated with the dispersion measure [pc/cm^3, 1-sigma], with symmetric uncertainty; array[number]: uncertainty associated with the dispersion measure [pc/cm^3, 1-sigma], with asymmetric uncertainty
-			try:
-				record_dm_error = record['dm_error']
-			except KeyError:
-				record_dm_error = None
-
-			# [number] estimated contribution to the dispersion measure [pc/cm^3] from the Galaxy using the NE2001 model
-			try:
-				record_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
-			except KeyError:
-				record_dm_gal_ne_2001_max = None
-
-			# [string] time of trigger at infinite frequency [ISO 8601]
-			try:
-				record_trigger_time_inf_freq = record['trigger_time_inf_freq']
-			except KeyError:
-				record_trigger_time_inf_freq = None
-
-			# [nunber] error on the trigger time at infinite frequency [s]
-			try:
-				record_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
-			except KeyError:
-				record_trigger_time_inf_freq_error = None
-
-			# [number] a machine learning score separating RFI (0) from an astrophysical signal (1)
-			try:
-				record_importance = record['importance']
-			except KeyError:
-				record_importance = None
-
-			# [number] a score of known source association probability from poorly associated (0) to confidently associated (1)
-			try:
-				record_association_probability = record['association_probability']
-			except KeyError:
-				record_association_probability = None
-
-			# [number] time resolution of the FRB search at the host observatory [ms]
-			try:
-				record_sampling_time = record['sampling_time']
-			except KeyError:
-				record_sampling_time = None
-
-			# [array] observed spectral band, expressed in the specified 'units' field
-			try:
-				record_spectral_band = record['spectral_band']
-			except KeyError:
-				record_spectral_band = None
-
-			# [string] units for the spectral data; default unit is keV; options: keV, nm, MHz
-			try:
-				record_spectral_band_units = record['spectral_band_units']
-			except KeyError:
-				record_spectral_band_units = None
-
-			# [number] the number of polarizations of the real-time FRB search
-			try:
-				record_npol = record['npol']
-			except KeyError:
-				record_npol = None
-
-			# [number] the system temperature of the real-time FRB search [K]
-			try:
-				record_tsys = record['tsys']
-			except KeyError:
-				record_tsys = None
-
-			# [string] message description
-			try:
-				record_description = record['description']
-			except KeyError:
-				record_description = None
-
-			print('\t\tID:', record_id)
-			print('\t\tKnown source:', record_known_source)
-			print('\t\tTrigger time:', record_trigger_time)
-			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
-			print('\t\tSNR:', record_snr)
-			print('\t\tRA:', record_ra, 'deg')
-			print('\t\tDec:', record_dec, 'deg')
-			print('\t\tRA/Dec error:', record_ra_dec_error, 'deg')
-			print('\t\tDM:', record_dm, 'pc/cm^3')
-			print('\t\tDM error:', record_dm_error, 'pc/cm^3')
-			print('\t\tDM (galactic, NE2001):', record_dm_gal_ne_2001_max, 'pc/cm^3')
-			print('\t\tTrigger time (inf freq):', record_trigger_time_inf_freq)
-			print('\t\tTrigger time (inf freq) error:', record_trigger_time_inf_freq_error, 's')
-			print('\t\tImportance:', record_importance)
-			print('\t\tAssociation probability:', record_association_probability)
-			print('\t\tSampling time:', record_sampling_time, 'ms')
-			print('\t\tSpectral band:', record_spectral_band, record_spectral_band_units)
-			print('\t\tNumber of polarizations:', record_npol)
-			print('\t\tSystem temperature:', record_tsys, 'K')
-			print('\t\tDescription:', record_description)
-
-			if alert:
-				body = str(record_id) + '\nRA: ' + str(record_ra) + ' deg\nDec: ' + str(record_dec) + ' deg'
-				Alerts.send_alert(topic, body)
-
-		# update
-		elif record_alert_type == 'update':
-			# [string | array] string: instrument-specific trigger ID or alternate ID; array[string]: if multiple instrument-specific trigger IDs are present
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
-
-			# [string] time of the trigger [ISO 8601]
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
-
-			# [number | array] number: trigger time uncertainty [s, 1-sigma], with symmetric uncertainty; array[number]: trigger time uncertainty [s, 1-sigma], with asymmetric uncertainty
-			try:
-				record_trigger_time_error = record['trigger_time_error']
-			except KeyError:
-				record_trigger_time_error = None
-
-			# [string] message to be included in an update alert
-			try:
-				record_update_message = record['update_message']
-			except KeyError:
-				record_update_message = None
-
-			# [string] message description
 			try:
 				record_description = record['description']
 			except KeyError:
 				record_description = None
 
 			# print the alert contents
-			print('\t\tID:', record_id)
-			print('\t\tTrigger time:', record_trigger_time)
-			print('\t\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
-			print('\t\tUpdate message:', record_update_message)
-			print('\t\tDescription:', record_description)
+			print('\tSchema:', record_schema)
+			print('\tAlert type:', record_alert_type)
+			print('\tID:', record_id)
+			print('\tTrigger time:', record_trigger_time)
+			print('\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\tSNR:', record_snr)
+			print('\tRA:', record_ra, 'deg')
+			print('\tDec:', record_dec, 'deg')
+			print('\tRA/Dec error:', record_ra_dec_error, 'deg')
+			print('\tDM:', record_dm, 'pc/cm^3')
+			print('\tDM error:', record_dm_error, 'pc/cm^3')
+			print('\tDM (galactic, NE2001):', record_dm_gal_ne_2001_max, 'pc/cm^3')
+			print('\tTrigger time (inf freq):', record_trigger_time_inf_freq)
+			print('\tTrigger time (inf freq) error:', record_trigger_time_inf_freq_error, 's')
+			print('\tImportance:', record_importance)
+			print('\tSampling time:', record_sampling_time, 'ms')
+			print('\tSpectral band:', record_spectral_band, record_spectral_band_units)
+			print('\tNumber of polarizations:', record_npol)
+			print('\tSystem temperature:', record_tsys, 'K')
+			print('\tDescription:', record_description)
+
+			# send an alert message
+			if alert:
+				body = str(record_id) + '\nRA: ' + str(record_ra) + ' deg\nDec: ' + str(record_dec) + ' deg'
+				Alerts.send_alert(topic, body)
+
+		# retraction
+		elif record_alert_type == 'retraction':
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+			# print the alert contents
+			print('\tSchema:', record_schema)
+			print('\tAlert type:', record_alert_type)
+			print('\tID:', record_id)
+			print('\tTrigger time:', record_trigger_time)
+			print('\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\tDescription:', record_description)
+
+			# send an alert message
+			if alert:
+				body = str(record_id) + '\nRetraction'
+				Alerts.send_alert(topic, body)
+
+		# subsequent
+		elif record_alert_type == 'subsequent':
+			try:
+				record_known_source = record['known_source']
+			except KeyError:
+				record_known_source = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_snr = record['snr']
+			except KeyError:
+				record_snr = None
+
+			try:
+				record_ra = record['ra']
+			except KeyError:
+				record_ra = None
+
+			try:
+				record_dec = record['dec']
+			except KeyError:
+				record_dec = None
+
+			try:
+				record_ra_dec_error = record['ra_dec_error']
+			except KeyError:
+				record_ra_dec_error = None
+
+			try:
+				record_dm = record['dm']
+			except KeyError:
+				record_dm = None
+
+			try:
+				record_dm_error = record['dm_error']
+			except KeyError:
+				record_dm_error = None
+
+			try:
+				record_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
+			except KeyError:
+				record_dm_gal_ne_2001_max = None
+
+			try:
+				record_trigger_time_inf_freq = record['trigger_time_inf_freq']
+			except KeyError:
+				record_trigger_time_inf_freq = None
+
+			try:
+				record_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
+			except KeyError:
+				record_trigger_time_inf_freq_error = None
+
+			try:
+				record_importance = record['importance']
+			except KeyError:
+				record_importance = None
+
+			try:
+				record_association_probability = record['association_probability']
+			except KeyError:
+				record_association_probability = None
+
+			try:
+				record_sampling_time = record['sampling_time']
+			except KeyError:
+				record_sampling_time = None
+
+			try:
+				record_spectral_band = record['spectral_band']
+			except KeyError:
+				record_spectral_band = None
+
+			try:
+				record_spectral_band_units = record['spectral_band_units']
+			except KeyError:
+				record_spectral_band_units = None
+
+			try:
+				record_npol = record['npol']
+			except KeyError:
+				record_npol = None
+
+			try:
+				record_tsys = record['tsys']
+			except KeyError:
+				record_tsys = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+			# print the alert contents
+			print('\tSchema:', record_schema)
+			print('\tAlert type:', record_alert_type)
+			print('\tID:', record_id)
+			print('\tKnown source:', record_known_source)
+			print('\tTrigger time:', record_trigger_time)
+			print('\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\tSNR:', record_snr)
+			print('\tRA:', record_ra, 'deg')
+			print('\tDec:', record_dec, 'deg')
+			print('\tRA/Dec error:', record_ra_dec_error, 'deg')
+			print('\tDM:', record_dm, 'pc/cm^3')
+			print('\tDM error:', record_dm_error, 'pc/cm^3')
+			print('\tDM (galactic, NE2001):', record_dm_gal_ne_2001_max, 'pc/cm^3')
+			print('\tTrigger time (inf freq):', record_trigger_time_inf_freq)
+			print('\tTrigger time (inf freq) error:', record_trigger_time_inf_freq_error, 's')
+			print('\tImportance:', record_importance)
+			print('\tAssociation probability:', record_association_probability)
+			print('\tSampling time:', record_sampling_time, 'ms')
+			print('\tSpectral band:', record_spectral_band, record_spectral_band_units)
+			print('\tNumber of polarizations:', record_npol)
+			print('\tSystem temperature:', record_tsys, 'K')
+			print('\tDescription:', record_description)
+
+			# send an alert message
+			if alert:
+				body = str(record_id) + '\nRA: ' + str(record_ra) + ' deg\nDec: ' + str(record_dec) + ' deg'
+				Alerts.send_alert(topic, body)
+
+		# update
+		elif record_alert_type == 'update':
+			try:
+				record_id = record['id']
+			except KeyError:
+				record_id = None
+
+			try:
+				record_trigger_time = record['trigger_time']
+			except KeyError:
+				record_trigger_time = None
+
+			try:
+				record_trigger_time_error = record['trigger_time_error']
+			except KeyError:
+				record_trigger_time_error = None
+
+			try:
+				record_update_message = record['update_message']
+			except KeyError:
+				record_update_message = None
+
+			try:
+				record_description = record['description']
+			except KeyError:
+				record_description = None
+
+			# print the alert contents
+			print('\tSchema:', record_schema)
+			print('\tAlert type:', record_alert_type)
+			print('\tID:', record_id)
+			print('\tTrigger time:', record_trigger_time)
+			print('\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\tUpdate message:', record_update_message)
+			print('\tDescription:', record_description)
 
 			# send an alert message
 			if alert:
@@ -718,7 +677,15 @@ class Alerts:
 				record_description = None
 
 	@staticmethod
-	def gcn_notices_einstein_probe_wxt_alert(value, topic, alert=False):
+	def gcn_notices_einstein_probe_wxt_alert(value, topic, alert=Configuration.ALERT):
+		'''This function processes GCN Notices from the Einstein Probe Wide Field X-ray Telescope (EP-WXT) via GCN Kafka.
+
+		:parameter value - The value of the message
+		:parameter topic - The topic of the message
+		:parameter alert - A toggle for broadcasting the alert
+
+		:return - Nothing is returned
+		'''
 
 		record = json.loads(value)
 		
@@ -726,71 +693,74 @@ class Alerts:
 			record_schema = record['$schema']
 		except KeyError:
 			record_schema = None
-		print('\t$schema:', record_schema)
 
 		try:
 			record_instrument = record['instrument']
 		except KeyError:
 			record_instrument = None
-		print('\tInstrument:', record_instrument)
 
 		try:
 			record_trigger_time = record['trigger_time']
 		except KeyError:
 			record_trigger_time = None
-		print('\tTrigger time:', record_trigger_time)
 
 		try:
 			record_id = record['id'][0]
 		except KeyError:
 			record_id = None
-		print('\tID:', record_id)
 
 		try:
 			record_ra = record['ra']
 		except KeyError:
 			record_ra = None
-		print('\tRA:', record_ra)
 
 		try:
 			record_dec = record['dec']
 		except KeyError:
 			record_dec = None
-		print('\tDec:', record_dec)
 
 		try:
 			record_ra_dec_error = record['ra_dec_error']
 		except KeyError:
 			record_ra_dec_error = None
-		print('\tRA/Dec error:', record_ra_dec_error)
 
 		try:
 			record_image_energy_range = record['image_energy_range']
-			record_image_energy_range_min = record_image_energy_range[0]
-			record_image_energy_range_max = record_image_energy_range[1]
 		except KeyError:
-			record_image_energy_range = [None, None]
-			record_image_energy_range_min = record_image_energy_range[0]
-			record_image_energy_range_max = record_image_energy_range[1]
-		print('\tImage energy range:', record_image_energy_range_min, record_image_energy_range_max)
+			record_image_energy_range = None
 
 		try:
 			record_net_count_rate = record['net_count_rate']
 		except KeyError:
 			record_net_count_rate = None
-		print('\tNet count rate:', record_net_count_rate)
 
 		try:
 			record_image_snr = record['image_snr']
 		except KeyError:
 			record_image_snr = None
-		print('\tImage SNR:', record_image_snr)
 
 		try:
 			record_additional_info = record['additional_info']
 		except KeyError:
 			record_additional_info = None
+
+		# print the alert contents
+		print('\t$schema:', record_schema)
+		print('\tInstrument:', record_instrument)
+		print('\tTrigger time:', record_trigger_time)
+		print('\tID:', record_id)
+		print('\tRA:', record_ra)
+		print('\tDec:', record_dec)
+		print('\tRA/Dec error:', record_ra_dec_error)
+		print('\tImage energy range:', record_image_energy_range)
+		print('\tNet count rate:', record_net_count_rate)
+		print('\tImage SNR:', record_image_snr)
 		print('\tAdditional info:', record_additional_info)
+
+		# send an alert message
+		if alert:
+			body = str(record_id) + '\n' + str(record_ra) + '\n' + str(record_dec)
+			Alerts.send_alert(topic, body)
 
 	@staticmethod
 	def gcn_notices_icecube_lvk_nu_track_search(value, topic):

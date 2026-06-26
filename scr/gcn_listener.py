@@ -1,6 +1,5 @@
 from config import Configuration
 from lib.alerts import Alerts
-
 from gcn_kafka import Consumer
 import os
 import sys

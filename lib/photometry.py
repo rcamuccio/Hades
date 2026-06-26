@@ -3,7 +3,6 @@ from lib.calculator import Calculator
 from lib.observatory import Observatory
 from lib.plot import Plot
 from lib.survey import Survey
-
 from astropy import units as u
 from astropy.coordinates import EarthLocation, SkyCoord
 from astropy.io import ascii, fits
@@ -127,8 +126,8 @@ class Photometry:
 			clean_frame_name = 'cln_' + raw_frame_name
 			clean_frame_path = clean_frame_directory + clean_frame
 
-			img_bkg_path = clean_frame_directory + 'bkg/bkg_' + raw_frame_name + Configuration.IMAGE_EXTENSION
-			img_res_path = clean_frame_directory + 'res/res_' + raw_frame_name + Configuration.IMAGE_EXTENSION
+			img_bkg_path = clean_frame_directory + 'background/bkg_' + raw_frame_name + Configuration.IMAGE_EXTENSION
+			img_res_path = clean_frame_directory + 'background/res_' + raw_frame_name + Configuration.IMAGE_EXTENSION
 
 			# check if cleaned frame already exists
 			if not os.path.exists(clean_frame_path):
@@ -351,7 +350,7 @@ class Photometry:
 		return table
 
 	@staticmethod
-	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name):
+	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name, table_type):
 		'''This function performs aperture photometry on a FITS image and returns a table of photometric measurements.
 
 		:parameter frame_data - The image data array
@@ -367,21 +366,7 @@ class Photometry:
 
 		# main output directory
 		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
-
-		# histogram paths
-		hst_flux_path = output_directory + 'hst/flux_' + output_name + Configuration.IMAGE_EXTENSION
-		hst_inst_mag_path = output_directory + 'hst/inst_mag_' + output_name + Configuration.IMAGE_EXTENSION
-		hst_gaia_mag_path = output_directory + 'hst/gaia_mag_' + output_name + Configuration.IMAGE_EXTENSION
 		
-		# field path
-		field_path = output_directory + 'img/' + output_name + Configuration.IMAGE_EXTENSION
-		
-		# color-magnitude diagram path
-		colormag_path = output_directory + 'plt/colormag_' + output_name + Configuration.IMAGE_EXTENSION
-
-		# generate the mask
-		mask, boxes = Photometry.make_mask(frame_data)
-
 		# get the observation time
 		try:
 			time = Time(frame_header['STKJD'], format='jd', scale='utc')
@@ -401,14 +386,19 @@ class Photometry:
 		exp_time = frame_header['EXPTIME']
 
 		# calculate the background statistics
+		mask, boxes = Photometry.make_mask(frame_data)
 		glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
 
 		# extract and convert coordinates from the input table
 		wcs = WCS(frame_header)
 		sky_coords = []
 		for obj in match_table:
-			ra = obj['ra']
-			dec = obj['dec']
+			if table_type == 'gaia_dr3':
+				ra = obj['ra']
+				dec = obj['dec']
+			elif table_type == 'aavso_vsx':
+				ra = obj['RAJ2000']
+				dec = obj['DEJ2000']
 			coord = (ra, dec)
 			sky_coords.append(coord)
 		sky_pos = SkyCoord(sky_coords, unit='deg')
@@ -443,10 +433,12 @@ class Photometry:
 		flux_err_list = []
 		inst_mag_list = []
 		inst_mag_err_list = []
-		color_list = []
-		delta_mag_list = []
 		flux_flag_list = []
-		color_flag_list = []
+
+		if table_type == 'gaia_dr3':
+			color_list = []
+			delta_mag_list = []
+			color_flag_list = []
 
 		for src in master_table:
 			flux = src['aperture_residual']
@@ -461,67 +453,83 @@ class Photometry:
 			inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
 			inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
 
-			if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):
-				color = -9.999999
-				cat_mag = -9.999999
-				delta_mag = -9.999999
-				color_flag_list.append(True)
-			else:
-				b = src['phot_bp_mean_mag']
-				r = src['phot_rp_mean_mag']
-				color = b - r
-				cat_mag = src['phot_g_mean_mag']
-				delta_mag = cat_mag - inst_mag
-				color_flag_list.append(False)
+			if table_type == 'gaia_dr3':
+				if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):
+					color = -9.999999
+					cat_mag = -9.999999
+					delta_mag = -9.999999
+					color_flag_list.append(True)
+				else:
+					b = src['phot_bp_mean_mag']
+					r = src['phot_rp_mean_mag']
+					color = b - r
+					cat_mag = src['phot_g_mean_mag']
+					delta_mag = cat_mag - inst_mag
+					color_flag_list.append(False)
+
+				color_list.append(color)
+				delta_mag_list.append(delta_mag)
 
 			flux_list.append(flux)
 			flux_err_list.append(flux_err)
 			inst_mag_list.append(inst_mag)
 			inst_mag_err_list.append(inst_mag_err)
-			color_list.append(color)
-			delta_mag_list.append(delta_mag)
 
 		master_table['flux'] = flux_list
 		master_table['flux_flag'] = flux_flag_list
 		master_table['flux_err'] = flux_err_list
 		master_table['inst_mag'] = inst_mag_list
 		master_table['inst_mag_err'] = inst_mag_err_list
-		master_table['color'] = color_list
-		master_table['color_flag'] = color_flag_list
-		master_table['delta_mag'] = delta_mag_list
+
+		if table_type == 'gaia_dr3':
+			master_table['color'] = color_list
+			master_table['color_flag'] = color_flag_list
+			master_table['delta_mag'] = delta_mag_list
 
 		# save the photometry table
 		if not os.path.exists(master_table_path):
 			master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
 
 		# calculate the transform and zero point
-		if not os.path.exists(colormag_path):
-			color_list = []
-			delta_list = []
-			for src in master_table:
-				#if not (src['flux_flag'] and src['color_flag'] and np.isinf(src['color']) and np.isinf(src['delta_mag']) and np.isnan(src['color']) and np.isnan(src['delta_mag'])):
-				color = float(src['color'])
-				delta = float(src['delta_mag'])
-				if not (np.isinf(color) or np.isnan(color) or np.isinf(delta) or np.isnan(delta)):
-					color_list.append(color)
-					delta_list.append(delta)
-			Plot.color_magnitude(color_list, delta_list, colormag_path)
+		if table_type == 'gaia_dr3':
+			colormag_path = output_directory + 'photometry/colormag_FIELD_' + date + '_' + field + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(colormag_path):
+				color_list = []
+				delta_list = []
+				for src in master_table:
+					color = float(src['color'])
+					delta = float(src['delta_mag'])
+					if not (np.isinf(color) or np.isnan(color) or np.isinf(delta) or np.isnan(delta)):
+						color_list.append(color)
+						delta_list.append(delta)
+				linear_fit, slope, intercept, delta_slope, delta_intercept = Calculator.unweighted_fit(color_list, delta_list)
+				Plot.color_magnitude(color_list, delta_list, linear_fit, colormag_path)
 
 		# draw an annotated frame
+		if table_type == 'gaia_dr3':
+			field_path = output_directory + 'image/gaia_' + output_name + Configuration.IMAGE_EXTENSION
+		elif table_type == 'aavso_vsx':
+			field_path = output_directory + 'image/aavso_' + output_name + Configuration.IMAGE_EXTENSION
 		if not os.path.exists(field_path):
 			Plot.field(frame_data, aperture, boxes, field_path)
 
 		# draw a histogram of the stellar fluxes
-		if not os.path.exists(hst_flux_path):
-			Plot.stellar_flux_histogram(master_table['aperture_sum'], hst_flux_path)
+		if table_type == 'gaia_dr3':
+			hst_flux_path = output_directory + 'histogram/flux_' + output_name + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(hst_flux_path):
+				Plot.stellar_flux_histogram(master_table['aperture_sum'], hst_flux_path)
 
 		# draw a histogram of the instrumental magnitudes
-		if not os.path.exists(hst_inst_mag_path):
-			Plot.stellar_magnitude_histogram(master_table['inst_mag'], hst_inst_mag_path)
+		if table_type == 'gaia_dr3':
+			hst_inst_mag_path = output_directory + 'histogram/inst_mag_' + output_name + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(hst_inst_mag_path):
+				Plot.stellar_magnitude_histogram(master_table['inst_mag'], hst_inst_mag_path)
 
 		# draw a histogram of the Gaia magnitudes
-		if not os.path.exists(hst_gaia_mag_path):
-			Plot.stellar_gaia_histogram(master_table['phot_rp_mean_mag'], master_table['phot_g_mean_mag'], master_table['phot_bp_mean_mag'], hst_gaia_mag_path)
+		if table_type == 'gaia_dr3':
+			hst_gaia_mag_path = output_directory + 'histogram/gaia_mag_FIELD_' + date + '_' + field + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(hst_gaia_mag_path):
+				Plot.stellar_gaia_histogram(master_table['phot_rp_mean_mag'], master_table['phot_g_mean_mag'], master_table['phot_bp_mean_mag'], hst_gaia_mag_path)
 
 		return master_table
 
@@ -548,7 +556,7 @@ class Photometry:
 		return filtered_table
 
 	@staticmethod
-	def frame_timeseries(date, field, input_table):
+	def timeseries_photometry(date, field, input_table, table_type):
 		'''This function performs photometry for sources in a provided input catalog on a particular date and field.
 
 		:parameter date - The date string
@@ -558,72 +566,96 @@ class Photometry:
 		:return -
 		'''
 
-		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
-
-		# photometric precision diagram path
-		photprec_path = output_directory + 'plt/photprec_FIELD_' + str(field) + '_' + str(date) + Configuration.IMAGE_EXTENSION
-
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'		
 		os.chdir(output_directory)
+		
 		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
 		date_list = []
 		table_list = []
-		table_path_list = []
 
 		for frm in frame_list:
 			# set the table path
 			frame_string = frm.split(Configuration.FILE_EXTENSION)[0]
-			table_path = output_directory + 'tbl/' + frame_string + Configuration.TABLE_EXTENSION
-			table_path_list.append(table_path)
+			if table_type == 'gaia_dr3':
+				table_path = output_directory + 'table/gaia_' + frame_string + Configuration.TABLE_EXTENSION
+			elif table_type == 'aavso_vsx':
+				table_path = output_directory + 'table/aavso_' + frame_string + Configuration.TABLE_EXTENSION
 
 			# open the frame
 			frame = fits.open(frm)
 			frame_data = frame[0].data
 			frame_header = frame[0].header
+
+			# read the timestamp
 			time = Time(frame_header['DATE'], format='isot', scale='utc')
 			jd = float(time.jd)
 			date_list.append(jd)
 
 			# perform photometry on the frame
-			table = Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, input_table, table_path, frame_string)
+			table = Photometry.frame_aperture_photometry(date, field, frame_data, frame_header, input_table, table_path, frame_string, table_type)
 			table_list.append(table)
 
+		# grab the number of frames, epochs, and sources
 		n_frames = len(frame_list)
 		n_epochs = len(table_list)
 		n_sources = len(input_table)
 
+		# create the holders for the time series output
 		fluxes = np.zeros((n_sources, n_epochs))
 		flux_errors = np.zeros((n_sources, n_epochs))
 		mags = np.zeros((n_sources, n_epochs))
 		mag_errors = np.zeros((n_sources, n_epochs))
 
+		# populate the holders with the time series information
 		for i, table in enumerate(table_list):
 			fluxes[:, i] = table['flux']
 			flux_errors[:, i] = table['flux_err']
 			mags[:, i] = table['inst_mag']
 			mag_errors[:, i] = table['inst_mag_err']
 
-		plot_mag_list = []
-		plot_rms_list = []
+		if table_type == 'gaia_dr3':
+			plot_mag_list = []
+			plot_rms_list = []
 
 		table_columns = ('jd', 'flx', 'flxerr', 'mag', 'magerr')
 		table_dtypes = (float, float, float, float, float)
+
+		# generate flux files for each source
 		for src in range(n_sources):
+			# generate the table for the source
 			source_table = Table(names=table_columns, dtype=table_dtypes)
-			source_table_path = output_directory + '/pho/' + str(src) + Configuration.TABLE_EXTENSION
-			rms_list = []
+
+			# set the source table path
+			if table_type == 'gaia_dr3':
+				source_table_path = output_directory + '/flux/' + str(src) + Configuration.TABLE_EXTENSION
+				rms_list = []
+			elif table_type == 'aavso_vsx':
+				source_table_path = output_directory = '/variable/' + str(src) + Configuration.TABLE_EXTENSION
+
 			if not os.path.exists(source_table_path):
+				# build the source table per timestamp
 				for dte in range(len(date_list)):
+					# add the row for the timestamp
 					table_row = (date_list[dte], fluxes[src][dte], flux_errors[src][dte], mags[src][dte], mag_errors[src][dte])
 					source_table.add_row(table_row)
-					rms_list.append(mag_errors[src][dte])
+
+					if table_type == 'gaia_dr3':
+						rms_list.append(mag_errors[src][dte])
+
+				# write the time series table for the source
 				ascii.write(source_table, source_table_path, format='fixed_width')
 
-				rms = float(np.sqrt(np.mean(np.square(rms_list))))
-				plot_mag_list.append(input_table['phot_g_mean_mag'][src])
-				plot_rms_list.append(rms)
+				# grab the magnitudes and errors for the photometric precision plot
+				if table_type == 'gaia_dr3':
+					rms = float(np.sqrt(np.mean(np.square(rms_list))))
+					plot_mag_list.append(input_table['phot_g_mean_mag'][src])
+					plot_rms_list.append(rms)
 
-		if not os.path.exists(photprec_path):
-			Plot.photometric_precision(plot_mag_list, plot_rms_list, photprec_path)
+		# draw a photometric precision plot
+		if table_type == 'gaia_dr3':
+			photprec_path = output_directory + 'photometry/photprec_FIELD_' + str(field) + '_' + str(date) + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(photprec_path):
+				Plot.photometric_precision(plot_mag_list, plot_rms_list, photprec_path)
 
 	@staticmethod
 	def point_timeseries(field, date, point_ra, point_dec):
@@ -1247,11 +1279,11 @@ class Photometry:
 
 		# image paths
 		#img_path = stack_directory + 'img/' + field + '_' + date + Configuration.IMAGE_EXTENSION
-		img_bkg_path = stack_directory + 'bkg/bkg_' + stack_subname + Configuration.IMAGE_EXTENSION
+		img_bkg_path = stack_directory + 'background/bkg_' + stack_subname + Configuration.IMAGE_EXTENSION
 
 		# histogram paths
-		hst_path = stack_directory + 'hst/' + stack_subname + Configuration.IMAGE_EXTENSION
-		hst_bkg_path = stack_directory + 'hst/bkg_' + stack_subname + Configuration.IMAGE_EXTENSION
+		hst_path = stack_directory + 'histogram/' + stack_subname + Configuration.IMAGE_EXTENSION
+		hst_bkg_path = stack_directory + 'histogram/bkg_' + stack_subname + Configuration.IMAGE_EXTENSION
 
 		if not os.path.exists(stack_path):
 			# grab the individual frames
@@ -1349,22 +1381,31 @@ class Photometry:
 		return stack_data, stack_header
 
 	@staticmethod
-	def match_catalogs(source_table, query_table, match_table_path):
-		'''This function matches an extracted catalog of sources with a queried catalog of sources.
+	def match_catalogs(source_table, query_table, match_table_path, table_type):
+		'''This function matches an extracted source catalog with a queried source catalog.
 
-		:parameter source_table - An Astropy table of extracted sources
-		:parameter query_table - An Astropy table of queried sources
-		:parameter match_table_path - The path of the matched table
+		:parameter source_table - the table of extracted sources
+		:parameter query_table - the table of queried sources
+		:parameter match_table_path - the path of the matched table
+		:parameter table_type - the type of the table for formatting purposes
 
-		:return match_table - An Astropy table of matched sources
+		:return match_table - the table of matched sources
 		'''
 
 		if not os.path.exists(match_table_path):
-			print('Matching catalogs')
+			print('Matching catalogs (' + table_type + ')')
+
+			# grab the extracted source positions
 			source_coord = SkyCoord(source_table['ra']*u.deg, source_table['dec']*u.deg)
-			query_coord = SkyCoord(query_table['ra'], query_table['dec'], unit='deg')
+
+			# grab the corresponding queried source positions
+			if table_type == 'gaia_dr3':
+				query_coord = SkyCoord(query_table['ra'], query_table['dec'], unit='deg')
+			elif table_type == 'aavso_vsx':
+				query_coord = SkyCoord(query_table['RAJ2000'], query_table['DEJ2000'], unit='deg')
 
 			idx, d2d, d3d = query_coord.match_to_catalog_sky(source_coord)
+
 			t = d2d < Configuration.MATCH_TOLERANCE * u.arcsec
 
 			query_table['sep_flag'] = t
@@ -1378,10 +1419,13 @@ class Photometry:
 				if sep_flag:
 					match_table.add_row(query_table[row].as_void())
 
+			# save the matched table
 			match_table.write(match_table_path, format=Configuration.TABLE_FORMAT)
 
 		else:
-			print('Reading matched catalog')
+			print('Reading matched catalog (' + table_type + ')')
+
+			# reading pre-existing matched table
 			match_table = Table.read(match_table_path, format=Configuration.TABLE_FORMAT)
 
 		return match_table

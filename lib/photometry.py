@@ -245,6 +245,7 @@ class Photometry:
 
 		return frame_data, frame_header
 
+	# CONSTRUCT
 	@staticmethod
 	def difference_frames(field, date):
 		'''This function creates a series of differenced images from a reference image and a series of aligned images at different epochs.
@@ -277,7 +278,6 @@ class Photometry:
 			# check to see if the difference file already exists
 
 			# run the differencing algorithm
-
 
 	@staticmethod
 	def divide_flat(raw_frame_data, raw_frame_header, flatfield_frame_path):
@@ -349,6 +349,7 @@ class Photometry:
 
 		return table
 
+	# DEPRECATE
 	@staticmethod
 	def frame_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name, table_type):
 		'''This function performs aperture photometry on a FITS image and returns a table of photometric measurements.
@@ -533,6 +534,7 @@ class Photometry:
 
 		return master_table
 
+	# CONSTRUCT
 	@staticmethod
 	def select_stars(source_table):
 
@@ -555,6 +557,7 @@ class Photometry:
 
 		return filtered_table
 
+	# DEPRECATE
 	@staticmethod
 	def timeseries_photometry(date, field, input_table, table_type):
 		'''This function performs photometry for sources in a provided input catalog on a particular date and field.
@@ -617,6 +620,10 @@ class Photometry:
 			plot_mag_list = []
 			plot_rms_list = []
 
+		lc_jd_list = []
+		lc_mag_list = []
+		lc_err_list = []
+
 		table_columns = ('jd', 'flx', 'flxerr', 'mag', 'magerr')
 		table_dtypes = (float, float, float, float, float)
 
@@ -630,7 +637,7 @@ class Photometry:
 				source_table_path = output_directory + '/flux/' + str(src) + Configuration.TABLE_EXTENSION
 				rms_list = []
 			elif table_type == 'aavso_vsx':
-				source_table_path = output_directory = '/variable/' + str(src) + Configuration.TABLE_EXTENSION
+				source_table_path = output_directory + '/variable/' + str(src) + Configuration.TABLE_EXTENSION
 
 			if not os.path.exists(source_table_path):
 				# build the source table per timestamp
@@ -642,6 +649,11 @@ class Photometry:
 					if table_type == 'gaia_dr3':
 						rms_list.append(mag_errors[src][dte])
 
+					# grab the magnitude and time for the light curve
+					lc_jd_list.append(date_list[dte])
+					lc_mag_list.append(mags[src][dte])
+					lc_err_list.append(mag_errors[src][dte])
+
 				# write the time series table for the source
 				ascii.write(source_table, source_table_path, format='fixed_width')
 
@@ -651,12 +663,21 @@ class Photometry:
 					plot_mag_list.append(input_table['phot_g_mean_mag'][src])
 					plot_rms_list.append(rms)
 
+				# draw a light curve of the source
+				if table_type == 'gaia_dr3':
+					lc_path = output_directory + '/flux/' + str(src) + Configuration.IMAGE_EXTENSION
+				elif table_type == 'aavso_vsx':
+					lc_path = output_directory + '/variable/' + str(src) + Configuration.IMAGE_EXTENSION
+				if not os.path.exists(lc_path):
+					Plot.lightcurve(lc_jd_list, lc_mag_list, lc_err_list, lc_path)
+
 		# draw a photometric precision plot
 		if table_type == 'gaia_dr3':
 			photprec_path = output_directory + 'photometry/photprec_FIELD_' + str(field) + '_' + str(date) + Configuration.IMAGE_EXTENSION
 			if not os.path.exists(photprec_path):
 				Plot.photometric_precision(plot_mag_list, plot_rms_list, photprec_path)
 
+	# DEPRECATE
 	@staticmethod
 	def point_timeseries(field, date, point_ra, point_dec):
 		'''This function creates a table of photometry measurements for a given point (RA, Dec) on a particular field and date.
@@ -699,6 +720,7 @@ class Photometry:
 
 		return table
 
+	# DEPRECATE
 	@staticmethod
 	def point_aperture_photometry(date, field, frame_data, frame_header, point_ra, point_dec):
 
@@ -760,7 +782,10 @@ class Photometry:
 		inst_mag_error = float(inst_mag_error)
 
 		return jd, airmass, flux, flux_error, inst_mag, inst_mag_error
-		
+
+
+	
+	# REVIEW
 	@staticmethod
 	def get_overscan(frame_data):
 
@@ -846,6 +871,7 @@ class Photometry:
 
 		return ovs_h_mn_list, ovs_h_sd_list, ovs_v_mn_list, ovs_v_sd_list
 
+	# REVIEW
 	@staticmethod
 	def get_taps(frame_data, frame_type):
 
@@ -1381,40 +1407,38 @@ class Photometry:
 		return stack_data, stack_header
 
 	@staticmethod
-	def match_catalogs(source_table, query_table, match_table_path, table_type):
-		'''This function matches an extracted source catalog with a queried source catalog.
+	def match_aavso_catalog(source_table, query_table, match_table_path):
+		'''This function matches an extracted source catalog with an AAVSO VSX catalog.
 
 		:parameter source_table - the table of extracted sources
 		:parameter query_table - the table of queried sources
 		:parameter match_table_path - the path of the matched table
-		:parameter table_type - the type of the table for formatting purposes
 
 		:return match_table - the table of matched sources
 		'''
 
 		if not os.path.exists(match_table_path):
-			print('Matching catalogs (' + table_type + ')')
-
+			print('Matching AAVSO VSX catalog')
 			# grab the extracted source positions
 			source_coord = SkyCoord(source_table['ra']*u.deg, source_table['dec']*u.deg)
 
-			# grab the corresponding queried source positions
-			if table_type == 'gaia_dr3':
-				query_coord = SkyCoord(query_table['ra'], query_table['dec'], unit='deg')
-			elif table_type == 'aavso_vsx':
-				query_coord = SkyCoord(query_table['RAJ2000'], query_table['DEJ2000'], unit='deg')
+			# grab the AAVSO VSX source positions
+			query_coord = SkyCoord(query_table['RAJ2000'], query_table['DEJ2000'], unit='deg')
 
+			# find the nearest catalog matches for the extracted sources
 			idx, d2d, d3d = query_coord.match_to_catalog_sky(source_coord)
 
+			# define a match tolerance
 			t = d2d < Configuration.MATCH_TOLERANCE * u.arcsec
 
+			# add the match tolerance flags and matched indices
 			query_table['sep_flag'] = t
 			query_table['idx'] = idx
 
+			# generate the matched table
 			ct = query_table.dtype
 			names, dtypes = zip(*ct.descr)
 			match_table = Table(names=names, dtype=dtypes)
-
 			for row, sep_flag in enumerate(query_table['sep_flag']):
 				if sep_flag:
 					match_table.add_row(query_table[row].as_void())
@@ -1423,8 +1447,54 @@ class Photometry:
 			match_table.write(match_table_path, format=Configuration.TABLE_FORMAT)
 
 		else:
-			print('Reading matched catalog (' + table_type + ')')
+			print('Reading matched AAVSO VSX catalog')
+			# reading pre-existing matched table
+			match_table = Table.read(match_table_path, format=Configuration.TABLE_FORMAT)
 
+		return match_table
+
+	@staticmethod
+	def match_gaia_catalog(source_table, query_table, match_table_path):
+		'''This function matches an extracted source catalog with a Gaia DR3 catalog.
+
+		:parameter source_table - the table of extracted sources
+		:parameter query_table - the table of Gaia DR3 sources
+		:parameter match_table_path - the path of the matched table
+
+		:return match_table - the table of matched sources
+		'''
+
+		if not os.path.exists(match_table_path):
+			print('Matching Gaia DR3 catalog')
+			# grab the extracted source positions
+			source_coord = SkyCoord(source_table['ra']*u.deg, source_table['deg']*u.deg)
+
+			# grab the Gaia DR3 source positions
+			query_coord = SkyCoord(query_table['ra'], query_table['dec'], unit='deg')
+
+			# find the nearest catalog matches for the extracted sources
+			idx, d2d, d3d = query_coord.match_to_catalog_sky(source_coord)
+
+			# define a match tolerance
+			t = d2d < Configuration.MATCH_TOLERANCE * u.arcsec
+
+			# add the match tolerance flags and matched indices
+			query_table['sep_flag'] = t
+			query_table['idx'] = idx
+
+			# generate the matched table
+			ct = query_table.dtype
+			names, dtypes = zip(*ct.descr)
+			match_table = Table(names=names, dtype=dtypes)
+			for row, sep_flag in enumerate(query_table['sep_flag']):
+				if sep_flag:
+					match_table.add_row(query_table[row].as_void())
+
+			# save the matched table
+			match_table.write(match_table_path, format=Configuration.TABLE_FORMAT)
+
+		else:
+			print('Reading matched Gaia DR3 catalog')
 			# reading pre-existing matched table
 			match_table = Table.read(match_table_path, format=Configuration.TABLE_FORMAT)
 
@@ -1456,6 +1526,7 @@ class Photometry:
 
 		return bkg2d_data, bkg2d_md, bkg2d_sd, bkgsc_mn, bkgsc_md, bkgsc_sd
 
+	# REVIEW
 	@staticmethod
 	def read_raw_frame(path, display=True, show_mask=True):
 
@@ -1683,6 +1754,337 @@ class Photometry:
 			for ln in lns:
 				default_sex.write(ln)
 			default_sex.close()
+	
+	@staticmethod
+	def single_frame_aavso_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name):
+		'''This function performs aperture photometry on a FITS image and an AAVSO VSX source catalog, and returns a series of photometric measurements.
+
+		:parameter frame_data - the image data array
+		:parameter frame_header - the image header
+		:parameter match_table - the matched catalog table
+		:parameter master_table_path - the photometry table save path
+		:parameter output_name - a string for naming the output products
+
+		:return master_table - the photometry table performed at the matched catalog positions
+		'''
+
+		if not os.path.exists(master_table_path):
+			print('Performing single frame aperture photometry [AAVSO VSX]')
+
+			# set the main output directory
+			output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+
+			# get the observation time
+			try:
+				time = Time(frame_header['STKJD'], format='jd', scale='utc')
+				jd = time
+			except KeyError:
+				time = Time(frame_header['DATE'], format='isot', scale='utc')
+				jd = time.jd
+
+			# get the airmass
+			location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
+			field_ra, field_dec = Survey.get_field(field)
+			field_ra = float(field_ra)
+			field_dec = float(field_dec)
+			altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
+			airmass = Calculator.airmass(altitude)
+
+			# get the exposure time
+			exp_time = frame_header['EXPTIME']
+
+			# calculate the background statistics
+			mask, boxes = Photometry.make_mask(frame_data)
+			glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
+
+			# extract and convert coordinates from the input table
+			pix_coords = sky_to_pixel_transform(frame_header, match_table, 'aavso_vsx')
+
+			# create the photometry apertures
+			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
+			annulus = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
+
+			# measure the local background
+			annulus_stats = ApertureStats(frame_data, annulus)
+			annulus_mean = annulus_stats.mean
+
+			# perform aperture photometry at all source positions
+			phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
+
+			# calculate the residual flux
+			aperture_residual = phot_table['aperture_sum'] - annulus_mean * aperture.area
+			phot_table['aperture_residual'] = aperture_residual
+
+			# merge the input and photometry tables
+			master_table = hstack([match_table, phot_table])
+
+			# calculate the magnitudes and errors
+			flux_list = []
+			flux_err_list = []
+			inst_mag_list = []
+			inst_mag_err_list = []
+			flux_flag_list = []
+
+			# loop through each source
+			for src in master_table:
+				# get the flux
+				flux = src['aperture_residual']
+
+				# flag for negative residual flux
+				if src['aperture_residual'] < 0.:
+					flux = abs(glob_bkg_md)
+					flux_flag_list.append(True)
+				else:
+					flux_flag_list.append(True)
+
+				# calculate the flux error
+				flux_err = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
+				
+				# calculate the instrumental magnitude
+				inst_mag = - 2.5 * np.log10(flux) * 2.5 * np.log10(exp_time)
+				
+				# calculate the instrumental magnitude error
+				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
+
+				# add the calculations to list
+				flux_list.append(flux)
+				flux_err_list.append(flux_err)
+				inst_mag_list.append(inst_mag)
+				inst_mag_err_list.append(inst_mag_err)
+
+			# add the lists to the photometry table
+			master_table['flux'] = flux_list
+			master_table['flux_flag'] = flux_flag_list
+			master_table['flux_err'] = flux_err_list
+			master_table['inst_mag'] = inst_mag_list
+			master_table['inst_mag_err'] = inst_mag_err_list
+
+			# save the photometry table
+			master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
+
+		else:
+			print('Reading existing aperture photometry table [AAVSO VSX]')
+
+			# read the existing master table
+			master_table = ascii.read(master_table_path, format='fixed_width', delimiter='|')
+
+			# get the mask for plotting
+			mask, boxes = Photometry.make_mask(frame_data)
+
+			# get the apertures for plotting
+			pix_coords = Photometry.sky_to_pixel_transform(frame_header, match_table, 'aavso_vsx')
+			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
+
+			# draw an annotated frame
+			field_path = output_directory + 'image/aavso_' + output_name + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(field_path):
+				Plot.field(frame_data, aperture, boxes, field_path)
+
+		return master_table
+
+	@staticmethod
+	def single_frame_gaia_aperture_photometry(date, field, frame_data, frame_header, match_table, master_table_path, output_name):
+		'''This function performs aperture photometry on a FITS image and a Gaia DR3 source catalog, and returns a series of photometric measurements.
+
+		:parameter frame_data - the image data array
+		:parameter frame_header - the image header
+		:parameter match_table - the matched catalog table
+		:parameter master_table_path - the photometry table save path
+		:parameter output_name - a string for naming the output products
+
+		:return master_table - the photometry table performed at the matched catalog positions
+		'''
+
+		if not os.path.exists(master_table_path):
+			print('Performing single frame aperture photometry [Gaia DR3]')
+
+			# set the main output directory
+			output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+
+			# get the observation time
+			try:
+				time = Time(frame_header['STKJD'], format='jd', scale='utc')
+				jd = time
+			except KeyError:
+				time = Time(frame_header['DATE'], format='isot', scale='utc')
+				jd = time.jd
+
+			# get the airmass
+			location = EarthLocation(lat=Observatory.latitude(), lon=Observatory.longitude(), height=Observatory.elevation())
+			field_ra, field_dec = Survey.get_field(field)
+			field_ra = float(field_ra)
+			field_dec = float(field_dec)
+			altitude = Calculator.sky_to_altitude(location, time, field_ra, field_dec)
+			airmass = Calculator.airmass(altitude)
+
+			# get the exposure time
+			exp_time = frame_header['EXPTIME']
+
+			# calculate the background statistics
+			mask, boxes = Photometry.make_mask(frame_data)
+			glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
+
+			# extract and convert coordinates from the input table
+			pix_coords = sky_to_pixel_transform(frame_header, match_table, 'gaia_dr3')
+
+			# create the photometry apertures
+			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
+			annulus = CircularAnnulus(pix_coords, r_in=Configuration.ANNULI_INNER, r_out=Configuration.ANNULI_OUTER)
+
+			# measure the local background
+			annulus_stats = ApertureStats(frame_data, annulus)
+			annulus_mean = annulus_stats.mean
+
+			# perform aperture photometry at all source positions
+			phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
+
+			# calculate the residual flux
+			aperture_residual = phot_table['aperture_sum'] - annulus_mean * aperture.area
+			phot_table['aperture_residual'] = aperture_residual
+
+			# merge the input and photometry tables
+			master_table = hstack([match_table, phot_table])
+
+			# calculate the magnitudes and errors
+			flux_list = []
+			flux_err_list = []
+			inst_mag_list = []
+			inst_mag_err_list = []
+			flux_flag_list = []
+			color_list = []
+			delta_list = []
+			color_flag_list = []
+
+			# loop through each source
+			for src in master_table:
+				# get the flux
+				flux = src['aperture_residual']
+
+				# flag for negative residual flux
+				if src['aperture_residual'] < 0.:
+					flux = abs(glob_bkg_md)
+					flux_flag_list.append(True)
+				else:
+					flux_flag_list.append(True)
+
+				# calculate the flux error
+				flux_err = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
+				
+				# calculate the instrumental magnitude
+				inst_mag = - 2.5 * np.log10(flux) * 2.5 * np.log10(exp_time)
+				
+				# calculate the instrumental magnitude error
+				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
+
+				# calculate the color and delta magnitude
+				if (src['phot_bp_n_obs'] == 0) or (src['phot_rp_n_obs'] == 0):
+					color = -9.999999
+					cat_mag = -9.999999
+					delta = -9.999999
+					color_flag_list.append(True)
+				else:
+					color = src['phot_bp_mean_mag'] - src['phot_rp_mean_mag']
+					cat_mag = src['phot_g_mean_mag']
+					delta = cat_mag - inst_mag
+					color_flag_list.append(False)
+
+				# add the calculations to list
+				flux_list.append(flux)
+				flux_err_list.append(flux_err)
+				inst_mag_list.append(inst_mag)
+				inst_mag_err_list.append(inst_mag_err)
+				color_list.append(color)
+				delta_list.append(delta)
+
+			# add the lists to the photometry table
+			master_table['flux'] = flux_list
+			master_table['flux_flag'] = flux_flag_list
+			master_table['flux_err'] = flux_err_list
+			master_table['inst_mag'] = inst_mag_list
+			master_table['inst_mag_err'] = inst_mag_err_list
+			master_table['color'] = color_list
+			master_table['color_flag'] = color_flag_list
+			master_table['delta'] = delta_list
+
+			# save the photometry table
+			master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
+
+		else:
+			print('Reading existing aperture photometry table [Gaia DR3]')
+
+			# read the existing master table
+			master_table = ascii.read(master_table_path, format='fixed_width', delimiter='|')
+
+			# get the mask for plotting
+			mask, boxes = Photometry.make_mask(frame_data)
+
+			# get the apertures for plotting
+			pix_coords = Photometry.sky_to_pixel_transform(frame_header, match_table, 'gaia_dr3')
+			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
+
+			# draw an annotated frame
+			field_path = output_directory + 'image/gaia_' + output_name + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(field_path):
+				Plot.field(frame_data, aperture, boxes, field_path)
+
+			# draw a histogram of Gaia magnitudes
+			hst_gaia_mag_path = output_directory + 'histogram/gaia_mag_FIELD_' + date + '_' + field + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(hst_gaia_mag_path):
+				Plot.stellar_gaia_histogram(master_table['phot_rp_mean_mag'], master_table['phot_g_mean_mag'], master_table['phot_bp_mean_mag'], hst_gaia_mag_path)
+
+			# draw a histogram of stellar fluxes
+			hst_flux_path = output_directory + 'histogram/flux_' + output_name + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(hst_flux_path):
+				Plot.stellar_flux_histogram(master_table['aperture_sum'], hst_flux_path)
+
+			# draw a histogram of instrumental magnitudes
+			hst_inst_mag_path = output_directory + 'histogram/inst_mag_' + output_name + Configuration.IMAGE_EXTENSION
+			if not os.path.exists(hst_inst_mag_path):
+				Plot.stellar_magnitude_histogram(master_table['inst_mag'], hst_inst_mag_path)
+
+		return master_table
+
+	@staticmethod
+	def sky_to_pixel_transform(frame_header, match_table, catalog):
+		'''This function creates a list of pixel coordinate tuples (xp, yp) from a set of sky coordinate tuples (ra, dec) and an FITS frame header.
+
+		:parameter frame_header - the image header
+		:parameter match_table - the matched catalog table
+		:parameter catalog - the name of the queried catalog
+
+		:return pix_coords - the list of pixel coordinate tuples (xp, yp)
+		'''
+
+		wcs = WCS(frame_header)
+
+		sky_coords = []
+
+		for src in match_table:
+			if catalog == 'aavso_vsx':
+				ra = src['RAJ2000']
+				dec = src['DEJ2000']
+
+			elif catalog == 'gaia_dr3':
+				ra = src['ra']
+				dec = src['dec']
+
+			coord = (ra, dec)
+			sky_coords.append(coord)
+
+		sky_pos = SkyCoord(sky_coords, unit='deg')
+
+		pix_pos = skycoord_to_pixel(sky_pos, wcs=wcs)
+
+		pix_coords = []
+
+		for px in range(len(pix_pos[0])):
+			xp = pix_pos[0][px]
+			yp = pix_pos[1][px]
+
+			coord = (xp, yp)
+			pix_coords.append(coord)
+
+		return pix_coords
 
 	@staticmethod
 	def solve_field(frame_name, frame_dir, field, verbose=False):
@@ -1792,3 +2194,191 @@ class Photometry:
 		clean_frame_header['DRKSB'] = ('yes', 'Master dark subtracted')
 
 		return clean_frame_data, clean_frame_header
+
+	@staticmethod
+	def timeseries_aavso_aperture_photometry(date, field, input_table):
+		'''This function performs photometry for sources in an AAVSO VSX catalog on a particular date and field.
+
+		:parameter date - the date string
+		:parameter field - the field string
+		:parameter input_table - the table of AAVSO VSX sources
+
+		:return - nothing is returned
+		'''
+
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+
+		os.chdir(output_directory)
+
+		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
+		date_list = []
+		table_list = []
+
+		# loop through each frame
+		for frm in frame_list:
+			# set the table path
+			frame_string = frm.split(Configuration.FILE_EXTENSION)[0]
+			table_path = output_directory + 'table/aavso_' + frame_string + Configuration.TABLE_EXTENSION
+
+			# open the frame
+			frame = fits.open(frm)
+			frame_data = frame[0].data
+			frame_header = frame[0].header
+
+			# read the time stamp
+			time = Time(frame_header['DATE'], format='isot', scale='utc')
+			jd = float(time.jd)
+			date_list.append(jd)
+
+			# perform photometry on the frame
+			table = Photometry.single_frame_aavso_aperture_photometry(date, field, frame_data, frame_header, input_table, table_path, frame_string)
+
+			table_list.append(table)
+
+		# get the bumber of frames, epochs, and sources
+		n_frames = len(frame_list)
+		n_epochs = len(table_list)
+		n_sources = len(input_table)
+
+		# create holders for the time series output
+		fluxes = np.zeros((n_sources, n_epochs))
+		flux_errors = np.zeros((n_sources, n_epochs))
+		mags = np.zeros((n_sources, n_epochs))
+		mag_errors = np.zeros((n_sources, n_epochs))
+
+		lc_jd_list = []
+		lc_mag_list = []
+		lc_err_list = []
+
+		table_columns = ('jd', 'flx', 'flxerr', 'mag', 'magerr')
+		table_dtypes = (float, float, float, float, float)
+
+		# generate flux files for each source
+		for src in range(n_sources):
+			# generate a table for the source
+			source_table = Table(names=table_columns, dtype=table_dtypes)
+
+			# set the source table path
+			source_table_path = output_directory + 'variable/' + str(src) + Configuration.TABLE_EXTENSION
+
+			# build the source table per time stamp
+			if not os.path.exists(source_table_path):
+				# loop through each time stamp
+				for dte in range(len(date_list)):
+					# add the row for the time stamp
+					table_row = (date_list[dte], fluxes[src][dte], flux_errors[src][dte], mags[src][dte], mag_errors[src][dte])
+					source_table.add_row(table_row)
+
+					# get the time, magnitude, and error for the light curve
+					lc_jd_list.append(date_list[dte])
+					lc_mag_list.append(mags[src][dte])
+					lc_err_list.append(mag_errors[src][dte])
+
+				# wrte the flux file for the source
+				ascii.write(source_table, source_table_path, format='fixed_width')
+
+				# draw a light curve for the source
+				lc_path = output_directory + 'variable/' + str(src) + Configuration.IMAGE_EXTENSION
+				if not os.path.exists(lc_path):
+					Plot.lightcurve(lc_jd_list, lc_mag_list, lc_err_list, lc_path)
+
+	@staticmethod
+	def timeseries_gaia_aperture_photometry(date, field, input_table):
+		'''This function performs photometry for sources in a Gaia DR3 catalog on a particular date and field.
+
+		:parameter date - the date string
+		:parameter field - the field string
+		:parameter input_table - the table of Gaia DR3 sources
+
+		:return - nothing is returned
+		'''
+
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+
+		os.chdir(output_directory)
+
+		frame_list = sorted(glob.glob('cln*' + Configuration.FILE_EXTENSION))
+		date_list = []
+		table_list = []
+
+		# loop through each frame
+		for frm in frame_list:
+			# set the table path
+			frame_string = frm.split(Configuration.FILE_EXTENSION)[0]
+			table_path = output_directory + 'table/gaia_' + frame_string + Configuration.TABLE_EXTENSION
+
+			# open the frame
+			frame = fits.open(frm)
+			frame_data = frame[0].data
+			frame_header = frame[0].header
+
+			# read the time stamp
+			time = Time(frame_header['DATE'], format='isot', scale='utc')
+			jd = float(time.jd)
+			date_list.append(jd)
+
+			# perform photometry on the frame
+			table = Photometry.single_frame_gaia_aperture_photometry(date, field, frame_data, frame_header, input_table, table_path, frame_string)
+
+			table_list.append(table)
+
+		# get the bumber of frames, epochs, and sources
+		n_frames = len(frame_list)
+		n_epochs = len(table_list)
+		n_sources = len(input_table)
+
+		# create holders for the time series output
+		fluxes = np.zeros((n_sources, n_epochs))
+		flux_errors = np.zeros((n_sources, n_epochs))
+		mags = np.zeros((n_sources, n_epochs))
+		mag_errors = np.zeros((n_sources, n_epochs))
+
+		plt_mag_list = []
+		plt_rms_list = []
+		lc_jd_list = []
+		lc_mag_list = []
+		lc_err_list = []
+
+		table_columns = ('jd', 'flx', 'flxerr', 'mag', 'magerr')
+		table_dtypes = (float, float, float, float, float)
+
+		# generate flux files for each source
+		for src in range(n_sources):
+			# generate a table for the source
+			source_table = Table(names=table_columns, dtype=table_dtypes)
+
+			# set the source table path
+			source_table_path = output_directory + 'flux/' + str(src) + Configuration.TABLE_EXTENSION
+
+			rms_list = []
+
+			# build the source table per time stamp
+			if not os.path.exists(source_table_path):
+				# loop through each time stamp
+				for dte in range(len(date_list)):
+					# add the row for the time stamp
+					table_row = (date_list[dte], fluxes[src][dte], flux_errors[src][dte], mags[src][dte], mag_errors[src][dte])
+					source_table.add_row(table_row)
+
+					# get the time, magnitude, and error for the light curve
+					lc_jd_list.append(date_list[dte])
+					lc_mag_list.append(mags[src][dte])
+					lc_err_list.append(mag_errors[src][dte])
+
+				# wrte the flux file for the source
+				ascii.write(source_table, source_table_path, format='fixed_width')
+
+				# get the magnitude and error for the photometric precision plot
+				rms = float(np.sqrt(np.mean(np.square(rms_list))))
+				plt_mag_list.append(input_table['phot_g_mean_mag'][src])
+				plt_rms_list.append(rms)
+
+				# draw a light curve for the source
+				lc_path = output_directory + 'variable/' + str(src) + Configuration.IMAGE_EXTENSION
+				if not os.path.exists(lc_path):
+					Plot.lightcurve(lc_jd_list, lc_mag_list, lc_err_list, lc_path)
+
+		# draw a photometric precision plot
+		photprec_path = output_directory + 'photometry/photprec_FIELD_' + str(field) + '_' + str(date) + Configuration.IMAGE_EXTENSION
+		if not os.path.exists(photprec_path):
+			Plot.photometric_precision(plt_mag_list, plt_rms_list, photprec_path)

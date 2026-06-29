@@ -87,15 +87,15 @@ class Configuration:
 	# listener
 	ALERT = True
 	CATALOG = 'glade+'
-	CLIENT_ID = '7vjhnkra2bveb93u0d2dqdmtks'
-	CLIENT_SECRET = '1v840t3ljqgob81m8kk0903edss4ul4huf5h3tq931f15lsjhoab'
+	CLIENT_ID = 'client_id'
+	CLIENT_SECRET = 'client_secret'
 	EMAIL = 'toros.alerts@yahoo.com'
 	FIELD_GENERATION = 'N'
 	FIELD_PRIORITY = ['commissioning', 'ligo', 'science', 'main_survey']
 	GALACTIC_PLANE = 15.
 	GALAXY_LIST = 50
 	LISTEN_NED_WAIT = 1
-	MAILING_LIST = ['rcamuccio@gmail.com']
+	MAILING_LIST = ['mailing', 'list']
 	MOON_DISTANCE = 60.
 	PAS = 'ncnrlqwdthofhoch'
 	PORT = 465

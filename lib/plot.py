@@ -289,23 +289,28 @@ class Plot:
 			plt.show()
 
 	@staticmethod
-	def lightcurve(xlist, ylist, elist):
+	def lightcurve(jd_list, mag_list, err_list, save_path, save_figure=Configuration.SAVE_FIGURE):
+		'''This function draws a time series plot of stellar magnitudes.
 
-		plt.clf()
-		font = {'fontname':'Monospace', 'size':12}
+		:parameter jd_list - the list of times [JD]
+		:parameter mag_list - the list of stellar magnitudes [mag]
+		:parameter err_list - the list of stellar magnitude errors [mag]
+		:parameter save_path - the save path of the diagram
+		:parameter save_figure - a toggle to save or display the diagram
 
-		plt.figure(figsize=(10, 10))
-		plt.errorbar(xlist, ylist, yerr=elist, fmt='o', linewidth=0.5, markersize=0.5, capsize=2, capthick=0.5)
+		:return - nothing is returned
+		'''
 
-		#plt.ylim(13, 19)
-		plt.title('Time Series of ' + name, **font)
-		plt.xlabel('Time [JD]', **font)
-		plt.ylabel('Magnitude [mag]', **font)
-		plt.xticks(**font)
-		plt.yticks(**font)
-
-		plt.savefig('plot-' + name + '-timeseries.png', dpi=400)
-		plt.close()
+		# draw the plot
+		plt.figure(figsize=Configuration.FIGURE_SIZE)
+		plt.errorbar(jd_list, mag_list, yerr=err_list, fmt='o', linewidth=0.5, markersize=0.5, capsize=2, capthick=0.5)
+		plt.xlabel('Time [JD]')
+		plt.ylabel('Instrumental Magnitude [mag]')
+		if save_figure:
+			plt.savefig(save_path, dpi=Configuration.DPI)
+			plt.close()
+		else:
+			plt.show()
 
 	@staticmethod
 	def seeing(xlist, ylist, type):

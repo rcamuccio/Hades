@@ -94,14 +94,14 @@ for dte in range(n_dates):
 
 	# match the catalogs
 	tbl_match_gaia_path = tbl_directory + 'match_gaia' + Configuration.TABLE_EXTENSION
-	match_gaia_table = Photometry.match_catalogs(source_table, query_gaia_table, tbl_match_gaia_path, 'gaia_dr3')
+	match_gaia_table = Photometry.match_gaia_catalog(source_table, query_gaia_table, tbl_match_gaia_path, 'gaia_dr3')
 
 	# perform photometry on the stack
 	tbl_master_path = tbl_directory + 'master_gaia' + Configuration.TABLE_EXTENSION
-	master_table = Photometry.frame_aperture_photometry(date, field, stack_data, stack_header, match_gaia_table, tbl_master_path, stack_name, 'gaia_dr3')
+	master_table = Photometry.single_frame_gaia_aperture_photometry(date, field, stack_data, stack_header, match_gaia_table, tbl_master_path, stack_name)
 
 	# perform photometry on the series
-	Photometry.timeseries_photometry(date, field, match_gaia_table, 'gaia_dr3')
+	Photometry.timeseries_gaia_aperture_photometry(date, field, match_gaia_table, 'gaia_dr3')
 
 	#
 	# VARIABLE PHOTOMETRY
@@ -113,10 +113,10 @@ for dte in range(n_dates):
 
 	# match the catalogs
 	tbl_match_aavso_path = tbl_directory + 'match_aavso' + Configuration.TABLE_EXTENSION
-	match_aavso_table = Photometry.match_catalogs(source_table, query_aavso_table, tbl_match_aavso_path, 'aavso_vsx')
+	match_aavso_table = Photometry.match_aavso_catalog(source_table, query_aavso_table, tbl_match_aavso_path)
 
 	# perform photometry on the series
-	Photometry.timeseries_photometry(date, field, match_aavso_table, 'aavso_vsx')
+	Photometry.timeseries_aavso_aperture_photometry(date, field, match_aavso_table, 'aavso_vsx')
 
 	# 
 	# GALAXY PHOTOMETRY

@@ -48,13 +48,10 @@ for dte in range(n_dates):
 	date_flat_directory = output_flat_directory + date_extension
 	date_clean_frame_directory = clean_frame_directory + date_extension
 	bkg_directory = date_clean_frame_directory + 'background/'
-	#gal_directory = date_clean_frame_directory + 'gal/'
 	flx_directory = date_clean_frame_directory + 'flux/'
 	hst_directory = date_clean_frame_directory + 'histogram/'
 	img_directory = date_clean_frame_directory + 'image/'
-	#pho_directory = date_clean_frame_directory + 'pho/'
 	pht_directory = date_clean_frame_directory + 'photometry/'
-	#res_directory = date_clean_frame_directory + 'res/'
 	tbl_directory = date_clean_frame_directory + 'table/'
 	var_directory = date_clean_frame_directory + 'variable/'
 
@@ -94,14 +91,14 @@ for dte in range(n_dates):
 
 	# match the catalogs
 	tbl_match_gaia_path = tbl_directory + 'match_gaia' + Configuration.TABLE_EXTENSION
-	match_gaia_table = Photometry.match_gaia_catalog(source_table, query_gaia_table, tbl_match_gaia_path, 'gaia_dr3')
+	match_gaia_table = Photometry.match_gaia_catalog(source_table, query_gaia_table, tbl_match_gaia_path)
 
 	# perform photometry on the stack
 	tbl_master_path = tbl_directory + 'master_gaia' + Configuration.TABLE_EXTENSION
 	master_table = Photometry.single_frame_gaia_aperture_photometry(date, field, stack_data, stack_header, match_gaia_table, tbl_master_path, stack_name)
 
 	# perform photometry on the series
-	Photometry.timeseries_gaia_aperture_photometry(date, field, match_gaia_table, 'gaia_dr3')
+	Photometry.timeseries_gaia_aperture_photometry(date, field, match_gaia_table)
 
 	#
 	# VARIABLE PHOTOMETRY
@@ -116,7 +113,7 @@ for dte in range(n_dates):
 	match_aavso_table = Photometry.match_aavso_catalog(source_table, query_aavso_table, tbl_match_aavso_path)
 
 	# perform photometry on the series
-	Photometry.timeseries_aavso_aperture_photometry(date, field, match_aavso_table, 'aavso_vsx')
+	Photometry.timeseries_aavso_aperture_photometry(date, field, match_aavso_table)
 
 	# 
 	# GALAXY PHOTOMETRY

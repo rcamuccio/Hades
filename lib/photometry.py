@@ -783,8 +783,6 @@ class Photometry:
 
 		return jd, airmass, flux, flux_error, inst_mag, inst_mag_error
 
-
-	
 	# REVIEW
 	@staticmethod
 	def get_overscan(frame_data):
@@ -1467,7 +1465,7 @@ class Photometry:
 		if not os.path.exists(match_table_path):
 			print('Matching Gaia DR3 catalog')
 			# grab the extracted source positions
-			source_coord = SkyCoord(source_table['ra']*u.deg, source_table['deg']*u.deg)
+			source_coord = SkyCoord(source_table['ra']*u.deg, source_table['dec']*u.deg)
 
 			# grab the Gaia DR3 source positions
 			query_coord = SkyCoord(query_table['ra'], query_table['dec'], unit='deg')
@@ -1768,11 +1766,11 @@ class Photometry:
 		:return master_table - the photometry table performed at the matched catalog positions
 		'''
 
+		# set the main output directory
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+		
 		if not os.path.exists(master_table_path):
-			print('Performing single frame aperture photometry [AAVSO VSX]')
-
-			# set the main output directory
-			output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+			print('Performing single frame aperture photometry [AAVSO VSX] -', output_name)
 
 			# get the observation time
 			try:
@@ -1798,7 +1796,7 @@ class Photometry:
 			glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
 
 			# extract and convert coordinates from the input table
-			pix_coords = sky_to_pixel_transform(frame_header, match_table, 'aavso_vsx')
+			pix_coords = Photometry.sky_to_pixel_transform(frame_header, match_table, 'aavso_vsx')
 
 			# create the photometry apertures
 			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
@@ -1809,6 +1807,7 @@ class Photometry:
 			annulus_mean = annulus_stats.mean
 
 			# perform aperture photometry at all source positions
+			wcs = WCS(frame_header)
 			phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
 
 			# calculate the residual flux
@@ -1841,7 +1840,7 @@ class Photometry:
 				flux_err = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
 				
 				# calculate the instrumental magnitude
-				inst_mag = - 2.5 * np.log10(flux) * 2.5 * np.log10(exp_time)
+				inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
 				
 				# calculate the instrumental magnitude error
 				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
@@ -1863,7 +1862,7 @@ class Photometry:
 			master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
 
 		else:
-			print('Reading existing aperture photometry table [AAVSO VSX]')
+			print('Reading existing aperture photometry table [AAVSO VSX] -', output_name)
 
 			# read the existing master table
 			master_table = ascii.read(master_table_path, format='fixed_width', delimiter='|')
@@ -1875,10 +1874,10 @@ class Photometry:
 			pix_coords = Photometry.sky_to_pixel_transform(frame_header, match_table, 'aavso_vsx')
 			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
 
-			# draw an annotated frame
-			field_path = output_directory + 'image/aavso_' + output_name + Configuration.IMAGE_EXTENSION
-			if not os.path.exists(field_path):
-				Plot.field(frame_data, aperture, boxes, field_path)
+		# draw an annotated frame
+		field_path = output_directory + 'image/aavso_' + output_name + Configuration.IMAGE_EXTENSION
+		if not os.path.exists(field_path):
+			Plot.field(frame_data, aperture, boxes, field_path)
 
 		return master_table
 
@@ -1895,11 +1894,11 @@ class Photometry:
 		:return master_table - the photometry table performed at the matched catalog positions
 		'''
 
-		if not os.path.exists(master_table_path):
-			print('Performing single frame aperture photometry [Gaia DR3]')
+		# set the main output directory
+		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
 
-			# set the main output directory
-			output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
+		if not os.path.exists(master_table_path):
+			print('Performing single frame aperture photometry [Gaia DR3] -', output_name)
 
 			# get the observation time
 			try:
@@ -1925,7 +1924,7 @@ class Photometry:
 			glob_bkg_mn, glob_bkg_md, glob_bkg_sd = sigma_clipped_stats(frame_data, mask=mask, sigma=Configuration.SIG_BKG)
 
 			# extract and convert coordinates from the input table
-			pix_coords = sky_to_pixel_transform(frame_header, match_table, 'gaia_dr3')
+			pix_coords = Photometry.sky_to_pixel_transform(frame_header, match_table, 'gaia_dr3')
 
 			# create the photometry apertures
 			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
@@ -1936,6 +1935,7 @@ class Photometry:
 			annulus_mean = annulus_stats.mean
 
 			# perform aperture photometry at all source positions
+			wcs = WCS(frame_header)
 			phot_table = aperture_photometry(frame_data, aperture, mask=mask, wcs=wcs)
 
 			# calculate the residual flux
@@ -1971,7 +1971,7 @@ class Photometry:
 				flux_err = np.sqrt(flux + aperture.area * glob_bkg_sd**2)
 				
 				# calculate the instrumental magnitude
-				inst_mag = - 2.5 * np.log10(flux) * 2.5 * np.log10(exp_time)
+				inst_mag = - 2.5 * np.log10(flux) + 2.5 * np.log10(exp_time)
 				
 				# calculate the instrumental magnitude error
 				inst_mag_err = (2.5 * flux_err) / (np.log(10.) * flux)
@@ -2010,7 +2010,7 @@ class Photometry:
 			master_table.write(master_table_path, format=Configuration.TABLE_FORMAT)
 
 		else:
-			print('Reading existing aperture photometry table [Gaia DR3]')
+			print('Reading existing aperture photometry table [Gaia DR3] -', output_name)
 
 			# read the existing master table
 			master_table = ascii.read(master_table_path, format='fixed_width', delimiter='|')
@@ -2022,25 +2022,25 @@ class Photometry:
 			pix_coords = Photometry.sky_to_pixel_transform(frame_header, match_table, 'gaia_dr3')
 			aperture = CircularAperture(pix_coords, r=Configuration.APER_SIZE)
 
-			# draw an annotated frame
-			field_path = output_directory + 'image/gaia_' + output_name + Configuration.IMAGE_EXTENSION
-			if not os.path.exists(field_path):
-				Plot.field(frame_data, aperture, boxes, field_path)
+		# draw an annotated frame
+		field_path = output_directory + 'image/gaia_' + output_name + Configuration.IMAGE_EXTENSION
+		if not os.path.exists(field_path):
+			Plot.field(frame_data, aperture, boxes, field_path)
 
-			# draw a histogram of Gaia magnitudes
-			hst_gaia_mag_path = output_directory + 'histogram/gaia_mag_FIELD_' + date + '_' + field + Configuration.IMAGE_EXTENSION
-			if not os.path.exists(hst_gaia_mag_path):
-				Plot.stellar_gaia_histogram(master_table['phot_rp_mean_mag'], master_table['phot_g_mean_mag'], master_table['phot_bp_mean_mag'], hst_gaia_mag_path)
+		# draw a histogram of Gaia magnitudes
+		hst_gaia_mag_path = output_directory + 'histogram/gaia_mag_FIELD_' + date + '_' + field + Configuration.IMAGE_EXTENSION
+		if not os.path.exists(hst_gaia_mag_path):
+			Plot.stellar_gaia_histogram(master_table['phot_rp_mean_mag'], master_table['phot_g_mean_mag'], master_table['phot_bp_mean_mag'], hst_gaia_mag_path)
 
-			# draw a histogram of stellar fluxes
-			hst_flux_path = output_directory + 'histogram/flux_' + output_name + Configuration.IMAGE_EXTENSION
-			if not os.path.exists(hst_flux_path):
-				Plot.stellar_flux_histogram(master_table['aperture_sum'], hst_flux_path)
+		# draw a histogram of stellar fluxes
+		hst_flux_path = output_directory + 'histogram/flux_' + output_name + Configuration.IMAGE_EXTENSION
+		if not os.path.exists(hst_flux_path):
+			Plot.stellar_flux_histogram(master_table['aperture_sum'], hst_flux_path)
 
-			# draw a histogram of instrumental magnitudes
-			hst_inst_mag_path = output_directory + 'histogram/inst_mag_' + output_name + Configuration.IMAGE_EXTENSION
-			if not os.path.exists(hst_inst_mag_path):
-				Plot.stellar_magnitude_histogram(master_table['inst_mag'], hst_inst_mag_path)
+		# draw a histogram of instrumental magnitudes
+		hst_inst_mag_path = output_directory + 'histogram/inst_mag_' + output_name + Configuration.IMAGE_EXTENSION
+		if not os.path.exists(hst_inst_mag_path):
+			Plot.stellar_magnitude_histogram(master_table['inst_mag'], hst_inst_mag_path)
 
 		return master_table
 
@@ -2235,7 +2235,7 @@ class Photometry:
 
 			table_list.append(table)
 
-		# get the bumber of frames, epochs, and sources
+		# get the number of frames, epochs, and sources
 		n_frames = len(frame_list)
 		n_epochs = len(table_list)
 		n_sources = len(input_table)
@@ -2245,6 +2245,13 @@ class Photometry:
 		flux_errors = np.zeros((n_sources, n_epochs))
 		mags = np.zeros((n_sources, n_epochs))
 		mag_errors = np.zeros((n_sources, n_epochs))
+
+		# populate the holders with the time series information
+		for i, table in enumerate(table_list):
+			fluxes[:, i] = table['flux']
+			flux_errors[:, i] = table['flux_err']
+			mags[:, i] = table['inst_mag']
+			mag_errors[:, i] = table['inst_mag_err']
 
 		lc_jd_list = []
 		lc_mag_list = []
@@ -2322,7 +2329,7 @@ class Photometry:
 
 			table_list.append(table)
 
-		# get the bumber of frames, epochs, and sources
+		# get the number of frames, epochs, and sources
 		n_frames = len(frame_list)
 		n_epochs = len(table_list)
 		n_sources = len(input_table)
@@ -2332,6 +2339,13 @@ class Photometry:
 		flux_errors = np.zeros((n_sources, n_epochs))
 		mags = np.zeros((n_sources, n_epochs))
 		mag_errors = np.zeros((n_sources, n_epochs))
+
+		# populate the holders with the time series information
+		for i, table in enumerate(table_list):
+			fluxes[:, i] = table['flux']
+			flux_errors[:, i] = table['flux_err']
+			mags[:, i] = table['inst_mag']
+			mag_errors[:, i] = table['inst_mag_err']
 
 		plt_mag_list = []
 		plt_rms_list = []

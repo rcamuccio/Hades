@@ -519,6 +519,14 @@ class Alerts:
 
 	@staticmethod
 	def gcn_notices_dsa110_frb(value, topic):
+		'''This function processes GCN Notices from the Deep Synoptic Array-110 (DSA-110) via GCN Kafka.
+
+		:parameter value - the value of the message
+		:parameter topic - the topic of the message
+		:parameter alert - a toggle for broadcasting the alert
+
+		:return - nothing is returned
+		'''
 
 		record = json.loads(value)
 
@@ -532,6 +540,7 @@ class Alerts:
 		except KeyError:
 			record_alert_type = None
 
+		# initial
 		if record_alert_type == 'initial':
 			try:
 				record_trigger_time = record['trigger_time']
@@ -578,6 +587,7 @@ class Alerts:
 			except KeyError:
 				record_importance = None
 
+		# retraction
 		elif record_alert_type == 'retraction':
 			try:
 				record_id = record['id']
@@ -599,6 +609,7 @@ class Alerts:
 			except KeyError:
 				record_description = None
 
+		# subsequent
 		elif record_alert_type == 'subsequent':
 			try:
 				record_trigger_time = record['trigger_time']
@@ -655,6 +666,37 @@ class Alerts:
 			except KeyError:
 				record_importance = None
 
+			# print the alert contents
+			print('\tSchema:', record_schema)
+			print('\tAlert type:', record_alert_type)
+			print('\tID:', record_id)
+			print('\tKnown source:', record_known_source)
+			print('\tTrigger time:', record_trigger_time)
+			print('\tTrigger time error (1σ):', record_trigger_time_error, 's')
+			print('\tSNR:', record_snr)
+			print('\tDM:', record_dm, 'pc/cm^3')
+			print('\tEvent duration:', record_event_duration, 'ms')
+			print('\tRA:', record_ra, 'deg')
+			print('\tDec:', record_dec, 'deg')
+			print('\tRA/Dec error:', record_ra_dec_error, 'deg')
+			print('\tImportance:', record_importance)
+
+			# send an alert message
+			if alert:
+				ln_01 = 'Schema: ' + str(record_schema) + '\n'
+				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
+				ln_03 = 'ID: ' + str(record_id) + '\n'
+				ln_04 = 'Known source: ' + str(record_known_source) + '\n'
+				ln_05 = 'Trigger time: ' + str(record_trigger_time) + '\n'
+				ln_06 = 'Trigger time error (1σ): ' + str(record_trigger_time_error) + ' s\n'
+				ln_07 = 'SNR: ' + str(record_snr) + '\n'
+				ln_08 = 'DM: ' + str(record_dm) + ' pc/cm^3\n'
+				ln_09 = 'Event duration: ' + str(record_event_duration) + ' ms\n'
+				ln_10 = 'RA: ' + str(record_ra) + ' deg\n'
+				ln_11 = 'Dec: ' + str(record_dec) + ' deg\n'
+				ln_12 = 'RA/Dec error: ' + str(record_ra_dec_error) + ' deg\n'
+
+		# update
 		elif record_alert_type == 'update':
 			try:
 				record_id = record['id']
@@ -675,6 +717,27 @@ class Alerts:
 				record_description = record['description']
 			except KeyError:
 				record_description = None
+
+			# print the alert contents
+			print('\tSchema:', record_schema)
+			print('\tAlert type:', record_alert_type)
+			print('\tID:', record_id)
+			print('\tTrigger time:', record_trigger_time)
+			print('\tTrigger time error (1-sigma):', record_trigger_time_error, 's')
+			print('\tDescription:', record_description)
+
+			# send an alert message
+			if alert:
+				ln_01 = 'Schema: ' + str(record_schema) + '\n'
+				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
+				ln_03 = 'ID: ' + str(record_id) + '\n'
+				ln_04 = 'Trigger time: ' + str(record_trigger_time) + '\n'
+				ln_05 = 'Trigger time error (1σ): ' + str(record_trigger_time_error) + ' s\n'
+				ln_06 = 'Description: ' + str(record_description) + '\n'
+
+				body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06
+
+				Alerts.send_alert(topic, body)
 
 	@staticmethod
 	def gcn_notices_einstein_probe_wxt_alert(value, topic, alert=Configuration.ALERT):

@@ -69,7 +69,7 @@ class Configuration:
 
 	# plotting
 	CMAP = 'gray'
-	DPI = 300
+	DPI = 250
 	FIGURE_SIZE = (10, 10)
 	FONT_NAME = 'Monospace'
 	FONT_SIZE = 12
@@ -97,8 +97,8 @@ class Configuration:
 	LISTEN_NED_WAIT = 1
 	MAILING_LIST = ['mailing', 'list']
 	MOON_DISTANCE = 60.
-	PAS = 'ncnrlqwdthofhoch'
+	PAS = 'pas'
 	PORT = 465
 	SMTP = 'smtp.mail.yahoo.com'
 
-	AVAILABLE_TOPICS = ['gcn.circulars', 'gcn.heartbeat', 'gcn.notices.chime.frb', 'gcn.notices.dsa110.frb', 'gcn.notices.einstein_probe.wxt.alert', 'gcn.notices.icecube.gold_bronze_track_alerts', 'gcn.notices.icecube.lvk_nu_track_search', 'gcn.notices.superk.sn_alert', 'gcn.notices.swift.bat.guano', 'igwn.gwalert']
+	AVAILABLE_TOPICS = ['gcn.circulars', 'gcn.heartbeat', 'gcn.notices.chime.frb', 'gcn.notices.dsa110.frb', 'gcn.notices.einstein_probe.wxt.alert', 'gcn.notices.icecube.lvk_nu_track_search', 'gcn.notices.icecube.gold_bronze_track_alerts', 'gcn.notices.superk.sn_alert', 'gcn.notices.swift.bat.guano', 'igwn.gwalert']

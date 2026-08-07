@@ -7,28 +7,31 @@ import sys
 os.system('clear')
 print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m] - Running GCN listener\n')
 
+# create a consumer object
 consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET, **{'log_level': 0})
-consumer.subscribe(Configuration.AVAILABLE_TOPICS)
+
+# get the available notice topics
+topic_list, n_topics = Alerts.get_notice_topics()
+consumer.subscribe(topic_list)
 
 while True:
 	try:
-		for message in consumer.consume(timeout=1):
-			message_error = message.error()
-			message_offset = message.offset()
-			message_topic = message.topic()
-			message_value = message.value()
+		for msg in consumer.consume(timeout=1):
+			msg_err = msg.error()
+			msg_off = msg.offset()
+			msg_top = msg.topic()
+			msg_val = msg.value()
 
-			if message_error:
-				print()
-				print(message_error)
-				print(message_offset)
-				print(message_topic)
-				print(message_value)
-				print()
+			if msg_err:
+				print(msg_err)
+				print(msg_off)
+				print(msg_top)
+				print(msg_val)
 
 			else:
-				Alerts.filter_alert(message_value, message_topic)
+				Alerts.filter_notice(msg_val, msg_top)
 
+	# handle manual interruptions
 	except KeyboardInterrupt:
 		print('\n\n[\033[1m' + 'ᾍδης ἀπέρχεται' + '\033[0m] - GCN listener terminated')
 		try:
@@ -36,5 +39,6 @@ while True:
 		except SystemExit:
 			os._exit(130)
 
+	# handle unplanned interruptions
 	except Exception as e:
 		print(f'{type(e).__name__}: {e}')

@@ -87,18 +87,16 @@ class Configuration:
 	# listener
 	ALERT = True
 	CATALOG = 'glade+'
-	CLIENT_ID = 'client_id'
-	CLIENT_SECRET = 'client_secret'
+	CLIENT_ID = '7vjhnkra2bveb93u0d2dqdmtks'
+	CLIENT_SECRET = '1v840t3ljqgob81m8kk0903edss4ul4huf5h3tq931f15lsjhoab'
 	EMAIL = 'toros.alerts@yahoo.com'
 	FIELD_GENERATION = 'N'
 	FIELD_PRIORITY = ['commissioning', 'ligo', 'science', 'main_survey']
 	GALACTIC_PLANE = 15.
 	GALAXY_LIST = 50
 	LISTEN_NED_WAIT = 1
-	MAILING_LIST = ['mailing', 'list']
+	MAILING_LIST = ['2674218771@tmomail.net', 'richardcamuccio@aol.com', 'detweilerlc1@gmail.com']
 	MOON_DISTANCE = 60.
-	PAS = 'pas'
+	PAS = 'ncnrlqwdthofhoch'
 	PORT = 465
 	SMTP = 'smtp.mail.yahoo.com'
-
-	AVAILABLE_TOPICS = ['gcn.circulars', 'gcn.heartbeat', 'gcn.notices.chime.frb', 'gcn.notices.dsa110.frb', 'gcn.notices.einstein_probe.wxt.alert', 'gcn.notices.icecube.lvk_nu_track_search', 'gcn.notices.icecube.gold_bronze_track_alerts', 'gcn.notices.superk.sn_alert', 'gcn.notices.swift.bat.guano', 'igwn.gwalert']

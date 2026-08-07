@@ -2206,6 +2206,8 @@ class Photometry:
 		:return - nothing is returned
 		'''
 
+		print('Generating flux files [AAVSO VSX]')
+
 		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
 
 		os.chdir(output_directory)
@@ -2300,6 +2302,8 @@ class Photometry:
 		:return - nothing is returned
 		'''
 
+		print('Generating flux files [Gaia DR3]')
+
 		output_directory = Configuration.OUTPUT_DATA_DIRECTORY + 'clean/' + date + '/FIELD_' + field + '/'
 
 		os.chdir(output_directory)
@@ -2364,8 +2368,6 @@ class Photometry:
 			# set the source table path
 			source_table_path = output_directory + 'flux/' + str(src) + Configuration.TABLE_EXTENSION
 
-			rms_list = []
-
 			# build the source table per time stamp
 			if not os.path.exists(source_table_path):
 				# loop through each time stamp
@@ -2379,16 +2381,16 @@ class Photometry:
 					lc_mag_list.append(mags[src][dte])
 					lc_err_list.append(mag_errors[src][dte])
 
-				# wrte the flux file for the source
+				# write the flux file for the source
 				ascii.write(source_table, source_table_path, format='fixed_width')
 
 				# get the magnitude and error for the photometric precision plot
-				rms = float(np.sqrt(np.mean(np.square(rms_list))))
+				rms = float(np.sqrt(np.mean(np.square(lc_err_list))))
 				plt_mag_list.append(input_table['phot_g_mean_mag'][src])
 				plt_rms_list.append(rms)
 
 				# draw a light curve for the source
-				lc_path = output_directory + 'variable/' + str(src) + Configuration.IMAGE_EXTENSION
+				lc_path = output_directory + 'flux/' + str(src) + Configuration.IMAGE_EXTENSION
 				if not os.path.exists(lc_path):
 					Plot.lightcurve(lc_jd_list, lc_mag_list, lc_err_list, lc_path)
 

@@ -20,565 +20,236 @@ class Alerts:
 		record = json.loads(value)
 		body = ''
 
-		try:
-			rec_schema = record['$schema']
-			str_schema = '\tSchema: ' + str(rec_schema) + '\n'
-		except KeyError:
-			rec_schema = None
-			str_schema = '\tSchema: none\n'
+		rec_schema = record['$schema']
+		str_schema = '\tSchema: ' + str(rec_schema)
 		body += str_schema
-		print(str_schema)
 
-		try:
-			rec_alert_type = record['alert_type']
-			str_alert_type = '\tAlert type: ' + str(rec_alert_type) + '\n'
-		except KeyError:
-			rec_alert_type = None
-			str_alert_type = '\tAlert type: none\n'
+		rec_alert_type = record['alert_type']
+		str_alert_type = '\tAlert type: ' + str(rec_alert_type)
 		body += str_alert_type
-		print(str_alert_type)
 
 		# initial
 		if rec_alert_type == 'initial':
-			# trigger_time
-			try:
-				rec_trigger_time = record['trigger_time']
-				str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time) + '\n'
-			except KeyError:
-				rec_trigger_time = None
-				str_trigger_time = '\tTrigger time: none\n'
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
 			body += str_trigger_time
-			print(str_trigger_time)
 
-			# trigger_time_error
-			try:
-				rec_trigger_time_error = record['trigger_time_error']
-				str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error) + ' s\n'
-			except KeyError:
-				rec_trigger_time_error = None
-				str_trigger_time_error = '\tTrigger time error: none\n'
+			rec_trigger_time_error = record['trigger_time_error']
+			str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error) + ' s'
 			body += str_trigger_time_error
-			print(str_trigger_time_error)
 
-			# id
-			try:
-				rec_id = record['id']
-				str_id = '\tID: ' + str(rec_id) + '\n'
-			except KeyError:
-				rec_id = None
-				str_id = '\tID: none\n'
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
 			body += str_id
-			print(str_id)
 
-			# snr
-			try:
-				rec_snr = record['snr']
-				str_snr = '\tSNR: ' + str(rec_snr) + '\n'
-			except KeyError:
-				rec_snr = None
-				str_snr = '\tSNR: none\n'
+			rec_snr = record['snr']
+			str_snr = '\tSNR: ' + str(rec_snr)
 			body += str_snr
-			print(str_snr)
 
-			# ra
-			try:
-				rec_ra = record['ra']
-				str_ra = '\tRA: ' + str(rec_ra) + ' deg\n'
-			except KeyError:
-				rec_ra = None
-				str_ra = '\tRA: none\n'
+			rec_ra = record['ra']
+			str_ra = '\tRA: ' + str(rec_ra) + ' deg'
 			body += str_ra
-			print(str_ra)
 
-			# dec
-			try:
-				rec_dec = record['dec']
-				str_dec = '\tDec: ' + str(rec_dec) + ' deg\n'
-			except KeyError:
-				rec_dec = None
-				str_dec = '\tDec: none\n'
+			rec_dec = record['dec']
+			str_dec = '\tDec: ' + str(rec_dec) + ' deg'
 			body += str_dec
-			print(str_dec)
 
-			# ra_dec_error
-			try:
-				rec_ra_dec_error = record['ra_dec_error']
-				str_ra_dec_error = '\tRA/Dec error: ' + str(rec_ra_dec_error) + '\n'
-			except KeyError:
-				rec_ra_dec_error = None
-				str_ra_dec_error = '\tRA/Dec error: none\n'
+			rec_ra_dec_error = record['ra_dec_error']
+			str_ra_dec_error = '\tRA/Dec error: ' + str(rec_ra_dec_error)
 			body += str_ra_dec_error
-			print(str_ra_dec_error)
 
-			# dm
-			try:
-				rec_dm = record['dm']
-				str_dm = '\tDM: ' + str(rec_dm) + ' pc/cm^3\n'
-			except KeyError:
-				rec_dm = None
-				str_dm = '\tDM: none\n'
+			rec_dm = record['dm']
+			str_dm = '\tDM: ' + str(rec_dm) + ' pc/cm^3'
 			body += str_dm
-			print(str_dm)
 
-			# dm_error
-			try:
-				rec_dm_error = record['dm_error']
-				str_dm_error = '\tDM error: ' + str(rec_dm_error) + ' pc/cm^3\n'
-			except KeyError:
-				rec_dm_error = None
-				str_dm_error = '\tDM error: none\n'
+			rec_dm_error = record['dm_error']
+			str_dm_error = '\tDM error: ' + str(rec_dm_error) + ' pc/cm^3'
 			body += str_dm_error
-			print(str_dm_error)
 
-			# dm_gal_ne_2001_max
-			try:
-				rec_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
-				str_dm_gal_ne_2001_max = '\tDM (galactic, NE2001): ' + str(rec_dm_gal_ne_2001_max) + ' pc/cm^3\n'
-			except KeyError:
-				rec_dm_gal_ne_2001_max = None
-				str_dm_gal_ne_2001_max = '\tDM (galactic, NE2001): none\n'
+			rec_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
+			str_dm_gal_ne_2001_max = '\tDM (galactic, NE2001): ' + str(rec_dm_gal_ne_2001_max) + ' pc/cm^3'
 			body += str_dm_gal_ne_2001_max
-			print(str_dm_gal_ne_2001_max)
 
-			# trigger_time_inf_freq
-			try:
-				rec_trigger_time_inf_freq = record['trigger_time_inf_freq']
-				str_trigger_time_inf_freq = '\tTrigger time (inf freq): ' + str(rec_trigger_time_inf_freq) + '\n'
-			except KeyError:
-				rec_trigger_time_inf_freq = None
-				str_trigger_time_inf_freq = '\tTrigger time (inf freq): none\n'
+			rec_trigger_time_inf_freq = record['trigger_time_inf_freq']
+			str_trigger_time_inf_freq = '\tTrigger time (inf freq): ' + str(rec_trigger_time_inf_freq)
 			body += str_trigger_time_inf_freq
-			print(str_trigger_time_inf_freq)
 
-			# trigger_time_inf_freq_error
-			try:
-				rec_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
-				str_trigger_time_inf_freq_error = '\tTrigger time (inf freq) error: ' + str(rec_trigger_time_inf_freq_error) + ' s\n'
-			except KeyError:
-				rec_trigger_time_inf_freq_error = None
-				str_trigger_time_inf_freq_error = '\tTrigger time (inf freq) error: none\n'
+			rec_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
+			str_trigger_time_inf_freq_error = '\tTrigger time (inf freq) error: ' + str(rec_trigger_time_inf_freq_error) + ' s'
 			body += str_trigger_time_inf_freq_error
-			print(str_trigger_time_inf_freq_error)
 
-			# importance
-			try:
-				rec_importance = record['importance']
-				str_importance = '\tImportance: ' + str(rec_importance) + '\n'
-			except KeyError:
-				rec_importance = None
-				str_importance = '\tImportance: none\n'
+			rec_importance = record['importance']
+			str_importance = '\tImportance: ' + str(rec_importance)
 			body += str_importance
-			print(str_importance)
 
-			# sampling_time
-			try:
-				rec_sampling_time = record['sampling_time']
-				str_sampling_time = '\tSampling time: ' + str(rec_sampling_time) + ' ms\n'
-			except KeyError:
-				rec_sampling_time = None
-				str_sampling_time = '\tSampling time: none\n'
+			rec_sampling_time = record['sampling_time']
+			str_sampling_time = '\tSampling time: ' + str(rec_sampling_time) + ' ms'
 			body += str_sampling_time
-			print(str_sampling_time)
 
-			# spectral_band
-			try:
-				rec_spectral_band = record['spectral_band']
-				str_spectral_band = '\tSpectral band: ' + str(rec_spectral_band) + '\n'
-			except KeyError:
-				rec_spectral_band = None
-				str_spectral_band = '\tSpectral band: none\n'
+			rec_spectral_band = record['spectral_band']
+			str_spectral_band = '\tSpectral band: ' + str(rec_spectral_band)
 			body += str_spectral_band
-			print(str_spectral_band)
 
-			# spectral_band_units
-			try:
-				rec_spectral_band_units = record['spectral_band_units']
-				str_spectral_band_units = '\tSpectral band units: ' + str(rec_spectral_band_units) + '\n'
-			except KeyError:
-				rec_spectral_band_units = None
-				str_spectral_band_units = '\tSpectral band units: none\n'
+			rec_spectral_band_units = record['spectral_band_units']
+			str_spectral_band_units = '\tSpectral band units: ' + str(rec_spectral_band_units)
 			body += str_spectral_band_units
-			print(str_spectral_band_units)
 
-			# npol
-			try:
-				rec_npol = record['npol']
-				str_npol = '\tNumber of polarizations: ' + str(rec_npol) + '\n'
-			except KeyError:
-				rec_npol = None
-				str_npol = '\tNumber of polarizations: none\n'
+			rec_npol = record['npol']
+			str_npol = '\tNumber of polarizations: ' + str(rec_npol)
 			body += str_npol
-			print(str_npol)
 
-			# tsys
-			try:
-				rec_tsys = record['tsys']
-				str_tsys = '\tSystem temperature: ' + str(rec_tsys) + ' K\n'
-			except KeyError:
-				rec_tsys = None
-				str_tsys = '\tSystem temperature: none\n'
+			rec_tsys = record['tsys']
+			str_tsys = '\tSystem temperature: ' + str(rec_tsys) + ' K'
 			body += str_tsys
-			print(str_tsys)
 
-			# description
-			try:
-				rec_description = record['description']
-				str_description = '\tDescription: ' + str(rec_description) + '\n'
-			except KeyError:
-				rec_description = None
-				str_description = '\tDescription: none\n'
+			rec_description = record['description']
+			str_description = '\tDescription: ' + str(rec_description)
 			body += str_description
-			print(str_description)
 
-			# send an alert message
+			print(body)
+
 			if alert:
 				Alerts.send_alert(topic, body)
 
 		# retraction
 		elif rec_alert_type == 'retraction':
-			# id
-			try:
-				rec_id = record['id']
-				str_id = '\tID: ' + str(rec_id) + '\n'
-			except KeyError:
-				rec_id = None
-				str_id = '\tID: none\n'
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
 			body += str_id
-			print(str_id)
 
-			# trigger_time
-			try:
-				rec_trigger_time = record['trigger_time']
-				str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time) + '\n'
-			except KeyError:
-				rec_trigger_time = None
-				str_trigger_time = '\tTrigger time: none\n'
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
 			body += str_trigger_time
-			print(str_trigger_time)
 
-			# trigger_time_error
-			try:
-				rec_trigger_time_error = record['trigger_time_error']
-				str_trigger_time_error = '\tTrigger time error: ' + str(trigger_time_error) + ' s\n'
-			except KeyError:
-				rec_trigger_time_error = None
-				str_trigger_time_error = '\tTrigger time error: none\n'
+			rec_trigger_time_error = record['trigger_time_error']
+			str_trigger_time_error = '\tTrigger time error: ' + str(trigger_time_error) + ' s'
 			body += str_trigger_time_error
-			print(str_trigger_time_error)
 
-			# description
-			try:
-				rec_description = record['description']
-				str_description = '\tDescription: ' + str(rec_description) + '\n'
-			except KeyError:
-				rec_description = None
-				str_description = '\tDescription: none\n'
+			rec_description = record['description']
+			str_description = '\tDescription: ' + str(rec_description)
 			body += str_description
-			print(str_description)
 
-			# send an alert message
+			print(body)
+
 			if alert:
 				Alerts.send_alert(topic, body)
 
 		# subsequent
 		elif rec_alert_type == 'subsequent':
-			# known_source
-			try:
-				rec_known_source = record['known_source']
-				str_known_source = '\tKnown source: ' + str(rec_known_source) + '\n'
-			except KeyError:
-				rec_known_source = None
-				str_known_source = '\tKnown source: none\n'
+			rec_known_source = record['known_source']
+			str_known_source = '\tKnown source: ' + str(rec_known_source)
 			body += str_known_source
-			print(str_known_source)
 
-			# trigger_time
-			try:
-				rec_trigger_time = record['trigger_time']
-				str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time) + '\n'
-			except KeyError:
-				rec_trigger_time = None
-				str_trigger_time = '\tTrigger time: none\n'
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
 			body += str_trigger_time
-			print(str_trigger_time)
 
-			# trigger_time_error
-			try:
-				rec_trigger_time_error = record['trigger_time_error']
-				str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error) + ' s\n'
-			except KeyError:
-				rec_trigger_time_error = None
-				str_trigger_time_error = '\tTrigger time error: none\n'
+			rec_trigger_time_error = record['trigger_time_error']
+			str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error) + ' s'
 			body += str_trigger_time_error
-			print(str_trigger_time_error)
 
-			# id
-			try:
-				rec_id = record['id']
-				str_id = '\tID: ' + str(rec_id) + '\n'
-			except KeyError:
-				rec_id = None
-				str_id = '\tID: none\n'
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
 			body += str_id
-			print(str_id)
 
-			# snr
-			try:
-				rec_snr = record['snr']
-				str_snr = '\tSNR: ' + str(rec_snr) + '\n'
-			except KeyError:
-				rec_snr = None
-				str_snr = '\tSNR: none\n'
+			rec_snr = record['snr']
+			str_snr = '\tSNR: ' + str(rec_snr)
 			body += str_snr
-			print(str_snr)
 
-			# ra
-			try:
-				rec_ra = record['ra']
-				str_ra = '\tRA: ' + str(rec_ra) + ' deg\n'
-			except KeyError:
-				rec_ra = None
-				str_ra = '\tRA: none\n'
+			rec_ra = record['ra']
+			str_ra = '\tRA: ' + str(rec_ra) + ' deg'
 			body += str_ra
-			print(str_ra)
 
-			# dec
-			try:
-				rec_dec = record['dec']
-				str_dec = '\tDec: ' + str(rec_dec) + ' deg\n'
-			except KeyError:
-				rec_dec = None
-				str_dec = '\tDec: none\n'
+			rec_dec = record['dec']
+			str_dec = '\tDec: ' + str(rec_dec) + ' deg'
 			body += str_dec
-			print(str_dec)
 
-			# ra_dec_error - ?
-			try:
-				rec_ra_dec_error = record['ra_dec_error']
-				str_ra_dec_error = '\tRA/Dec error: ' + str(rec_ra_dec_error) + '\n'
-			except KeyError:
-				rec_ra_dec_error = None
-				str_ra_dec_error = '\tRA/Dec error: none\n'
+			rec_ra_dec_error = record['ra_dec_error']
+			str_ra_dec_error = '\tRA/Dec error: ' + str(rec_ra_dec_error)
 			body += str_ra_dec_error
-			print(str_ra_dec_error)
 
-			# dm
-			try:
-				rec_dm = record['dm']
-				str_dm = '\tDM: ' + str(rec_dm) + ' pc/cm^3\n'
-			except KeyError:
-				rec_dm = None
-				str_dm = '\tDM: none\n'
+			rec_dm = record['dm']
+			str_dm = '\tDM: ' + str(rec_dm) + ' pc/cm^3'
 			body += str_dm
-			print(str_dm)
 
-			# dm_error
-			try:
-				rec_dm_error = record['dm_error']
-				str_dm_error = '\tDM error: ' + str(rec_dm_error) + ' pc/cm^3\n'
-			except KeyError:
-				rec_dm_error = None
-				str_dm_error = '\tDM error: none\n'
+			rec_dm_error = record['dm_error']
+			str_dm_error = '\tDM error: ' + str(rec_dm_error) + ' pc/cm^3'
 			body += str_dm_error
-			print(str_dm_error)
 
-			# dm_gal_ne_2001_max
-			try:
-				rec_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
-				str_dm_gal_ne_2001_max = '\tDM (galactic, NE2001): ' + str(rec_dm_gal_ne_2001_max) + ' pc/cm^3\n'
-			except KeyError:
-				rec_dm_gal_ne_2001_max = None
-				str_dm_gal_ne_2001_max = '\tDM (galactic, NE2001): none\n'
+			rec_dm_gal_ne_2001_max = record['dm_gal_ne_2001_max']
+			str_dm_gal_ne_2001_max = '\tDM (galactic, NE2001): ' + str(rec_dm_gal_ne_2001_max) + ' pc/cm^3'
 			body += str_dm_gal_ne_2001_max
-			print(str_dm_gal_ne_2001_max)
 
-			# trigger_time_inf_freq
-			try:
-				rec_trigger_time_inf_freq = record['trigger_time_inf_freq']
-				str_trigger_time_inf_freq = '\tTrigger time (inf freq): ' + str(rec_trigger_time_inf_freq) + '\n'
-			except KeyError:
-				rec_trigger_time_inf_freq = None
-				str_trigger_time_inf_freq = '\tTrigger time (inf freq) error: none\n'
+			rec_trigger_time_inf_freq = record['trigger_time_inf_freq']
+			str_trigger_time_inf_freq = '\tTrigger time (inf freq): ' + str(rec_trigger_time_inf_freq)
 			body += str_trigger_time_inf_freq
-			print(str_trigger_time_inf_freq)
 
-			# trigger_time_inf_freq_error
-			try:
-				rec_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
-				str_trigger_time_inf_freq_error = '\tTrigger time (inf freq) error: ' + str(rec_trigger_time_inf_freq_error) + ' s\n'
-			except KeyError:
-				rec_trigger_time_inf_freq_error = None
-				str_trigger_time_inf_freq_error = '\tTrigger time (inf freq) error: none\n'
+			rec_trigger_time_inf_freq_error = record['trigger_time_inf_freq_error']
+			str_trigger_time_inf_freq_error = '\tTrigger time (inf freq) error: ' + str(rec_trigger_time_inf_freq_error) + ' s'
 			body += str_trigger_time_inf_freq_error
-			print(str_trigger_time_inf_freq_error)
 
-			# importance
-			try:
-				rec_importance = record['importance']
-				str_importance = '\tImportance: ' + str(rec_importance) + '\n'
-			except KeyError:
-				rec_importance = None
-				str_importance = '\tImportance: none\n'
+			rec_importance = record['importance']
+			str_importance = '\tImportance: ' + str(rec_importance)
 			body += str_importance
-			print(str_importance)
 
-			# association_probability
-			try:
-				rec_association_probability = record['association_probability']
-				str_association_probability = '\tAssociation probability: ' + str(rec_association_probability) + '\n'
-			except KeyError:
-				rec_association_probability = None
-				str_association_probability = '\tAssociation probability: none\n'
+			rec_association_probability = record['association_probability']
+			str_association_probability = '\tAssociation probability: ' + str(rec_association_probability)
 			body += str_association_probability
-			print(str_association_probability)
 
-			# sampling_time
-			try:
-				rec_sampling_time = record['sampling_time']
-				str_sampling_time = '\tSampling time: ' + str(rec_sampling_time) + ' ms\n'
-			except KeyError:
-				rec_sampling_time = None
-				str_sampling_time = '\tSampling time: none\n'
+			rec_sampling_time = record['sampling_time']
+			str_sampling_time = '\tSampling time: ' + str(rec_sampling_time) + ' ms'
 			body += str_sampling_time
-			print(str_sampling_time)
 
-			# spectral_band
-			try:
-				rec_spectral_band = record['spectral_band']
-				str_spectral_band = '\tSpectral band: ' + str(rec_spectral_band) + '\n'
-			except KeyError:
-				rec_spectral_band = None
-				str_spectral_band = '\tSpectral band: none\n'
+			rec_spectral_band = record['spectral_band']
+			str_spectral_band = '\tSpectral band: ' + str(rec_spectral_band)
 			body += str_spectral_band
-			print(str_spectral_band)
 
-			# spectral_band_units
-			try:
-				rec_spectral_band_units = record['spectral_band_units']
-				str_spectral_band_units = '\tSpectral band units: ' + str(rec_spectral_band_units) + '\n'
-			except KeyError:
-				rec_spectral_band_units = None
+			rec_spectral_band_units = record['spectral_band_units']
+			str_spectral_band_units = '\tSpectral band units: ' + str(rec_spectral_band_units)
+			body += str_spectral_band_units
+			
+			rec_npol = record['npol']
+			str_npol = '\tNumber of polarizations: ' + str(rec_npol)
+			body += str_npol
 
-			# npol
-			try:
-				record_npol = record['npol']
-			except KeyError:
-				record_npol = None
+			rec_tsys = record['tsys']
+			str_tsys = '\tSystem temperature: ' + str(rec_tsys) + ' K'
+			body += str_tsys
 
-			# tsys
-			try:
-				record_tsys = record['tsys']
-			except KeyError:
-				record_tsys = None
+			rec_description = record['description']
+			str_description = '\tDescription: ' + str(rec_description)
+			body += str_description
 
-			# description
-			try:
-				record_description = record['description']
-			except KeyError:
-				record_description = None
+			print(body)
 
-			# print the alert contents
-			print('\tSchema:', record_schema)
-			print('\tAlert type:', record_alert_type)
-			print('\tID:', record_id)
-			print('\tKnown source:', record_known_source)
-			print('\tTrigger time:', record_trigger_time)
-			print('\tTrigger time error (1σ):', record_trigger_time_error, 's')
-			print('\tSNR:', record_snr)
-			print('\tRA:', record_ra, 'deg')
-			print('\tDec:', record_dec, 'deg')
-			print('\tRA/Dec error:', record_ra_dec_error, 'deg')
-			print('\tDM:', record_dm, 'pc/cm^3')
-			print('\tDM error:', record_dm_error, 'pc/cm^3')
-			print('\tDM (galactic, NE2001):', record_dm_gal_ne_2001_max, 'pc/cm^3')
-			print('\tTrigger time (inf freq):', record_trigger_time_inf_freq)
-			print('\tTrigger time (inf freq) error:', record_trigger_time_inf_freq_error, 's')
-			print('\tImportance:', record_importance)
-			print('\tAssociation probability:', record_association_probability)
-			print('\tSampling time:', record_sampling_time, 'ms')
-			print('\tSpectral band:', record_spectral_band, record_spectral_band_units)
-			print('\tNumber of polarizations:', record_npol)
-			print('\tSystem temperature:', record_tsys, 'K')
-			print('\tDescription:', record_description)
-
-			# send an alert message
 			if alert:
-				ln_01 = 'Schema: ' + str(record_schema) + '\n'
-				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
-				ln_03 = 'ID: ' + str(record_id) + '\n'
-				ln_04 = 'Known source: ' + str(record_known_source) + '\n'
-				ln_05 = 'Trigger time: ' + str(record_trigger_time) + '\n'
-				ln_06 = 'Trigger time error (1σ): ' + str(record_trigger_time_error) + ' s\n'
-				ln_07 = 'SNR: ' + str(record_snr) + '\n'
-				ln_08 = 'RA: ' + str(record_ra) + ' deg\n'
-				ln_09 = 'Dec: ' + str(record_dec) + ' deg\n'
-				ln_10 = 'RA/Dec error: ' + str(record_ra_dec_error) + ' deg\n'
-				ln_11 = 'DM: ' + str(record_dm) + ' pc/cm^3\n'
-				ln_12 = 'DM error: ' + str(record_dm_error) + ' pc/cm^3\n'
-				ln_13 = 'DM (galactic, NE2001): ' + str(record_dm_gal_ne_2001_max) + ' pc/cm^3\n'
-				ln_14 = 'Trigger time (inf freq): ' + str(record_trigger_time_inf_freq) + '\n'
-				ln_15 = 'Trigger time (inf freq) error: ' + str(record_trigger_time_inf_freq_error) + ' s\n'
-				ln_16 = 'Importance: ' + str(record_importance) + '\n'
-				ln_17 = 'Association probability: ' + str(record_association_probability) + '\n'
-				ln_18 = 'Sampling time: ' + str(record_sampling_time) + ' ms\n'
-				ln_19 = 'Spectral band: ' + str(record_spectral_band) + ' ' + str(record_spectral_band_units) + '\n'
-				ln_20 = 'Number of polarizations: ' + str(record_npol) + '\n'
-				ln_21 = 'System temperature: ' + str(record_tsys), ' K\n'
-				ln_22 = 'Description: ' + str(record_description) + '\n'
-				body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06 + ln_07 + ln_08 + ln_09 + ln_10 + ln_11 + ln_12 + ln_13 + ln_14 + ln_15 + ln_16 + ln_17 + ln_18 + ln_19 + ln_20 + ln_21 + ln_22
 				Alerts.send_alert(topic, body)
 
 		# update
 		elif record_alert_type == 'update':
-			# id
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
+			body += str_id
 
-			# trigger_time
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
+			body += str_trigger_time
 
-			# trigger_time_error
-			try:
-				record_trigger_time_error = record['trigger_time_error']
-			except KeyError:
-				record_trigger_time_error = None
+			rec_trigger_time_error = record['trigger_time_error']
+			str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error) + ' s'
+			body += str_trigger_time_error
 
-			# update_message
-			try:
-				record_update_message = record['update_message']
-			except KeyError:
-				record_update_message = None
+			rec_update_message = record['update_message']
+			str_update_message = '\tUpdate message: ' + str(rec_update_message)
+			body += str_update_message
 
-			# description
-			try:
-				record_description = record['description']
-			except KeyError:
-				record_description = None
+			rec_description = record['description']
+			str_description = '\tDescription: ' + str(rec_description)
+			body += str_description
 
-			# print the alert contents
-			print('\tSchema:', record_schema)
-			print('\tAlert type:', record_alert_type)
-			print('\tID:', record_id)
-			print('\tTrigger time:', record_trigger_time)
-			print('\tTrigger time error (1σ):', record_trigger_time_error, 's')
-			print('\tUpdate message:', record_update_message)
-			print('\tDescription:', record_description)
+			print(body)
 
-			# send an alert message
 			if alert:
-				ln_01 = 'Schema: ' + str(record_schema) + '\n'
-				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
-				ln_03 = 'ID: ' + str(record_id) + '\n'
-				ln_04 = 'Trigger time: ' + str(record_trigger_time) + '\n'
-				ln_05 = 'Trigger time error (1σ): ' + str(record_trigger_time_error) + ' s\n'
-				ln_06 = 'Update message: ' + str(record_update_message) + '\n'
-				ln_07 = 'Description: ' + str(record_description) + '\n'
-				body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06 + ln_07
 				Alerts.send_alert(topic, body)
 
 	@staticmethod

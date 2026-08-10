@@ -2512,7 +2512,124 @@ class Alerts:
 
 	@staticmethod
 	def swift_bat_grb_pos_ack(value, topic, alert=Configuration.ALERT):
-		return
+		'''This function processes Swift BAT GRB Position Notices from the Neil Gehrels Swift Observatory via GCN Classic over Kafka.
+
+		:parameter value - the value of the message
+		:parameter topic - the topic of the message
+		:parameter alert - a toggle for broadcasting the alert
+
+		:return - nothing is returned
+		'''
+
+		record = Alerts.decode_classic_notice(value)
+
+		rec_title = record['TITLE']
+		str_title = '\tTitle: ' + str(rec_title)
+		print(str_title)
+
+		rec_notice_date = record['NOTICE_DATE']
+		str_notice_date = '\tNotice date: ' + str(rec_notice_date)
+		print(str_notice_date)
+
+		rec_notice_type = record['NOTICE_TYPE']
+		str_notice_type = '\tNotice type: ' + str(rec_notice_type)
+		print(str_notice_type)
+
+		rec_trigger_num = record['TRIGGER_NUM']
+		str_trigger_num = '\tTrigger number: ' + str(rec_trigger_num)
+		print(str_trigger_num)
+
+		rec_grb_ra = record['GRB_RA']
+		str_grb_ra = '\tGRB RA: ' + str(rec_grb_ra)
+		print(str_grb_ra)
+
+		rec_grb_dec = record['GRB_DEC']
+		str_grb_dec = '\tGRB Dec: ' + str(rec_grb_dec)
+		print(str_grb_dec)
+
+		rec_grb_error = record['GRB_ERROR']
+		str_grb_error = '\tGRB error: ' + str(rec_grb_error)
+		print(str_grb_error)
+
+		rec_grb_inten = record['GRB_INTEN']
+		str_grb_inten = '\tGRB intensity: ' + str(rec_grb_inten)
+		print(str_grb_inten)
+
+		rec_bkg_inten = record['BKG_INTEN']
+		str_bkg_inten = '\tBackground intensity: ' + str(rec_bkg_inten)
+		print(str_bkg_inten)
+
+		rec_bkg_time = record['BKG_TIME']
+		str_bkg_time = '\tBackground time: ' + str(rec_bkg_time)
+		print(str_bkg_time)
+
+		rec_bkg_dur = record['BKG_DUR']
+		str_bkg_dur = '\tBackground duration: ' + str(rec_bkg_dur)
+		print(str_bkg_dur)
+
+		rec_grb_date = record['GRB_DATE']
+		str_grb_date = '\tGRB date: ' + str(rec_grb_date)
+		print(str_grb_date)
+
+		rec_grb_time = record['GRB_TIME']
+		str_grb_time = '\tGRB time: ' + str(rec_grb_time)
+		print(str_grb_time)
+
+		rec_grb_phi = record['GRB_PHI']
+		str_grb_phi = '\tGRB phi: ' + str(rec_grb_phi)
+		print(str_grb_phi)
+
+		rec_grb_theta = record['GRB_THETA']
+		str_grb_theta = '\tGRB theta: ' + str(rec_grb_theta)
+		print(str_grb_theta)
+
+		rec_trigger_index = record['TRIGGER_INDEX']
+		str_trigger_index = '\tTrigger index: ' + str(rec_trigger_index)
+		print(str_trigger_index)
+
+		rec_soln_status = record['SOLN_STATUS']
+		str_soln_status = '\tSoln status: ' + str(rec_soln_status)
+		print(str_soln_status)
+
+		rec_rate_signif = record['RATE_SIGNIF']
+		str_rate_signif = '\tRate significance: ' + str(rec_rate_signif)
+		print(str_rate_signif)
+
+		rec_image_signif = record['IMAGE_SIGNIF']
+		str_image_signif = '\tImage significance: ' + str(rec_image_signif)
+		print(str_image_signif)
+
+		rec_merit_params = record['MERIT_PARAMS']
+		str_merit_params = '\tMerit parameters: ' + str(rec_merit_params)
+		print(str_merit_params)
+
+		rec_sun_postn = record['SUN_POSTN']
+		str_sun_postn = '\tSun position: ' + str(rec_sun_postn)
+		print(str_sun_postn)
+
+		rec_sun_dist = record['SUN_DIST']
+		str_sun_dist = '\tSun distance: ' + str(rec_sun_dist)
+		print(str_sun_dist)
+
+		rec_moon_postn = record['MOON_POSTN']
+		str_moon_postn = '\tMoon position: ' + str(rec_moon_postn)
+		print(str_moon_postn)
+
+		rec_moon_dist = record['MOON_DIST']
+		str_moon_dist = '\tMoon distance: ' + str(rec_moon_dist)
+		print(str_moon_dist)
+
+		rec_gal_coords = record['GAL_COORDS']
+		str_gal_coords = '\tGalactic coordinates: ' + str(rec_gal_coords)
+		print(str_gal_coords)
+
+		rec_ecl_coords = record['ECL_COORDS']
+		str_ecl_coords = '\tEcliptic coordinates: ' + str(rec_ecl_coords)
+		print(str_ecl_coords)
+
+		rec_comments = record['COMMENTS']
+		str_comments = '\tComments: ' + str(rec_comments)
+		print(str_comments)
 
 	@staticmethod
 	def swift_bat_grb_pos_test(value, topic, alert=Configuration.ALERT):
@@ -3449,7 +3566,104 @@ class Alerts:
 
 	@staticmethod
 	def swift_xrt_lc(value, topic, alert=Configuration.ALERT):
-		return
+		'''This function processes Swift XRT Lightcurve Notices from the Neil Gehrels Swift Observatory via GCN Classic over Kafka.
+
+		:parameter value - the value of the message
+		:parameter topic - the topic of the message
+		:parameter alert - a toggle for broadcasting the alert
+
+		:return - nothing is returned
+		'''
+
+		record = Alerts.decode_classic_notice(value)
+
+		rec_title = record['TITLE']
+		str_title = '\tTitle: ' + str(rec_title)
+		print(str_title)
+
+		rec_notice_date = record['NOTICE_DATE']
+		str_notice_date = '\tNotice date: ' + str(rec_notice_date)
+		print(str_notice_date)
+
+		rec_notice_type = record['NOTICE_TYPE']
+		str_notice_type = '\tNotice type: ' + str(rec_notice_type)
+		print(str_notice_type)
+
+		rec_trigger_num = record['TRIGGER_NUM']
+		str_trigger_num = '\tTrigger number: ' + str(rec_trigger_num)
+		print(str_trigger_num)
+
+		rec_point_ra = record['POINT_RA']
+		str_point_ra = '\tPoint RA: ' + str(rec_point_ra)
+		print(str_point_ra)
+
+		rec_point_dec = record['POINT_DEC']
+		str_point_dec = '\tPoint Dec: ' + str(rec_point_dec)
+		print(str_point_dec)
+
+		rec_lc_start_date = record['LC_START_DATE']
+		str_lc_start_date = '\tLightcurve start date: ' + str(rec_lc_start_date)
+		print(str_lc_start_date)
+
+		rec_lc_start_time = record['LC_START_TIME']
+		str_lc_start_time = '\tLightcurve start time: ' + str(rec_lc_start_time)
+		print(str_lc_start_time)
+
+		rec_lc_stop_date = record['LC_STOP_DATE']
+		str_lc_stop_date = '\tLightcurve stop date: ' + str(rec_lc_stop_date)
+		print(str_lc_stop_date)
+
+		rec_lc_stop_time = record['LC_STOP_TIME']
+		str_lc_stop_time = '\tLightcurve stop time: ' + str(rec_lc_stop_time)
+		print(str_lc_stop_time)
+
+		rec_lc_live_time = record['LC_LIVE_TIME']
+		str_lc_live_time = '\tLightcurve live time: ' + str(rec_lc_live_time)
+		print(str_lc_live_time)
+
+		rec_delta_time = record['DELTA_TIME']
+		str_delta_time = '\tDelta time: ' + str(rec_delta_time)
+		print(str_delta_time)
+
+		rec_n_bins = record['N_BINS']
+		str_n_bins = '\tNumber bins: ' + str(rec_n_bins)
+		print(str_n_bins)
+
+		rec_term_cond = record['TERM_COND']
+		str_term_cond = '\tTerm condition: ' + str(rec_term_cond)
+		print(str_term_cond)
+
+		rec_lc_url = record['LC_URL']
+		str_lc_url = '\tLightcurve URL: ' + str(rec_lc_url)
+		print(str_lc_url)
+
+		rec_sun_postn = record['SUN_POSTN']
+		str_sun_postn = '\tSun position: ' + str(rec_sun_postn)
+		print(str_sun_postn)
+
+		rec_sun_dist = record['SUN_DIST']
+		str_sun_dist = '\tSun distance: ' + str(rec_sun_dist)
+		print(str_sun_dist)
+
+		rec_moon_postn = record['MOON_POSTN']
+		str_moon_postn = '\tMoon position: ' + str(rec_moon_postn)
+		print(str_moon_postn)
+
+		rec_moon_dist = record['MOON_DIST']
+		str_moon_dist = '\tMoon distance: ' + str(rec_moon_dist)
+		print(str_moon_dist)
+
+		rec_gal_coords = record['GAL_COORDS']
+		str_gal_coords = '\tGalactic coordinates: ' + str(rec_gal_coords)
+		print(str_gal_coords)
+
+		rec_ecl_coords = record['ECL_COORDS']
+		str_ecl_coords = '\tEcliptic coordinates: ' + str(rec_ecl_coords)
+		print(str_ecl_coords)
+
+		rec_comments = record['COMMENTS']
+		str_comments = '\tComments: ' + str(rec_comments)
+		print(str_comments)
 
 	@staticmethod
 	def swift_xrt_position(value, topic, alert=Configuration.ALERT):
@@ -3550,7 +3764,108 @@ class Alerts:
 
 	@staticmethod
 	def swift_xrt_spectrum(value, topic, alert=Configuration.ALERT):
-		return
+		'''This function processes Swift XRT Spectrum Notices from the Neil Gehrels Swift Observatory via GCN Classic over Kafka.
+
+		:parameter value - the value of the message
+		:parameter topic - the topic of the message
+		:parameter alert - a toggle for broadcasting the alert
+
+		:return - nothing is returned
+		'''
+
+		record = Alerts.decode_classic_notice(value)
+
+		rec_title = record['TITLE']
+		str_title = '\tTitle: ' + str(rec_title)
+		print(str_title)
+
+		rec_notice_date = record['NOTICE_DATE']
+		str_notice_date = '\tNotice date: ' + str(rec_notice_date)
+		print(str_notice_date)
+
+		rec_notice_type = record['NOTICE_TYPE']
+		str_notice_type = '\tNotice type: ' + str(rec_notice_type)
+		print(str_notice_type)
+
+		rec_trigger_num = record['TRIGGER_NUM']
+		str_trigger_num = '\tTrigger number: ' + str(rec_trigger_num)
+		print(str_trigger_num)
+
+		rec_spec_start_date = record['SPEC_START_DATE']
+		str_spec_start_date = '\tSpectrum start date: ' + str(rec_spec_start_date)
+		print(str_spec_start_date)
+
+		rec_spec_start_time = record['SPEC_START_TIME']
+		str_spec_start_time = '\tSpectrum start time: ' + str(rec_spec_start_time)
+		print(str_spec_start_time)
+
+		rec_spec_stop_date = record['SPEC_STOP_DATE']
+		str_spec_stop_date = '\tSpectrum stop date: ' + str(rec_spec_stop_date)
+		print(str_spec_stop_date)
+
+		rec_spec_stop_time = record['SPEC_STOP_TIME']
+		str_spec_stop_time = '\tSpectrum stop time: ' + str(rec_spec_stop_time)
+		print(str_spec_stop_time)
+
+		rec_livetime = record['LIVETIME']
+		str_livetime = '\tLivetime: ' + str(rec_livetime)
+		print(str_livetime)
+
+		rec_point_ra = record['POINT_RA']
+		str_point_ra = '\tPoint RA: ' + str(rec_point_ra)
+		print(str_point_ra)
+
+		rec_point_dec = record['POINT_DEC']
+		str_point_dec = '\tPoint Dec: ' + str(rec_point_dec)
+		print(str_point_dec)
+
+		rec_mode = record['MODE']
+		str_mode = '\tMode: ' + str(rec_mode)
+		print(str_mode)
+
+		rec_waveform = record['WAVEFORM']
+		str_waveform = '\tWaveform: ' + str(rec_waveform)
+		print(str_waveform)
+
+		rec_bias = record['BIAS']
+		str_bias = '\tBias: ' + str(rec_bias)
+		print(str_bias)
+
+		rec_term_cond = record['TERM_COND']
+		str_term_cond = '\tTerm condition: ' + str(rec_term_cond)
+		print(str_term_cond)
+
+		rec_spec_url = record['SPEC_URL']
+		str_spec_url = '\tSpectrum URL: ' + str(rec_spec_url)
+		print(str_spec_url)
+
+		rec_sun_postn = record['SUN_POSTN']
+		str_sun_postn = '\tSun position: ' + str(rec_sun_postn)
+		print(str_sun_postn)
+
+		rec_sun_dist = record['SUN_DIST']
+		str_sun_dist = '\tSun distance: ' + str(rec_sun_dist)
+		print(str_sun_dist)
+
+		rec_moon_postn = record['MOON_POSTN']
+		str_moon_postn = '\tMoon position: ' + str(rec_moon_postn)
+		print(str_moon_postn)
+
+		rec_moon_dist = record['MOON_DIST']
+		str_moon_dist = '\tMoon distance: ' + str(rec_moon_dist)
+		print(str_moon_dist)
+
+		rec_gal_coords = record['GAL_COORDS']
+		str_gal_coords = '\tGalactic coordinates: ' + str(rec_gal_coords)
+		print(str_gal_coords)
+
+		rec_ecl_coords = record['ECL_COORDS']
+		str_ecl_coords = '\tEcliptic coordinates: ' + str(rec_ecl_coords)
+		print(str_ecl_coords)
+
+		rec_comments = record['COMMENTS']
+		str_comments = '\tComments: ' + str(rec_comments)
+		print(str_comments)
 
 	@staticmethod
 	def swift_xrt_spectrum_proc(value, topic, alert=Configuration.ALERT):

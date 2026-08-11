@@ -290,289 +290,154 @@ class Alerts:
 		'''
 
 		record = json.loads(value)
+		body = ''
 
-		try:
-			record_schema = record['$schema']
-		except KeyError:
-			record_schema = None
+		rec_schema = record['$schema']
+		str_schema = '\tSchema: ' + str(rec_schema)
+		body += str_schema
 
-		try:
-			record_alert_type = record['alert_type']
-		except KeyError:
-			record_alert_type = None
+		rec_alert_type = record['alert_type']
+		str_alert_type = '\tAlert type: ' + str(rec_alert_type)
+		body += str_alert_type
 
 		# initial
 		if record_alert_type == 'initial':
-			# trigger time
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
+			body += str_trigger_time
 
-			# id
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
+			body += str_id
 
-			# snr
-			try:
-				record_snr = record['snr']
-			except KeyError:
-				record_snr = None
+			rec_snr = record['snr']
+			str_snr = '\tSNR: ' + str(rec_snr)
+			body += str_snr
 
-			# dm
-			try:
-				record_dm = record['dm']
-			except KeyError:
-				record_dm = None
+			rec_dm = record['dm']
+			str_dm = '\tDM: ' + str(rec_dm) + ' pc/cm^3'
+			body += str_dm
 
-			# event_duration
-			try:
-				record_event_duration = record['event_duration']
-			except KeyError:
-				record_event_duration = None
+			rec_event_duration = record['event_duration']
+			str_event_duration = '\tEvent duration: ' + str(rec_event_duration) + ' ms'
+			body += str_event_duration
 
-			# ra
-			try:
-				record_ra = record['ra']
-			except KeyError:
-				record_ra = None
+			rec_ra = record['ra']
+			str_ra = '\tRA: ' + str(rec_ra) + ' deg'
+			body += str_ra
 
-			# deg
-			try:
-				record_dec = record['dec']
-			except KeyError:
-				record_dec = None
+			rec_dec = record['dec']
+			str_dec = '\tDec: ' + str(rec_dec) + ' deg'
+			body += str_dec
 
-			# ra_dec_error
-			try:
-				record_ra_dec_error = record['ra_dec_error']
-			except KeyError:
-				record_ra_dec_error = None
+			rec_ra_dec_error = record['ra_dec_error']
+			str_ra_dec_error = '\tRA/Dec error: ' + str(rec_ra_dec_error)
+			body += str_ra_dec_error
 
-			# importance
-			try:
-				record_importance = record['importance']
-			except KeyError:
-				record_importance = None
+			rec_importance = record['importance']
+			str_importance = '\tImportance: ' + str(rec_importance)
+			body += str_importance
 
-			# print the alert contents
-			print('\tSchema:', record_schema)
-			print('\tAlert type:', record_alert_type)
-			print('\tID:', record_id)
-			print('\tSNR:', record_snr)
-			print('\tDM:', record_dm, 'pc/cm^3')
-			print('\tEvent duration:', record_event_duration, 'ms')
-			print('\tRA:', record_ra, 'deg')
-			print('\tDec:', record_dec, 'deg')
-			print('\tRA/Dec error:', record_ra_dec_error, 'deg')
-			print('\tImportance:', record_importance)
+			print(body)
 
-			# send an alert message
 			if alert:
-				ln_01 = 'Schema: ' + str(record_schema) + '\n'
-				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
-				ln_03 = 'ID: ' + str(record_id) + '\n'
-				ln_04 = 'SNR: ' + str(record_snr) + '\n'
-				ln_05 = 'DM: ' + str(record_dm) + ' pc/cm^3\n'
-				ln_06 = 'Event duration: ' + str(record_event_duration) + ' ms\n'
-				ln_07 = 'RA: ' + str(record_ra) + ' deg\n'
-				ln_08 = 'Dec: ' + str(record_dec) + ' deg\n'
-				ln_09 = 'RA/Dec error: ' + str(record_ra_dec_error) + ' deg\n'
-				ln_10 = 'Importance: ' + str(record_importance) + '\n'
-				body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06 + ln_07 + ln_08 + ln_09 + ln_10
 				Alerts.send_alert(topic, body)
 
 		# retraction
 		elif record_alert_type == 'retraction':
-			# id
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
+			body += str_id
 
-			# trigger_time
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
+			body += str_trigger_time
 
-			# trigger_time_error
-			try:
-				record_trigger_time_error = record['trigger_time_error']
-			except KeyError:
-				record_trigger_time_error = None
+			rec_trigger_time_error = record['trigger_time_error']
+			str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error) + ' s'
+			body += str_trigger_time_error
 
-			# description
-			try:
-				record_description = record['description']
-			except KeyError:
-				record_description = None
+			rec_description = record['description']
+			str_description = '\tDescription: ' + str(rec_description)
+			body += str_description
 
-			# print the alert contents
-			print('\tSchema:', record_schema)
-			print('\tAlert type:', record_alert_type)
-			print('\tID:', record_id)
-			print('\tTrigger time:', record_trigger_time)
-			print('\tTrigger time error (1σ):', record_trigger_time_error, 's')
-			print('\tDescription:', record_description)
+			print(body)
 
-			# send an alert message
 			if alert:
-				ln_01 = 'Schema: ' + str(record_schema) + '\n'
-				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
-				ln_03 = 'ID: ' + str(record_id) + '\n'
-				ln_04 = 'Trigger time: ' + str(record_trigger_time) + '\n'
-				ln_05 = 'Trigger time error (1σ): ' + str(record_trigger_time_error) + ' s\n'
-				ln_06 = 'Description: ' + str(record_description) + '\n'
-				body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06
 				Alerts.send_alert(topic, body)
 
 		# subsequent
 		elif record_alert_type == 'subsequent':
-			# trigger_time
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
+			body += str_trigger_time
 
-			# trigger_time_error
-			try:
-				record_trigger_time_error = record['trigger_time_error']
-			except KeyError:
-				record_trigger_time_error = None
+			rec_trigger_time_error = record['trigger_time_error']
+			str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error) + ' s'
+			body += str_trigger_time_error
 
-			# known_source
-			try:
-				record_known_source = record['known_source']
-			except KeyError:
-				record_known_source = None
+			rec_known_source = record['known_source']
+			str_known_source = '\tKnown source: ' + str(rec_known_source)
+			body += str_known_source
 
-			# id
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
+			body += str_id
 
-			# snr
-			try:
-				record_snr = record['snr']
-			except KeyError:
-				record_snr = None
+			rec_snr = record['snr']
+			str_snr = '\tSNR: ' + str(rec_snr)
+			body += str_snr
 
-			# dm
-			try:
-				record_dm = record['dm']
-			except KeyError:
-				record_dm = None
+			rec_dm = record['dm']
+			str_dm = '\tDM: ' + str(rec_dm) + ' pc/cm^3'
+			body += str_dm
 
-			# event_duration
-			try:
-				record_event_duration = record['event_duration']
-			except KeyError:
-				record_event_duration = None
+			rec_event_duration = record['event_duration']
+			str_event_duration = '\tEvent duration: ' + str(rec_event_duration) + ' ms'
+			body += str_event_duration
 
-			# ra
-			try:
-				record_ra = record['ra']
-			except KeyError:
-				record_ra = None
+			rec_ra = record['ra']
+			str_ra = '\tRA: ' + str(rec_ra) + ' deg'
+			body += str_ra
 
-			# dec
-			try:
-				record_dec = record['dec']
-			except KeyError:
-				record_dec = None
+			rec_dec = record['dec']
+			str_dec = '\tDec: ' + str(rec_dec) + ' deg'
+			body += str_dec
 
-			# ra_dec_error
-			try:
-				record_ra_dec_error = record['ra_dec_error']
-			except KeyError:
-				record_ra_dec_error = None
+			rec_ra_dec_error = record['ra_dec_error']
+			str_ra_dec_error = '\tRA/Dec error: ' + str(rec_ra_dec_error) + ' deg'
+			body += str_ra_dec_error
 
-			# importance
-			try:
-				record_importance = record['importance']
-			except KeyError:
-				record_importance = None
+			rec_importance = record['importance']
+			str_importance = '\tImportance: ' + str(rec_importance)
+			body += str_importance
+			
+			print(body)
 
-			# print the alert contents
-			print('\tSchema:', record_schema)
-			print('\tAlert type:', record_alert_type)
-			print('\tID:', record_id)
-			print('\tKnown source:', record_known_source)
-			print('\tTrigger time:', record_trigger_time)
-			print('\tTrigger time error (1σ):', record_trigger_time_error, 's')
-			print('\tSNR:', record_snr)
-			print('\tDM:', record_dm, 'pc/cm^3')
-			print('\tEvent duration:', record_event_duration, 'ms')
-			print('\tRA:', record_ra, 'deg')
-			print('\tDec:', record_dec, 'deg')
-			print('\tRA/Dec error:', record_ra_dec_error, 'deg')
-			print('\tImportance:', record_importance)
-
-			# send an alert message
 			if alert:
-				ln_01 = 'Schema: ' + str(record_schema) + '\n'
-				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
-				ln_03 = 'ID: ' + str(record_id) + '\n'
-				ln_04 = 'Known source: ' + str(record_known_source) + '\n'
-				ln_05 = 'Trigger time: ' + str(record_trigger_time) + '\n'
-				ln_06 = 'Trigger time error (1σ): ' + str(record_trigger_time_error) + ' s\n'
-				ln_07 = 'SNR: ' + str(record_snr) + '\n'
-				ln_08 = 'DM: ' + str(record_dm) + ' pc/cm^3\n'
-				ln_09 = 'Event duration: ' + str(record_event_duration) + ' ms\n'
-				ln_10 = 'RA: ' + str(record_ra) + ' deg\n'
-				ln_11 = 'Dec: ' + str(record_dec) + ' deg\n'
-				ln_12 = 'RA/Dec error: ' + str(record_ra_dec_error) + ' deg\n'
-				ln_13 = 'Imporance: ' + str(record_importance) + '\n'
-				body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06 + ln_07 + ln_08 + ln_09 + ln_10 + ln_11 + ln_12 + ln_13
 				Alerts.send_alert(topic, body)
 
 		# update
 		elif record_alert_type == 'update':
-			# id
-			try:
-				record_id = record['id']
-			except KeyError:
-				record_id = None
+			rec_id = record['id']
+			str_id = '\tID: ' + str(rec_id)
+			body += str_id
 
-			# trigger_time
-			try:
-				record_trigger_time = record['trigger_time']
-			except KeyError:
-				record_trigger_time = None
+			rec_trigger_time = record['trigger_time']
+			str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
+			body += str_trigger_time
 
-			# trigger_time_error
-			try:
-				record_trigger_time_error = record['trigger_time_error']
-			except KeyError:
-				record_trigger_time_error = None
+			rec_trigger_time_error = record['trigger_time_error']
+			str_trigger_time_error = '\tTrigger time error: ' + str(rec_trigger_time_error)
+			body += str_trigger_time_error
 
-			# description
-			try:
-				record_description = record['description']
-			except KeyError:
-				record_description = None
+			rec_description = record['description']
+			str_description = '\tDescription: ' + str(rec_description)
+			body += str_description
 
-			# print the alert contents
-			print('\tSchema:', record_schema)
-			print('\tAlert type:', record_alert_type)
-			print('\tID:', record_id)
-			print('\tTrigger time:', record_trigger_time)
-			print('\tTrigger time error (1σ):', record_trigger_time_error, 's')
-			print('\tDescription:', record_description)
+			print(body)
 
-			# send an alert message
 			if alert:
-				ln_01 = 'Schema: ' + str(record_schema) + '\n'
-				ln_02 = 'Alert type: ' + str(record_alert_type) + '\n'
-				ln_03 = 'ID: ' + str(record_id) + '\n'
-				ln_04 = 'Trigger time: ' + str(record_trigger_time) + '\n'
-				ln_05 = 'Trigger time error (1σ): ' + str(record_trigger_time_error) + ' s\n'
-				ln_06 = 'Description: ' + str(record_description) + '\n'
-				body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06
 				Alerts.send_alert(topic, body)
 
 	@staticmethod
@@ -587,100 +452,55 @@ class Alerts:
 		'''
 
 		record = json.loads(value)
+		body = ''
+
+		rec_schema = record['$schema']
+		str_schema = '\tSchema: ' + str(rec_schema)
+		body += str_schema
 		
-		# $schema
-		try:
-			record_schema = record['$schema']
-		except KeyError:
-			record_schema = None
+		rec_instrument = record['instrument']
+		str_instrument = '\tInstrument: ' + str(rec_instrument)
+		body += str_instrument
 
-		# instrument
-		try:
-			record_instrument = record['instrument']
-		except KeyError:
-			record_instrument = None
+		rec_trigger_time = record['trigger_time']
+		str_trigger_time = '\tTrigger time: ' + str(rec_trigger_time)
+		body += str_trigger_time
 
-		# trigger_time
-		try:
-			record_trigger_time = record['trigger_time']
-		except KeyError:
-			record_trigger_time = None
+		rec_id = record['id'][0]
+		str_id = '\tID: ' + str(rec_id)
+		body += str_id
 
-		# id
-		try:
-			record_id = record['id'][0]
-		except KeyError:
-			record_id = None
+		rec_ra = record['ra']
+		str_ra = '\tRA: ' + str(rec_ra) + ' deg'
+		body += str_ra
 
-		# ra
-		try:
-			record_ra = record['ra']
-		except KeyError:
-			record_ra = None
+		rec_dec = record['dec']
+		str_dec = '\tDec: ' + str(rec_dec) + ' deg'
+		body += str_dec
 
-		# dec
-		try:
-			record_dec = record['dec']
-		except KeyError:
-			record_dec = None
+		rec_ra_dec_error = record['ra_dec_error']
+		str_ra_dec_error = '\tRA/Dec error: ' + str(rec_ra_dec_error) + ' deg'
+		body += str_ra_dec_error
 
-		# ra_dec_error
-		try:
-			record_ra_dec_error = record['ra_dec_error']
-		except KeyError:
-			record_ra_dec_error = None
+		rec_image_energy_range = record['image_energy_range']
+		str_image_energy_range = '\tImage energy range: ' + str(rec_image_energy_range) + ' keV'
+		body += str_image_energy_range
 
-		# image_energy_range
-		try:
-			record_image_energy_range = record['image_energy_range']
-		except KeyError:
-			record_image_energy_range = None
+		rec_net_count_rate = record['net_count_rate']
+		str_net_count_rate = '\tNet count rate: ' + str(rec_net_count_rate) + ' counts/s'
+		body += str_net_count_rate
 
-		# net_count_rate
-		try:
-			record_net_count_rate = record['net_count_rate']
-		except KeyError:
-			record_net_count_rate = None
+		rec_image_snr = record['image_snr']
+		str_image_snr = '\tImage SNR: ' + str(rec_image_snr)
+		body += str_image_snr
 
-		# image_snr
-		try:
-			record_image_snr = record['image_snr']
-		except KeyError:
-			record_image_snr = None
+		rec_additional_info = record['additional_info']
+		str_additional_info = '\tAdditional info: ' + str(rec_additional_info)
+		body += str_additional_info
 
-		# additional_info
-		try:
-			record_additional_info = record['additional_info']
-		except KeyError:
-			record_additional_info = None
+		print(body)
 
-		# print the alert contents
-		print('\tSchema:', record_schema)
-		print('\tInstrument:', record_instrument)
-		print('\tTrigger time:', record_trigger_time)
-		print('\tID:', record_id)
-		print('\tRA:', record_ra, 'deg')
-		print('\tDec:', record_dec, 'deg')
-		print('\tRA/Dec error:', record_ra_dec_error, 'deg')
-		print('\tImage energy range:', record_image_energy_range, 'keV')
-		print('\tNet count rate:', record_net_count_rate, 'counts/s')
-		print('\tImage SNR:', record_image_snr)
-		print('\tAdditional info:', record_additional_info)
-
-		# send an alert message
 		if alert:
-			ln_01 = 'Schema: ' + str(record_schema) + '\n'
-			ln_02 = 'Instrument: ' + str(record_instrument) + '\n'
-			ln_03 = 'Trigger time: ' + str(record_trigger_time) + '\n'
-			ln_04 = 'ID: ' + str(record_id) + '\n'
-			ln_05 = 'RA: ' + str(record_ra) + ' deg\n'
-			ln_06 = 'Dec: ' + str(record_dec) + ' deg\n'
-			ln_07 = 'RA/Dec error: ' + str(record_ra_dec_error) + ' deg\n'
-			ln_08 = 'Image energy range: ' + str(record_image_energy_range) + ' keV\n'
-			ln_09 = 'Net count rate: ' + str(record_net_count_rate), ' counts/s\n'
-			ln_10 = 'Image SNR: ' + str(record_image_snr) + '\n'
-			ln_11 = 'Additional info: ' + str(record_additional_info) + '\n'
-			body = ln_01 + ln_02 + ln_03 + ln_04 + ln_05 + ln_06 + ln_07 + ln_08 + ln_09 + ln_10 + ln_10 + ln_11
 			Alerts.send_alert(topic, body)
 
 	@staticmethod
@@ -1390,64 +1210,47 @@ class Alerts:
 		'''
 
 		record = json.loads(value)
+		body = ''
 
-		try:
-			record_schema = record['$schema']
-		except KeyError:
-			record_schema = None
+		rec_schema = record['$schema']
+		str_schema = '\tSchema: ' + str(rec_schema)
+		body += str_schema
 
-		try:
-			record_event_id = record['eventId']
-		except KeyError:
-			record_event_id = None
+		rec_event_id = record['eventId']
+		str_event_id = '\tEvent ID: ' + str(rec_event_id)
+		body += str_event_id
 
-		try:
-			record_submitter = record['submitter']
-		except KeyError:
-			record_submitter = None
+		rec_submitter = record['submitter']
+		str_submitter = '\tSubmitter: ' + str(rec_submitter)
+		body += str_submitter
 
-		try:
-			record_submitted_how = record['submittedHow']
-		except KeyError:
-			record_submitted_how = None
+		rec_submitted_how = record['submittedHow']
+		str_submitted_how = '\tSubmitted How: ' + str(rec_submitted_how)
+		body += str_submitted_how
 
-		try:
-			record_subject = record['subject']
-		except KeyError:
-			record_subject = None
+		rec_subject = record['subject']
+		str_subject = '\tSubject: ' + str(rec_subject)
+		body += str_subject
 
-		try:
-			record_circular_id = record['circularId']
-		except KeyError:
-			record_circular_id = None
+		rec_circular_id = record['circularId']
+		str_circular_id = '\tCircular ID: ' + str(rec_circular_id)
+		body += str_circular_id
 
-		try:
-			record_format = record['format']
-		except KeyError:
-			record_format = None
+		rec_format = record['format']
+		str_format = '\tFormat: ' + str(rec_format)
+		body += str_format
 
-		try:
-			record_body = record['body']
-		except KeyError:
-			record_body = None
+		rec_body = record['body']
+		str_body = '\tBody: ' + str(rec_body)
+		body += str_body
 
-		try:
-			record_created_on = record['createdOn']
-		except KeyError:
-			record_created_on = None
+		rec_created_on = record['createdOn']
+		str_created_on = '\tCreated On: ' + str(rec_created_on)
+		body += str_created_on
 
-		print('\tSchema:', record_schema)
-		print('\tEvent ID:', record_event_id)
-		print('\tSubmitter:', record_submitter)
-		print('\tSubmitted How:', record_submitted_how)
-		print('\tSubject:', record_subject)
-		print('\tCircular ID:', record_circular_id)
-		print('\tFormat:', record_format)
-		#print('\tBody:', record_body)
-		print('\tCreated On:', record_created_on)
+		print(body)
 
 		if alert:
-			body = str(record_circular_id) + '\n' + str(record_body)
 			Alerts.send_alert(topic, body)
 
 	@staticmethod

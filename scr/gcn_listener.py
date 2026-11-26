@@ -1,17 +1,25 @@
-from config import Configuration
-from lib.alerts import Alerts
-from gcn_kafka import Consumer
+import numpy as np
 import os
 import sys
+import time
+from gcn_kafka import Consumer
 
+from conf import Configuration
+from lib.angelos import Angelos
+from lib.boethos import Boethos
+
+# terminal preamble
 os.system('clear')
-print('[\033[1m' + 'ᾍδης ζῇ' + '\033[0m] - Running GCN listener\n')
+script_preamble = Boethos.get_script_preamble('gcn_listener')
+print(script_preamble)
+
+st = time.time()
 
 # create a consumer object
 consumer = Consumer(client_id=Configuration.CLIENT_ID, client_secret=Configuration.CLIENT_SECRET, **{'log_level': 0})
 
 # get the available notice topics
-topic_list, n_topics = Alerts.get_notice_topics()
+topic_list, n_topics = Angelos.get_notice_topics()
 consumer.subscribe(topic_list)
 
 while True:
@@ -29,11 +37,17 @@ while True:
 				print(msg_val)
 
 			else:
-				Alerts.filter_notice(msg_val, msg_top)
+				Angelos.filter_notice(msg_val, msg_top)
 
 	# handle manual interruptions
 	except KeyboardInterrupt:
-		print('\n\n[\033[1m' + 'ᾍδης ἀπέρχεται' + '\033[0m] - GCN listener terminated')
+		script_postamble = Boethos.get_script_postamble('gcn_listener')
+		print(script_postamble)
+
+		fn = time.time()
+		dt = np.around(fn - st, decimals=2)
+		print('[' + str(dt) + ' s]')
+
 		try:
 			sys.exit(130)
 		except SystemExit:

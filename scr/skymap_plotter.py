@@ -37,7 +37,7 @@ Grapheus.draw_commissioning_skymap(save_path=commissioning_skymap_path, save_fig
 
 # generate a TNS skymap
 print(line_preamble, 'Drawing TNS skymap')
-tns_file_path = plouton_directory + 'alert/tns_search.csv'
+tns_file_path = skymap_directory + 'tns_search.csv'
 tns_skymap_path = skymap_directory + 'tns' + Configuration.IMAGE_EXTENSION
 Grapheus.draw_tns_skymap(file_path=tns_file_path, save_path=tns_skymap_path, save_figure=Configuration.SAVE_FIGURE)
 

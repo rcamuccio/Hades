@@ -2,6 +2,7 @@
 Ζητητής - The Inquirer
 '''
 
+import numpy as np
 import os
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -83,6 +84,45 @@ class Zetetes:
 
 		tns_file = open(file_path, 'r')
 
+		slsni_ra_list = []
+		slsni_dec_list = []
+		snia_ra_list = []
+		snia_dec_list = []
+		snia91bg_ra_list = []
+		snia91bg_dec_list = []
+		snia91t_ra_list = []
+		snia91t_dec_list = []
+		sniacsm_ra_list = []
+		sniacsm_dec_list = []
+		sniax02cx_ra_list = []
+		sniax02cx_dec_list = []
+		snib_ra_list = []
+		snib_dec_list = []
+		snibc_ra_list = []
+		snibc_dec_list = []
+		snic_ra_list = []
+		snic_dec_list = []
+		snicbl_ra_list = []
+		snicbl_dec_list = []
+		snii_ra_list = []
+		snii_dec_list = []
+		sniib_ra_list = []
+		sniib_dec_list = []
+		sniin_ra_list = []
+		sniin_dec_list = []
+		sniip_ra_list = []
+		sniip_dec_list = []
+
+		therm_ra_list = []
+		therm_dec_list = []
+		ccsne_ra_list = []
+		ccsne_dec_list = []
+		ot_ra_list = []
+		ot_dec_list = []
+
+		ndec_list = []
+		sdec_list = []
+
 		for line in tns_file:
 
 			line = line.split(',')
@@ -97,50 +137,106 @@ class Zetetes:
 				ra_deg = coords.ra.deg
 				dec_deg = coords.dec.deg
 
+				if dec_deg > 0.:
+					ndec_list.append(dec_deg)
+				else:
+					sdec_list.append(dec_deg)
+
 				ra_shift = np.remainder(ra_deg + 180, 360) - 180
 
 				ra_rad = np.radians(ra_shift)
 				dec_rad = np.radians(dec_deg)
 
-				slsni_ra_list = []
-				slsni_dec_list = []
+				if type == 'SLSN-I':
+					slsni_ra_list.append(ra_rad)
+					slsni_dec_list.append(dec_rad)
 
-				snia_ra_list = []
-				snia_dec_list = []
+				elif type == 'SN Ia':
+					snia_ra_list.append(ra_rad)
+					snia_dec_list.append(dec_rad)
+					therm_ra_list.append(ra_rad)
+					therm_dec_list.append(dec_rad)
 
-				snia91bg_ra_list = []
-				snia91bg_dec_list = []
+				elif type == 'SN Ia-91bg-like':
+					snia91bg_ra_list.append(ra_rad)
+					snia91bg_dec_list.append(dec_rad)
+					therm_ra_list.append(ra_rad)
+					therm_dec_list.append(dec_rad)
 
-				snia91t_ra_list = []
-				snia91t_dec_list = []
+				elif type == 'SN Ia-91T-like':
+					snia91t_ra_list.append(ra_rad)
+					snia91t_dec_list.append(dec_rad)
+					therm_ra_list.append(ra_rad)
+					therm_dec_list.append(dec_rad)
 
-				sniacsm_ra_list = []
-				sniacsm_dec_list = []
+				elif type == 'SN Ia-CSM':
+					sniacsm_ra_list.append(ra_rad)
+					sniacsm_dec_list.append(dec_rad)
+					therm_ra_list.append(ra_rad)
+					therm_dec_list.append(dec_rad)
 
-				sniax02cx_ra_list = []
-				sniax02cx_dec_list = []
-				
-				snib_ra_list = []
-				snib_dec_list = []
-				
-				snibc_ra_list = []
-				snibc_dec_list =-[]
-				
-				snic_list = []
-				
-				snicbl_list = []
+				elif type == 'SN Iax[02cx-like]':
+					sniax02cx_ra_list.append(ra_rad)
+					sniax02cx_dec_list.append(dec_rad)
+					therm_ra_list.append(ra_rad)
+					therm_dec_list.append(dec_rad)
 
-				
-				snii_list = []
-				
-				sniib_list = []
-				
-				sniin_list = []
-				
-				sniip_list = []
+				elif type == 'SN Ib':
+					snib_ra_list.append(ra_rad)
+					snib_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
 
+				elif type == 'SN Ib/c':
+					snibc_ra_list.append(ra_rad)
+					snibc_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
 
+				elif type == 'SN Ic':
+					snic_ra_list.append(ra_rad)
+					snic_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
 
+				elif type == 'SN Ic-BL':
+					snicbl_ra_list.append(ra_rad)
+					snicbl_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
+
+				elif type == 'SN II':
+					snii_ra_list.append(ra_rad)
+					snii_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
+
+				elif type == 'SN IIb':
+					sniib_ra_list.append(ra_rad)
+					sniib_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
+
+				elif type == 'SN IIn':
+					sniin_ra_list.append(ra_rad)
+					sniin_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
+
+				elif type == 'SN IIP':
+					sniip_ra_list.append(ra_rad)
+					sniip_dec_list.append(dec_rad)
+					ccsne_ra_list.append(ra_rad)
+					ccsne_dec_list.append(dec_rad)
+
+				else:
+					ot_ra_list.append(ra_rad)
+					ot_dec_list.append(dec_rad)
+
+		print(len(ndec_list))
+		print(len(sdec_list))
+
+		return therm_ra_list, therm_dec_list, ccsne_ra_list, ccsne_dec_list, ot_ra_list, ot_dec_list
 
 	@staticmethod
 	def query_aavso_vsx_cone(query_ra, query_dec, query_radius, table_path):

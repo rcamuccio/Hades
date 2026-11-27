@@ -14,6 +14,7 @@ from astropy.visualization import ZScaleInterval
 from conf import Configuration
 from lib.logistes import Logistes
 from lib.skopeus import Skopeus
+from lib.zetetes import Zetetes
 
 import matplotlib as mpl
 #mpl.rc('font', family=Configuration.FONT_NAME, size=Configuration.FONT_SIZE)
@@ -699,33 +700,11 @@ class Grapheus:
 		tick_labels = ['14h', '16h', '18h', '20h', '22h', '0h', '2h', '4h', '6h', '8h', '10h']
 		ax.set_xticklabels(tick_labels)
 
-		tns_file = open(file_path, 'r')
-		for line in tns_file:
-			line = line.split(",")
+		therm_ra_list, therm_dec_list, ccsne_ra_list, ccsne_dec_list, ot_ra_list, ot_dec_list = Zetetes.parse_tns_file(file_path)
 
-			if line[0] != '"ID"':
-				ra = line[2].strip('"')
-				dec = line[3].strip('"')
-				type = line[4].strip('"')
-
-				coord = SkyCoord(ra, dec, unit=(u.hourangle, u.deg), frame='icrs')
-
-				# convert the right ascension values into range [-180, +180]
-				ra_shift = np.remainder(coord.ra.deg + 180, 360) - 180
-
-				# convert the coordinates to radians
-				ra_rad = np.radians(ra_shift)
-				dec_rad = np.radians(coord.dec.deg)
-
-				# draw the objects
-				if (type == 'SN Ia') or (type == 'SN Ia-91bg-like') or (type == 'SN Ia-91T-like') or (type == 'SN Ia-CSM'):
-					ax.scatter(ra_rad, dec_rad, c='tab:red', s=25, label='Thermonuclear')
-				elif (type == 'SN II') or (type == 'SN Iax[02cx-like]') or (type == 'SN Ic') or (type == 'SN Ib/c') or (type == 'SN IIP') or (type == 'SN Ib') or (type == 'SN IIb') or (type == 'SN Ic-BL') or (type == 'SN IIn'):
-					ax.scatter(ra_rad, dec_rad, c='tab:orange', s=25, label='CCSNe')
-				elif type == 'SLSN-I':
-					ax.scatter(ra_rad, dec_rad, c='gold', marker='*', s=50, edgecolor='red', linewidth=0.5, label='SLSNe')
-				else:
-					ax.scatter(ra_rad, dec_rad, c='tab:gray', s=3, label='OT')
+		ax.scatter(therm_ra_list, therm_dec_list, c='tab:red', s=25, label='SNe Ia', zorder=3)
+		ax.scatter(ccsne_ra_list, ccsne_dec_list, c='tab:orange', s=25, label='CCSNe', zorder=2)
+		ax.scatter(ot_ra_list, ot_dec_list, c='tab:gray', s=5, label='OT', zorder=1)
 
 		plt.legend()
 		plt.tight_layout()
